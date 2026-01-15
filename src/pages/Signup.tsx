@@ -40,24 +40,18 @@ const Signup = () => {
         }}
       />
       
-      {/* Green glow effect */}
+      {/* Subtle green glow effect */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
         style={{
-          background: 'var(--gradient-radial)',
-          filter: 'blur(40px)'
+          background: 'var(--gradient-radial-subtle)',
+          filter: 'blur(100px)'
         }}
       />
 
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Main Card */}
-        <div 
-          className="rounded-xl border border-border bg-card p-8"
-          style={{
-            background: 'var(--card-metallic)',
-            boxShadow: 'var(--glow-primary)'
-          }}
-        >
+        <div className="rounded-xl border border-border bg-card p-8">
           {/* Logo / Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-foreground">

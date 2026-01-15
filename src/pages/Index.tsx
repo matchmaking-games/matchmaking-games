@@ -15,12 +15,12 @@ const Index = () => {
         }}
       />
       
-      {/* Green glow effect */}
+      {/* Subtle green glow effect */}
       <div 
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full pointer-events-none"
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[700px] rounded-full pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at center, hsl(142 82% 52% / 0.15) 0%, transparent 60%)',
-          filter: 'blur(60px)'
+          background: 'var(--gradient-radial-subtle)',
+          filter: 'blur(120px)'
         }}
       />
 

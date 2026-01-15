@@ -11,14 +11,14 @@ All colors MUST be HSL.
     --background: 0 0% 7.0000%;
     --foreground: 0 0% 93%;
 
-    --card: 0 0% 11%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 93%;
 
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 93%;
 
-    --primary: 142 82% 52%;
-    --primary-foreground: 0 0% 7.0000%;
+    --primary: 153 60% 50%;
+    --primary-foreground: 0 0% 5%;
 
     --secondary: 0 0% 14.0000%;
     --secondary-foreground: 0 0% 93%;
@@ -27,14 +27,14 @@ All colors MUST be HSL.
     --muted-foreground: 0 0% 63%;
 
     --accent: 0 0% 14.0000%;
-    --accent-foreground: 142 82% 52%;
+    --accent-foreground: 153 60% 50%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 142 82% 52%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 153 60% 50%;
 
     --radius: 0.5rem;
 
@@ -66,12 +66,8 @@ All colors MUST be HSL.
 
     --sidebar: 248 0.3% 98.4%;
 
-    /* Custom tokens for Matchmaking */
-    --glow-primary: 0 0 60px hsl(142 82% 52% / 0.3);
-    --glow-primary-intense: 0 0 100px hsl(142 82% 52% / 0.4);
-    --gradient-radial: radial-gradient(ellipse at center, hsl(142 82% 52% / 0.1) 0%, transparent 70%);
-    --card-metallic: linear-gradient(135deg, hsl(0 0% 13%) 0%, hsl(0 0% 9%) 100%);
-    --border-glow: hsl(142 82% 52% / 0.3);
+    /* Custom tokens for Matchmaking - Sober style */
+    --gradient-radial-subtle: radial-gradient(ellipse at center, hsl(153 60% 50% / 0.05) 0%, transparent 70%);
 
     --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
@@ -104,14 +100,14 @@ All colors MUST be HSL.
     --background: 0 0% 7.0000%;
     --foreground: 0 0% 93%;
 
-    --card: 0 0% 11%;
+    --card: 0 0% 9%;
     --card-foreground: 0 0% 93%;
 
-    --popover: 0 0% 11%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 93%;
 
-    --primary: 142 82% 52%;
-    --primary-foreground: 0 0% 7.0000%;
+    --primary: 153 60% 50%;
+    --primary-foreground: 0 0% 5%;
 
     --secondary: 0 0% 14.0000%;
     --secondary-foreground: 0 0% 93%;
@@ -120,14 +116,14 @@ All colors MUST be HSL.
     --muted-foreground: 0 0% 63%;
 
     --accent: 0 0% 14.0000%;
-    --accent-foreground: 142 82% 52%;
+    --accent-foreground: 153 60% 50%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 142 82% 52%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 153 60% 50%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 248 0.3% 98.4%;
     --sidebar-primary: 264 24.3% 48.8%;
