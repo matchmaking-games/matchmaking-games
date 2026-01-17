@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Building2, User, Mail, Lock, Chrome } from "lucide-react";
+import { Building2, User, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,49 +13,33 @@ const Signup = () => {
   const [password, setPassword] = useState("");
 
   const handleGoogleSignup = () => {
-    // TODO: Implement Google OAuth with Supabase
     console.log("Google signup clicked");
   };
 
   const handleLinkedInSignup = () => {
-    // TODO: Implement LinkedIn OAuth with Supabase
     console.log("LinkedIn signup clicked");
   };
 
   const handleEmailSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement email/password signup with Supabase
     console.log("Email signup:", { email, password, userType });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      {/* Background grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), 
-                           linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}
-      />
+      {/* Background grid pattern - 24px for connection feel */}
+      <div className="absolute inset-0 bg-grid-pattern" />
       
-      {/* Subtle green glow effect */}
-      <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
-        style={{
-          background: 'var(--gradient-radial-subtle)',
-          filter: 'blur(100px)'
-        }}
-      />
+      {/* Subtle green glow - decorative only */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
 
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Main Card */}
         <div className="rounded-xl border border-border bg-card p-8">
           {/* Logo / Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground">
-              Criar conta na <span className="text-primary">Matchmaking</span>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              Criar conta na <span className="text-gradient-primary">Matchmaking</span>
             </h1>
           </div>
 
@@ -63,7 +47,7 @@ const Signup = () => {
           {!userType && (
             <div className="space-y-6">
               <div className="text-center">
-                <h2 className="text-xl font-semibold text-foreground mb-2">
+                <h2 className="font-display text-xl font-semibold text-foreground mb-2">
                   Primeiramente, qual seu perfil?
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -72,11 +56,11 @@ const Signup = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Studio Card */}
+                {/* Studio Card - Metallic gradient */}
                 <button
                   type="button"
                   onClick={() => setUserType("studio")}
-                  className="group relative p-6 rounded-lg border-2 transition-all duration-300 text-left hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background border-border hover:border-primary/50 bg-secondary/30"
+                  className="group relative p-6 rounded-lg border transition-all duration-300 text-left hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background border-border hover:border-border/80 card-metallic"
                 >
                   <div className="flex flex-col items-center text-center space-y-3">
                     <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -91,11 +75,11 @@ const Signup = () => {
                   </div>
                 </button>
 
-                {/* Professional Card */}
+                {/* Professional Card - Metallic gradient */}
                 <button
                   type="button"
                   onClick={() => setUserType("professional")}
-                  className="group relative p-6 rounded-lg border-2 transition-all duration-300 text-left hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background border-border hover:border-primary/50 bg-secondary/30"
+                  className="group relative p-6 rounded-lg border transition-all duration-300 text-left hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background border-border hover:border-border/80 card-metallic"
                 >
                   <div className="flex flex-col items-center text-center space-y-3">
                     <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -141,7 +125,7 @@ const Signup = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-primary/30"
+                  className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                   onClick={handleGoogleSignup}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -168,7 +152,7 @@ const Signup = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-primary/30"
+                  className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                   onClick={handleLinkedInSignup}
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -200,7 +184,7 @@ const Signup = () => {
                       placeholder="seu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 h-11 bg-secondary/50 border-border focus:border-primary"
+                      className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                       required
                     />
                   </div>
@@ -216,7 +200,7 @@ const Signup = () => {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 h-11 bg-secondary/50 border-border focus:border-primary"
+                      className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                       required
                     />
                   </div>
