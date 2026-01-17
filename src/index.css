@@ -2,150 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ============================================
+   MATCHMAKING DESIGN SYSTEM
+   Dark, minimalist, sober with gamer green accent
+   ============================================ */
 
 @layer base {
   :root {
-    --background: 0 0% 7.0000%;
+    /* Core Colors - Matchmaking Palette */
+    --background: 0 0% 7%;
     --foreground: 0 0% 93%;
-
-    --card: 0 0% 9%;
+    
+    --card: 0 0% 11%;
     --card-foreground: 0 0% 93%;
-
+    
     --popover: 0 0% 11%;
     --popover-foreground: 0 0% 93%;
-
-    --primary: 153 60% 50%;
-    --primary-foreground: 0 0% 5%;
-
-    --secondary: 0 0% 14.0000%;
+    
+    /* Primary - Vibrant Gamer Green */
+    --primary: 142 82% 52%;
+    --primary-foreground: 0 0% 7%;
+    
+    --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 93%;
-
-    --muted: 0 0% 14.0000%;
+    
+    --muted: 0 0% 14%;
     --muted-foreground: 0 0% 63%;
-
-    --accent: 0 0% 14.0000%;
-    --accent-foreground: 153 60% 50%;
-
+    
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 93%;
+    
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 153 60% 50%;
-
+    
+    --border: 0 0% 10%;
+    --input: 0 0% 14%;
+    --ring: 142 82% 52%;
+    
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 265 4% 12.9%;
-
-    --sidebar-primary: 266 4% 20.8%;
-
-    --sidebar-primary-foreground: 248 0.3% 98.4%;
-
-    --sidebar-accent: 248 0.7% 96.8%;
-
-    --sidebar-accent-foreground: 266 4% 20.8%;
-
-    --sidebar-border: 256 1.3% 92.9%;
-
-    --sidebar-ring: 257 4% 70.4%;
-
-    --chart-1: 41 22.2% 64.6%;
-
-    --chart-2: 185 11.8% 60%;
-
-    --chart-3: 227 7% 39.8%;
-
-    --chart-4: 84 18.9% 82.8%;
-
-    --chart-5: 70 18.8% 76.9%;
-
-    --sidebar: 248 0.3% 98.4%;
-
-    /* Custom tokens for Matchmaking - Sober style */
-    --gradient-radial-subtle: radial-gradient(ellipse at center, hsl(153 60% 50% / 0.05) 0%, transparent 70%);
-
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-
-    --tracking-normal: 0em;
-
-    --spacing: 0.25rem;
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 93%;
+    --sidebar-primary: 142 82% 52%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 142 82% 52%;
+    
+    /* Chart colors */
+    --chart-1: 142 82% 52%;
+    --chart-2: 162 17% 69%;
+    --chart-3: 70 18% 76%;
+    --chart-4: 304 26% 62%;
+    --chart-5: 16 24% 64%;
   }
 
   .dark {
-    --background: 0 0% 7.0000%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 93%;
-
-    --card: 0 0% 9%;
+    
+    --card: 0 0% 11%;
     --card-foreground: 0 0% 93%;
-
-    --popover: 0 0% 9%;
+    
+    --popover: 0 0% 11%;
     --popover-foreground: 0 0% 93%;
-
-    --primary: 153 60% 50%;
-    --primary-foreground: 0 0% 5%;
-
-    --secondary: 0 0% 14.0000%;
+    
+    --primary: 142 82% 52%;
+    --primary-foreground: 0 0% 7%;
+    
+    --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 93%;
-
-    --muted: 0 0% 14.0000%;
+    
+    --muted: 0 0% 14%;
     --muted-foreground: 0 0% 63%;
-
-    --accent: 0 0% 14.0000%;
-    --accent-foreground: 153 60% 50%;
-
+    
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 93%;
+    
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 153 60% 50%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 248 0.3% 98.4%;
-    --sidebar-primary: 264 24.3% 48.8%;
-    --sidebar-primary-foreground: 248 0.3% 98.4%;
-    --sidebar-accent: 260 4.1% 27.9%;
-    --sidebar-accent-foreground: 248 0.3% 98.4%;
-    --sidebar-border: 0 0% 100% / 10%;
-    --sidebar-ring: 264 2.7% 55.1%;
-    --chart-1: 264 24.3% 48.8%;
-    --chart-2: 162 17% 69.6%;
-    --chart-3: 70 18.8% 76.9%;
-    --chart-4: 304 26.5% 62.7%;
-    --chart-5: 16 24.6% 64.5%;
-    --sidebar: 266 4% 20.8%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    
+    --border: 0 0% 10%;
+    --input: 0 0% 14%;
+    --ring: 142 82% 52%;
+    
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 93%;
+    --sidebar-primary: 142 82% 52%;
+    --sidebar-primary-foreground: 0 0% 7%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 142 82% 52%;
   }
 }
 
@@ -155,6 +105,41 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES - Matchmaking Design System
+   ============================================ */
+
+@layer utilities {
+  /* Grid Pattern - 24px for "connection" feel */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Text Gradient - Green highlight for important text */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, hsl(142 82% 52%) 0%, hsl(142 70% 65%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card Metallic - Subtle gradient for special cards */
+  .card-metallic {
+    background: linear-gradient(135deg, hsl(0 0% 11%) 0%, hsl(0 0% 14%) 50%, hsl(0 0% 11%) 100%);
+  }
+
+  /* Background Glow - Decorative only, never on interactive elements */
+  .bg-glow-primary {
+    background: radial-gradient(ellipse at center, hsl(142 82% 52% / 0.08) 0%, transparent 60%);
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: -10;
   }
 }

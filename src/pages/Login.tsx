@@ -10,49 +10,33 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth with Supabase
     console.log("Google login clicked");
   };
 
   const handleLinkedInLogin = () => {
-    // TODO: Implement LinkedIn OAuth with Supabase
     console.log("LinkedIn login clicked");
   };
 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement email/password login with Supabase
     console.log("Email login:", { email, password });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      {/* Background grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), 
-                           linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }}
-      />
+      {/* Background grid pattern - 24px for connection feel */}
+      <div className="absolute inset-0 bg-grid-pattern" />
       
-      {/* Subtle green glow effect */}
-      <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full pointer-events-none"
-        style={{
-          background: 'var(--gradient-radial-subtle)',
-          filter: 'blur(100px)'
-        }}
-      />
+      {/* Subtle green glow - decorative only */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
 
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Main Card */}
         <div className="rounded-xl border border-border bg-card p-8">
           {/* Logo / Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-foreground">
-              Entrar na <span className="text-primary">Matchmaking</span>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              Entrar na <span className="text-gradient-primary">Matchmaking</span>
             </h1>
             <p className="text-sm text-muted-foreground mt-2">
               Bem-vindo de volta! Faça login para continuar.
@@ -65,7 +49,7 @@ const Login = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-primary/30"
+                className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleGoogleLogin}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -92,7 +76,7 @@ const Login = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-primary/30"
+                className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleLinkedInLogin}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -124,7 +108,7 @@ const Login = () => {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-11 bg-secondary/50 border-border focus:border-primary"
+                    className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     required
                   />
                 </div>
@@ -145,7 +129,7 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-11 bg-secondary/50 border-border focus:border-primary"
+                    className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     required
                   />
                 </div>
