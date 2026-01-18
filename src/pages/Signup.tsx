@@ -7,22 +7,22 @@ import { Label } from "@/components/ui/label";
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
-  const username = searchParams.get("username");
+  const slug = searchParams.get("slug");
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleGoogleSignup = () => {
-    console.log("Google signup clicked", { username });
+    console.log("Google signup clicked", { slug });
   };
 
   const handleLinkedInSignup = () => {
-    console.log("LinkedIn signup clicked", { username });
+    console.log("LinkedIn signup clicked", { slug });
   };
 
   const handleEmailSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email signup:", { email, password, username });
+    console.log("Email signup:", { email, password, slug });
   };
 
   return (
@@ -44,13 +44,13 @@ const Signup = () => {
           </div>
 
           {/* Username Reservation Message */}
-          {username && (
+          {slug && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border border-primary/20 mb-6">
               <Gamepad2 className="w-5 h-5 text-primary flex-shrink-0" />
               <p className="text-sm text-foreground">
                 Estamos reservando{" "}
                 <span className="text-primary font-semibold">
-                  matchmaking.games/{username}
+                  matchmaking.games/{slug}
                 </span>{" "}
                 para você!
               </p>
