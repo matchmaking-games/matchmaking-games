@@ -1,40 +1,113 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gamepad2, ArrowRight } from "lucide-react";
+import { Gamepad2, ArrowRight, Check, X, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const navigate = useNavigate();
 
   const validateUsername = (value: string): string => {
     if (value.length === 0) return "";
     if (value.length < 3) return "Mínimo 3 caracteres";
-    if (!/^[a-z0-9_]+$/.test(value)) return "Apenas letras minúsculas, números e _";
+    if (value.length > 30) return "Máximo 30 caracteres";
+    if (!/^[a-z0-9-]+$/.test(value)) return "Use apenas letras, números e hífen";
+    if (value.startsWith("-") || value.endsWith("-")) return "Não pode começar ou terminar com hífen";
     return "";
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
     setUsername(value);
-    setError(validateUsername(value));
+    setValidationError(validateUsername(value));
+    setIsAvailable(null);
   };
+
+  // Debounced availability check
+  useEffect(() => {
+    if (!username || validationError) {
+      setIsAvailable(null);
+      setIsChecking(false);
+      return;
+    }
+
+    setIsChecking(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("users")
+        .select("slug")
+        .eq("slug", username)
+        .maybeSingle();
+      
+      setIsAvailable(data === null);
+      setIsChecking(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [username, validationError]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateUsername(username);
-    if (validationError) {
-      setError(validationError);
+    if (!username || validationError || isChecking || !isAvailable) {
       return;
     }
-    if (username.length === 0) {
-      setError("Digite um username");
-      return;
-    }
-    navigate(`/signup?username=${username}`);
+    navigate(`/signup?slug=${username}`);
   };
+
+  // Determine status icon
+  const renderStatusIcon = () => {
+    if (!username || username.length < 3) return null;
+    
+    if (validationError) {
+      return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+    }
+    
+    if (isChecking) {
+      return <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />;
+    }
+    
+    if (isAvailable === true) {
+      return <Check className="w-4 h-4 text-green-500" />;
+    }
+    
+    if (isAvailable === false) {
+      return <X className="w-4 h-4 text-red-500" />;
+    }
+    
+    return null;
+  };
+
+  // Determine status message
+  const getStatusMessage = () => {
+    if (!username) {
+      return { text: "Reserve seu username antes que seja tarde!", className: "text-muted-foreground" };
+    }
+    
+    if (validationError) {
+      return { text: validationError, className: "text-destructive" };
+    }
+    
+    if (isChecking) {
+      return { text: "Reserve seu username antes que seja tarde!", className: "text-muted-foreground" };
+    }
+    
+    if (isAvailable === true) {
+      return { text: "Boa escolha! Esse username está livre.", className: "text-green-500" };
+    }
+    
+    if (isAvailable === false) {
+      return { text: "Ops, esse username já foi pego. Tente outro.", className: "text-destructive" };
+    }
+    
+    return { text: "Reserve seu username antes que seja tarde!", className: "text-muted-foreground" };
+  };
+
+  const isButtonDisabled = !username || !!validationError || isChecking || isAvailable !== true;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
@@ -73,25 +146,25 @@ const Index = () => {
               placeholder="seu-username"
               value={username}
               onChange={handleUsernameChange}
+              maxLength={30}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-12 text-foreground placeholder:text-muted-foreground/50"
             />
+            <div className="px-2">
+              {renderStatusIcon()}
+            </div>
             <Button 
               type="submit" 
               size="sm" 
               className="m-1.5 h-9 px-4 rounded-md"
-              disabled={username.length === 0 || !!error}
+              disabled={isButtonDisabled}
             >
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
-          
-          {error && (
-            <p className="text-destructive text-sm mt-2 text-left">{error}</p>
-          )}
         </form>
 
-        <p className="text-sm text-muted-foreground mb-6">
-          Reserve seu username antes que seja tarde!
+        <p className={`text-sm mb-6 ${getStatusMessage().className}`}>
+          {getStatusMessage().text}
         </p>
 
         <p className="text-sm text-muted-foreground">
