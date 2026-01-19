@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Gamepad2, ArrowRight, Check, X, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowRight, Check, X, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const Index = () => {
   const [username, setUsername] = useState("");
@@ -122,11 +123,8 @@ const Index = () => {
 
       <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Gamepad2 className="w-7 h-7 text-primary" />
-          </div>
-          <span className="font-display text-2xl font-bold text-foreground">Matchmaking</span>
+        <div className="flex items-center justify-center mb-6">
+          <img src={matchmakingLogo} alt="Matchmaking" className="h-12" />
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
