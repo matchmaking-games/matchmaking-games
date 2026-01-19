@@ -38,13 +38,16 @@ const Index = () => {
 
     setIsChecking(true);
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("users")
-        .select("slug")
-        .eq("slug", username)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('check_slug_availability', {
+        slug_to_check: username
+      });
       
-      setIsAvailable(data === null);
+      if (error) {
+        console.error('Error checking slug availability:', error);
+        setIsAvailable(false); // Assume unavailable on error for security
+      } else {
+        setIsAvailable(data);
+      }
       setIsChecking(false);
     }, 500);
 
