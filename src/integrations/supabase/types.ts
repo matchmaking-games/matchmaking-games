@@ -968,6 +968,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_slug_availability: {
+        Args: { slug_to_check: string }
+        Returns: boolean
+      }
       expirar_vagas_antigas: { Args: never; Returns: number }
     }
     Enums: {
