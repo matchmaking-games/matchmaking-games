@@ -1,26 +1,84 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Mail, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+  const getErrorMessage = (error: string): string => {
+    if (error.includes("Invalid login credentials")) {
+      return "Email ou senha incorretos";
+    }
+    if (error.includes("Email not confirmed")) {
+      return "Confirme seu email antes de entrar";
+    }
+    return "Erro ao fazer login. Tente novamente.";
   };
 
-  const handleLinkedInLogin = () => {
-    console.log("LinkedIn login clicked");
+  const clearError = () => {
+    if (error) setError(null);
   };
 
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/auth/callback",
+      },
+    });
+
+    if (error) {
+      setError(getErrorMessage(error.message));
+      setIsLoading(false);
+    }
+  };
+
+  const handleLinkedInLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "linkedin_oidc",
+      options: {
+        redirectTo: window.location.origin + "/auth/callback",
+      },
+    });
+
+    if (error) {
+      setError(getErrorMessage(error.message));
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email login:", { email, password });
+    setIsLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(getErrorMessage(error.message));
+      setIsLoading(false);
+      return;
+    }
+
+    navigate("/dashboard");
   };
 
   return (
@@ -57,6 +115,7 @@ const Login = () => {
                 variant="outline"
                 className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleGoogleLogin}
+                disabled={isLoading}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -84,6 +143,7 @@ const Login = () => {
                 variant="outline"
                 className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleLinkedInLogin}
+                disabled={isLoading}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -113,9 +173,13 @@ const Login = () => {
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      clearError();
+                    }}
                     className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -134,9 +198,13 @@ const Login = () => {
                     type="password"
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      clearError();
+                    }}
                     className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -144,9 +212,23 @@ const Login = () => {
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
+                disabled={isLoading}
               >
-                Entrar
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar"
+                )}
               </Button>
+
+              {error && (
+                <p className="text-sm text-destructive text-center mt-2">
+                  {error}
+                </p>
+              )}
             </form>
           </div>
 
