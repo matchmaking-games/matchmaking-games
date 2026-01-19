@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Gamepad2, User, Check, X, Loader2 } from "lucide-react";
+import { User, Check, X, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const onboardingSchema = z.object({
   nomeCompleto: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -235,9 +236,7 @@ const Onboarding = () => {
         <div className="rounded-xl border border-border bg-card p-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Gamepad2 className="w-7 h-7 text-primary" />
-            </div>
+            <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
           </div>
 
           {/* Title */}

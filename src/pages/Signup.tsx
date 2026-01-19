@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { Gamepad2, Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 // Zod schema for form validation
 const signupSchema = z.object({
@@ -137,17 +138,21 @@ const Signup = () => {
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Main Card */}
         <div className="rounded-xl border border-border bg-card p-8">
-          {/* Logo / Title */}
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+          </div>
+
+          {/* Title */}
           <div className="text-center mb-6">
             <h1 className="font-display text-2xl font-bold text-foreground">
-              Criar conta na <span className="text-gradient-primary">Matchmaking</span>
+              Criar conta
             </h1>
           </div>
 
           {/* Username Reservation Message */}
           {slug && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border border-primary/20 mb-6">
-              <Gamepad2 className="w-5 h-5 text-primary flex-shrink-0" />
               <p className="text-sm text-foreground">
                 Estamos reservando{" "}
                 <span className="text-primary font-semibold">

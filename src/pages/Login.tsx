@@ -4,6 +4,7 @@ import { Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -33,10 +34,15 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Main Card */}
         <div className="rounded-xl border border-border bg-card p-8">
-          {/* Logo / Title */}
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+          </div>
+
+          {/* Title */}
           <div className="text-center mb-8">
             <h1 className="font-display text-2xl font-bold text-foreground">
-              Entrar na <span className="text-gradient-primary">Matchmaking</span>
+              Entrar
             </h1>
             <p className="text-sm text-muted-foreground mt-2">
               Bem-vindo de volta! Faça login para continuar.
