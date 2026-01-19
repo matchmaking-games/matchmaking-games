@@ -1,28 +1,129 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Gamepad2, Mail, Lock } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Gamepad2, Mail, Lock, Loader2 } from "lucide-react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+// Zod schema for form validation
+const signupSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
+});
+
+type ValidationErrors = {
+  email?: string;
+  password?: string;
+};
 
 const Signup = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const slug = searchParams.get("slug");
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const handleGoogleSignup = () => {
-    console.log("Google signup clicked", { slug });
+  const validateForm = (): boolean => {
+    const result = signupSchema.safeParse({ email, password });
+    
+    if (!result.success) {
+      const errors: ValidationErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof ValidationErrors;
+        errors[field] = err.message;
+      });
+      setValidationErrors(errors);
+      return false;
+    }
+    
+    setValidationErrors({});
+    return true;
   };
 
-  const handleLinkedInSignup = () => {
-    console.log("LinkedIn signup clicked", { slug });
+  const handleGoogleSignup = async () => {
+    // Salvar slug no localStorage antes do redirect OAuth
+    if (slug) {
+      localStorage.setItem("pending_slug", slug);
+    }
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    
+    if (error) {
+      console.error("Google OAuth error:", error);
+      toast.error("Erro ao conectar com Google. Tente novamente.");
+    }
   };
 
-  const handleEmailSignup = (e: React.FormEvent) => {
+  const handleLinkedInSignup = async () => {
+    // Salvar slug no localStorage antes do redirect OAuth
+    if (slug) {
+      localStorage.setItem("pending_slug", slug);
+    }
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "linkedin_oidc",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    
+    if (error) {
+      console.error("LinkedIn OAuth error:", error);
+      toast.error("Erro ao conectar com LinkedIn. Tente novamente.");
+    }
+  };
+
+  const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Email signup:", { email, password, slug });
+    
+    if (!validateForm()) return;
+    
+    setIsLoading(true);
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    
+    setIsLoading(false);
+    
+    if (error) {
+      console.error("Email signup error:", error);
+      
+      // Mapeamento de erros user-friendly
+      if (error.message.includes("already registered")) {
+        toast.error("Este email já possui conta", {
+          action: {
+            label: "Entrar",
+            onClick: () => navigate("/login")
+          }
+        });
+      } else if (error.message.includes("Invalid email")) {
+        toast.error("Email inválido");
+      } else if (error.message.includes("Password should be at least")) {
+        toast.error("Senha deve ter pelo menos 8 caracteres");
+      } else {
+        toast.error("Erro ao criar conta. Tente novamente.");
+      }
+      return;
+    }
+    
+    // Sucesso: redirecionar para onboarding
+    navigate(slug ? `/onboarding?slug=${slug}` : "/onboarding");
   };
 
   return (
@@ -66,6 +167,7 @@ const Signup = () => {
                 variant="outline"
                 className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleGoogleSignup}
+                disabled={isLoading}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -93,6 +195,7 @@ const Signup = () => {
                 variant="outline"
                 className="w-full h-12 text-base gap-3 bg-secondary/50 border-border hover:bg-secondary hover:border-border/80"
                 onClick={handleLinkedInSignup}
+                disabled={isLoading}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -124,9 +227,13 @@ const Signup = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    disabled={isLoading}
                     required
                   />
                 </div>
+                {validationErrors.email && (
+                  <p className="text-sm text-destructive">{validationErrors.email}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -140,16 +247,28 @@ const Signup = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    disabled={isLoading}
                     required
                   />
                 </div>
+                {validationErrors.password && (
+                  <p className="text-sm text-destructive">{validationErrors.password}</p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold"
+                disabled={isLoading}
               >
-                Criar Perfil
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Criando conta...
+                  </>
+                ) : (
+                  "Criar Perfil"
+                )}
               </Button>
             </form>
           </div>
