@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ type ValidationErrors = {
 export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [nomeCompleto, setNomeCompleto] = useState("");
   const [nomeExibicao, setNomeExibicao] = useState("");
   const [tituloProfissional, setTituloProfissional] = useState("");
@@ -39,9 +42,11 @@ export default function Profile() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
+    setUserId(session.user.id);
+
     const { data, error } = await supabase
       .from("users")
-      .select("nome_completo, nome_exibicao, titulo_profissional, bio_curta, localizacao")
+      .select("nome_completo, nome_exibicao, titulo_profissional, bio_curta, localizacao, avatar_url")
       .eq("id", session.user.id)
       .single();
 
@@ -51,6 +56,7 @@ export default function Profile() {
       setTituloProfissional(data.titulo_profissional || "");
       setBioCurta(data.bio_curta || "");
       setLocalizacao(data.localizacao || "");
+      setAvatarUrl(data.avatar_url);
     }
 
     if (error) {
@@ -140,8 +146,19 @@ export default function Profile() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome Completo */}
+          <>
+            {/* Avatar Upload */}
+            {userId && (
+              <AvatarUpload
+                userId={userId}
+                currentAvatarUrl={avatarUrl}
+                nomeCompleto={nomeCompleto}
+                onAvatarUpdated={(newUrl) => setAvatarUrl(newUrl)}
+              />
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Nome Completo */}
             <div className="space-y-2">
               <Label htmlFor="nome_completo">Nome completo *</Label>
               <Input
@@ -218,22 +235,23 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Botão Submit */}
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="w-full h-12 text-base font-semibold"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Salvando...
-                </>
-              ) : (
-                "Salvar Alterações"
-              )}
-            </Button>
-          </form>
+              {/* Botão Submit */}
+              <Button
+                type="submit"
+                disabled={isSaving}
+                className="w-full h-12 text-base font-semibold"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar Alterações"
+                )}
+              </Button>
+            </form>
+          </>
         )}
       </div>
     </DashboardLayout>
