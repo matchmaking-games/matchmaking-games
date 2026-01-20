@@ -10,6 +10,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import ProfileLinks from "./pages/ProfileLinks";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +41,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/profile/links"
+            element={
+              <ProtectedRoute>
+                <ProfileLinks />
               </ProtectedRoute>
             }
           />
