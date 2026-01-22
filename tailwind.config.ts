@@ -86,16 +86,17 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'fade-in': 'fadeIn 0.2s ease-out'
   		},
-  		fontFamily: {
-  			sans: [
-  				'ui-sans-serif',
-  				'system-ui',
-  				'sans-serif',
-  				'Apple Color Emoji',
-  				'Segoe UI Emoji',
-  				'Segoe UI Symbol',
-  				'Noto Color Emoji'
-  			],
+		fontFamily: {
+			sans: [
+				'Geist Sans',
+				'ui-sans-serif',
+				'system-ui',
+				'sans-serif',
+				'Apple Color Emoji',
+				'Segoe UI Emoji',
+				'Segoe UI Symbol',
+				'Noto Color Emoji'
+			],
   			display: [
   				'Space Grotesk',
   				'ui-sans-serif',
