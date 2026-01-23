@@ -2,14 +2,13 @@ import { ReactNode } from "react";
 import { Menu } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
-
 interface DashboardLayoutProps {
   children: ReactNode;
 }
-
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  return (
-    <SidebarProvider>
+export function DashboardLayout({
+  children
+}: DashboardLayoutProps) {
+  return <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
 
@@ -19,9 +18,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <SidebarTrigger className="text-foreground">
               <Menu className="h-6 w-6" />
             </SidebarTrigger>
-            <span className="ml-3 font-display font-bold text-lg text-gradient-primary">
-              Matchmaking
-            </span>
+            
           </header>
 
           {/* Main content area */}
@@ -30,6 +27,5 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 }
