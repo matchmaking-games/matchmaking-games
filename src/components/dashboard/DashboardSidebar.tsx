@@ -61,7 +61,7 @@ export function DashboardSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <Link to="/" className="flex items-center">
-          <img src={matchmakingLogo} alt="Matchmaking" className="h-7" />
+          <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
         </Link>
       </SidebarHeader>
 
