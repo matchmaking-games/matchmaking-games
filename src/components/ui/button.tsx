@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-t from-[hsl(var(--primary))] to-[hsl(var(--primary-accent))] text-primary-foreground transition-[filter] duration-150 ease-out hover:brightness-[1.01] hover:saturate-[1.04] hover:ring-1 hover:ring-[hsl(var(--primary)/0.22)]",
+          "bg-gradient-to-t from-[hsl(var(--primary))] to-[hsl(var(--primary-accent))] text-primary-foreground transition-[filter] duration-150 ease-out hover:brightness-[1.04] hover:saturate-[1.08] hover:ring-2 hover:ring-[hsl(var(--primary)/0.3)]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
