@@ -27,9 +27,9 @@
     /* Primary: #22e47a (vibrant gamer green) */
     --primary: 147 78% 51%;
     --primary-foreground: 0 0% 7%;
-    
+
     /* Primary Accent: #2dd4bf (teal for gradients) */
-    --primary-accent: 174 73% 51%;
+    --primary-accent: 154 70% 58%;
 
     --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 93%;
@@ -82,9 +82,9 @@
     /* Primary: #22e47a */
     --primary: 147 78% 51%;
     --primary-foreground: 0 0% 7%;
-    
+
     /* Primary Accent: #2dd4bf */
-    --primary-accent: 174 73% 51%;
+    --primary-accent: 154 70% 58%;
 
     --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 93%;
@@ -130,7 +130,7 @@
 @layer utilities {
   /* Grid Pattern - 24px for "connection" feel */
   .bg-grid-pattern {
-    background-image: 
+    background-image:
       linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
     background-size: 24px 24px;
