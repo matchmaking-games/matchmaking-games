@@ -11,8 +11,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
-        {/* Background grid (always behind) */}
-        <div className="absolute inset-0 bg-grid-pattern pointer-events-none z-0" />
+        {/* Background grid (top fade only) */}
+        <div
+          className="absolute inset-0 bg-grid-pattern pointer-events-none z-0"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+          }}
+        />
 
         {/* Foreground content */}
         <div className="relative z-10 flex w-full">
