@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LayoutDashboard, Briefcase, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -59,10 +60,8 @@ export function DashboardSidebar() {
   return (
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="font-display font-bold text-xl text-gradient-primary">
-            Matchmaking
-          </span>
+        <Link to="/" className="flex items-center">
+          <img src={matchmakingLogo} alt="Matchmaking" className="h-7" />
         </Link>
       </SidebarHeader>
 
