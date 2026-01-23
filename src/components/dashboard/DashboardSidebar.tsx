@@ -93,13 +93,13 @@ export function DashboardSidebar() {
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         {user && (
           <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={user.avatar_url || undefined} alt={user.nome_completo} />
-              <AvatarFallback className="bg-muted text-muted-foreground text-sm">
+              <AvatarFallback className="bg-muted text-muted-foreground text-[15px]">
                 {getInitials(user.nome_completo)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-sidebar-foreground truncate">
+            <span className="text-[15px] font-medium text-sidebar-foreground truncate">
               {user.nome_completo}
             </span>
           </div>
