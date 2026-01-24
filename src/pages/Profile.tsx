@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -137,9 +138,10 @@ export default function Profile() {
   return (
     <DashboardLayout>
       <div className="max-w-xl mx-auto">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-8">
+        <h1 className="font-display text-3xl font-bold text-foreground mb-4">
           Meu Perfil
         </h1>
+        <ProfileNavigation />
 
         {isLoading ? (
           <div className="flex justify-center py-12">

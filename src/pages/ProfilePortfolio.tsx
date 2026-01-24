@@ -4,6 +4,7 @@ import { Loader2, Globe, Linkedin, Github, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,7 @@ type ValidationErrors = {
   portfolio_url?: string;
 };
 
-const ProfileLinks = () => {
+const ProfilePortfolio = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -137,9 +138,10 @@ const ProfileLinks = () => {
   return (
     <DashboardLayout>
       <div className="max-w-xl mx-auto">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-          Links
+        <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+          Meu Perfil
         </h1>
+        <ProfileNavigation />
         <p className="text-muted-foreground mb-8">
           Adicione links para que recrutadores encontrem mais sobre você
         </p>
@@ -244,4 +246,4 @@ const ProfileLinks = () => {
   );
 };
 
-export default ProfileLinks;
+export default ProfilePortfolio;
