@@ -10,7 +10,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import ProfileLinks from "./pages/ProfileLinks";
+import ProfilePortfolio from "./pages/ProfilePortfolio";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -45,10 +45,10 @@ const App = () => (
             }
           />
           <Route
-            path="/dashboard/profile/links"
+            path="/dashboard/profile/portfolio"
             element={
               <ProtectedRoute>
-                <ProfileLinks />
+                <ProfilePortfolio />
               </ProtectedRoute>
             }
           />
