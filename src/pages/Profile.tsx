@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff } from "lucide-react";
-import InputMask from "react-input-mask";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
@@ -40,7 +39,7 @@ const cleanPhone = (phone: string): string => {
   return phone.replace(/\D/g, "");
 };
 
-// Helper to format phone for display
+// Helper to format phone for display (from database)
 const formatPhone = (phone: string | null): string => {
   if (!phone) return "";
   const digits = phone.replace(/\D/g, "");
@@ -48,6 +47,18 @@ const formatPhone = (phone: string | null): string => {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   }
   return phone;
+};
+
+// Helper to format phone as user types
+const formatPhoneInput = (value: string): string => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 2) {
+    return digits.length > 0 ? `(${digits}` : "";
+  }
+  if (digits.length <= 7) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 };
 
 export default function Profile() {
@@ -320,20 +331,17 @@ export default function Profile() {
                     <Label htmlFor="telefone">Telefone</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <InputMask
-                        mask="(99) 99999-9999"
+                      <Input
+                        id="telefone"
                         value={telefone}
-                        onChange={(e) => setTelefone(e.target.value)}
-                      >
-                        {(inputProps: React.InputHTMLAttributes<HTMLInputElement>) => (
-                          <Input
-                            {...inputProps}
-                            id="telefone"
-                            placeholder="(11) 98765-4321"
-                            className="h-11 pl-10 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                          />
-                        )}
-                      </InputMask>
+                        onChange={(e) => {
+                          const formatted = formatPhoneInput(e.target.value);
+                          setTelefone(formatted);
+                        }}
+                        placeholder="(11) 98765-4321"
+                        maxLength={15}
+                        className="h-11 pl-10 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
                     </div>
                     {validationErrors.telefone && (
                       <p className="text-sm text-destructive">{validationErrors.telefone}</p>
