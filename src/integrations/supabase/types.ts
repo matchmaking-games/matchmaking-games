@@ -322,9 +322,12 @@ export type Database = {
       experiencia: {
         Row: {
           atualmente_trabalhando: boolean | null
+          cidade: string | null
+          cidade_ibge_id: number | null
           criado_em: string | null
           descricao: string | null
           empresa: string
+          estado: string | null
           estudio_id: string | null
           fim: string | null
           habilidades_usadas: string[] | null
@@ -339,9 +342,12 @@ export type Database = {
         }
         Insert: {
           atualmente_trabalhando?: boolean | null
+          cidade?: string | null
+          cidade_ibge_id?: number | null
           criado_em?: string | null
           descricao?: string | null
           empresa: string
+          estado?: string | null
           estudio_id?: string | null
           fim?: string | null
           habilidades_usadas?: string[] | null
@@ -356,9 +362,12 @@ export type Database = {
         }
         Update: {
           atualmente_trabalhando?: boolean | null
+          cidade?: string | null
+          cidade_ibge_id?: number | null
           criado_em?: string | null
           descricao?: string | null
           empresa?: string
+          estado?: string | null
           estudio_id?: string | null
           fim?: string | null
           habilidades_usadas?: string[] | null

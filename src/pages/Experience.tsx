@@ -1,22 +1,74 @@
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExperienceList } from "@/components/experience/ExperienceList";
+import { ExperienceModal } from "@/components/experience/ExperienceModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useExperiences, type Experience } from "@/hooks/useExperiences";
+import { useToast } from "@/hooks/use-toast";
 
-export default function Experience() {
-  const { experiences, loading, error } = useExperiences();
+export default function ExperiencePage() {
+  const { experiences, loading, error, refetch, deleteExperience } = useExperiences();
+  const { toast } = useToast();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
+  const [deletingExperience, setDeletingExperience] = useState<Experience | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleAdd = () => {
+    setEditingExperience(null);
+    setIsModalOpen(true);
+  };
 
   const handleEdit = (experience: Experience) => {
-    // TODO: Implement edit modal (future task)
-    console.log("Edit:", experience.id);
+    setEditingExperience(experience);
+    setIsModalOpen(true);
   };
 
   const handleDelete = (experience: Experience) => {
-    // TODO: Implement delete functionality (future task)
-    console.log("Delete:", experience.id);
+    setDeletingExperience(experience);
+  };
+
+  const handleSuccess = () => {
+    setIsModalOpen(false);
+    setEditingExperience(null);
+    refetch();
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingExperience) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteExperience(deletingExperience.id);
+      toast({
+        title: "Experiência removida",
+        description: "A experiência foi removida com sucesso.",
+      });
+      refetch();
+    } catch (err) {
+      toast({
+        title: "Erro ao remover",
+        description: "Não foi possível remover a experiência.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeletingExperience(null);
+    }
   };
 
   return (
@@ -34,7 +86,7 @@ export default function Experience() {
               <p className="text-muted-foreground">
                 Adicione suas experiências profissionais na indústria de games
               </p>
-              <Button disabled className="flex-shrink-0">
+              <Button onClick={handleAdd} className="flex-shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
@@ -55,6 +107,44 @@ export default function Experience() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add/Edit Modal */}
+      <ExperienceModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        editingExperience={editingExperience}
+        onSuccess={handleSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!deletingExperience}
+        onOpenChange={(open) => !open && setDeletingExperience(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover experiência?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a experiência de{" "}
+              <strong>{deletingExperience?.titulo_cargo}</strong> na{" "}
+              <strong>{deletingExperience?.empresa}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Removendo..." : "Remover"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
