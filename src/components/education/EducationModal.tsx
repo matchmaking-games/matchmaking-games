@@ -113,6 +113,14 @@ export function EducationModal({
   });
 
   const descricao = form.watch("descricao") || "";
+  const concluido = form.watch("concluido");
+
+  // Clear end date when "concluido" is unchecked
+  useEffect(() => {
+    if (!concluido) {
+      form.setValue("fim", "");
+    }
+  }, [concluido, form]);
 
   // Reset form when modal opens/closes or when editing education changes
   useEffect(() => {
@@ -300,7 +308,7 @@ export function EducationModal({
             />
 
             {/* Date Range */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${concluido ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
               <FormField
                 control={form.control}
                 name="inicio"
@@ -320,24 +328,26 @@ export function EducationModal({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="fim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data de conclusão</FormLabel>
-                    <FormControl>
-                      <MonthYearPicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        maxDate={currentMonth}
-                        placeholder="Selecione a data"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {concluido && (
+                <FormField
+                  control={form.control}
+                  name="fim"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de conclusão</FormLabel>
+                      <FormControl>
+                        <MonthYearPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          maxDate={currentMonth}
+                          placeholder="Selecione a data"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             {/* Completed Checkbox */}
