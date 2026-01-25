@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,6 +100,7 @@ export default function Skills() {
 
   return (
     <DashboardLayout>
+      <ProfileNavigation />
       <Card className="border-border/40 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
           <CardTitle className="text-2xl font-display font-semibold">

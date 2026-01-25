@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 const navItems = [
   { label: "Perfil", to: "/dashboard/profile", end: true },
   { label: "Portfólio", to: "/dashboard/profile/portfolio", end: false },
+  { label: "Habilidades", to: "/dashboard/profile/skills", end: false },
 ];
 
 export function ProfileNavigation() {

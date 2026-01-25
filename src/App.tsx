@@ -54,7 +54,7 @@ const App = () => (
             }
           />
           <Route
-            path="/dashboard/skills"
+            path="/dashboard/profile/skills"
             element={
               <ProtectedRoute>
                 <Skills />
