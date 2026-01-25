@@ -494,7 +494,7 @@ export function ExperienceModal({
                 )}
               />
 
-              {!atualmenteTrabalhando && (
+              {!atualmenteTrabalhando ? (
                 <FormField
                   control={form.control}
                   name="fim"
@@ -515,6 +515,8 @@ export function ExperienceModal({
                     </FormItem>
                   )}
                 />
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
               )}
             </div>
 

@@ -308,7 +308,7 @@ export function EducationModal({
             />
 
             {/* Date Range */}
-            <div className={`grid gap-4 ${concluido ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="inicio"
@@ -328,7 +328,7 @@ export function EducationModal({
                 )}
               />
 
-              {concluido && (
+              {concluido ? (
                 <FormField
                   control={form.control}
                   name="fim"
@@ -347,6 +347,8 @@ export function EducationModal({
                     </FormItem>
                   )}
                 />
+              ) : (
+                <div className="hidden sm:block" aria-hidden="true" />
               )}
             </div>
 
