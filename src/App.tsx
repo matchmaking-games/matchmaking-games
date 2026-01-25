@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import ProfilePortfolio from "./pages/ProfilePortfolio";
+import Skills from "./pages/Skills";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -49,6 +50,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ProfilePortfolio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/skills"
+            element={
+              <ProtectedRoute>
+                <Skills />
               </ProtectedRoute>
             }
           />
