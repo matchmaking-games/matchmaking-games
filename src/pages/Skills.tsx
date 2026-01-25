@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -100,49 +100,54 @@ export default function Skills() {
 
   return (
     <DashboardLayout>
-      <ProfileNavigation />
-      <Card className="border-border/40 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6">
-          <CardTitle className="text-2xl font-display font-semibold">
-            Minhas Habilidades
-          </CardTitle>
-          <Button onClick={handleOpenAddModal}>
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar Habilidade
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-28 rounded-lg" />
-              ))}
-            </div>
-          ) : skills.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground max-w-sm">
-                Nenhuma habilidade cadastrada. Adicione suas skills para aparecer no seu portfólio.
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardContent className="pt-6">
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+              Meu Perfil
+            </h1>
+            <ProfileNavigation />
+            
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-muted-foreground">
+                Adicione suas habilidades técnicas e soft skills
               </p>
-              <Button onClick={handleOpenAddModal} className="mt-4">
+              <Button onClick={handleOpenAddModal}>
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar Habilidade
+                Adicionar
               </Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {skills.map((skill) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteClick}
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : skills.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground max-w-sm">
+                  Nenhuma habilidade cadastrada. Adicione suas skills para aparecer no seu portfólio.
+                </p>
+                <Button onClick={handleOpenAddModal} className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Habilidade
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {skills.map((skill) => (
+                  <SkillCard
+                    key={skill.id}
+                    skill={skill}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <SkillModal
         open={modalOpen}
