@@ -7,6 +7,7 @@ const navItems = [
   { label: "Portfólio", to: "/dashboard/profile/portfolio", value: "portfolio" },
   { label: "Habilidades", to: "/dashboard/profile/skills", value: "habilidades" },
   { label: "Experiência", to: "/dashboard/profile/experience", value: "experiencia" },
+  { label: "Educação", to: "/dashboard/profile/education", value: "educacao" },
 ];
 
 export function ProfileNavigation() {
@@ -21,6 +22,7 @@ export function ProfileNavigation() {
     if (currentPath.includes("/portfolio")) return "portfolio";
     if (currentPath.includes("/skills")) return "habilidades";
     if (currentPath.includes("/experience")) return "experiencia";
+    if (currentPath.includes("/education")) return "educacao";
     return "perfil";
   };
 
