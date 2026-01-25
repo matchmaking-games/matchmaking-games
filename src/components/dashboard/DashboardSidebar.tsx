@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LayoutDashboard, Briefcase, User, Sparkles } from "lucide-react";
+import { LayoutDashboard, Briefcase, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,6 @@ import {
 const navItems = [
   { title: "Visão Geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Vagas", url: "/dashboard/jobs", icon: Briefcase },
-  { title: "Habilidades", url: "/dashboard/skills", icon: Sparkles },
   { title: "Meu Perfil", url: "/dashboard/profile", icon: User },
 ];
 
