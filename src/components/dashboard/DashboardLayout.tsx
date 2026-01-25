@@ -17,10 +17,10 @@ export function DashboardLayout({
       }} />
 
         {/* Foreground content */}
-        <div className="relative z-10 flex w-full">
+        <div className="relative z-10 flex w-full min-w-0">
           <DashboardSidebar />
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 min-w-0 flex flex-col">
             {/* Mobile header with menu trigger */}
             <header className="md:hidden h-14 flex items-center border-b border-border px-4 bg-secondary">
               <SidebarTrigger className="text-foreground">
@@ -29,7 +29,9 @@ export function DashboardLayout({
             </header>
 
             {/* Main content area */}
-            <main className="flex-1 p-6">{children}</main>
+            <main className="flex-1 w-full min-w-0 px-4 py-6 sm:p-6 overflow-x-hidden">
+              {children}
+            </main>
           </div>
         </div>
       </div>
