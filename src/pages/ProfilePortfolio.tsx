@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -138,15 +139,17 @@ const ProfilePortfolio = () => {
   return (
     <DashboardLayout>
       <div className="max-w-xl mx-auto">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-4">
-          Meu Perfil
-        </h1>
-        <ProfileNavigation />
-        <p className="text-muted-foreground mb-8">
-          Adicione links para que recrutadores encontrem mais sobre você
-        </p>
+        <Card>
+          <CardContent className="pt-6">
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+              Meu Perfil
+            </h1>
+            <ProfileNavigation />
+            <p className="text-muted-foreground mb-8">
+              Adicione links para que recrutadores encontrem mais sobre você
+            </p>
 
-        {isLoading ? (
+            {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -239,8 +242,10 @@ const ProfilePortfolio = () => {
                 "Salvar alterações"
               )}
             </Button>
-          </form>
-        )}
+            </form>
+          )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
