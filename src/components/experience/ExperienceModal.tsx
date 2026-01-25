@@ -32,8 +32,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
 import { useExperiences, type Experience } from "@/hooks/useExperiences";
+import { MonthYearPicker } from "./MonthYearPicker";
 
-// Zod validation schema
+// Zod validation schema with conditional location validation
 const experienceSchema = z.object({
   titulo_cargo: z
     .string()
@@ -46,14 +47,32 @@ const experienceSchema = z.object({
   tipo_emprego: z.enum(["clt", "pj", "freelance", "estagio"], {
     required_error: "Selecione o tipo de contrato",
   }),
-  estado: z.string().length(2, "Selecione o estado"),
-  cidade: z.string().min(2, "Selecione a cidade"),
-  cidade_ibge_id: z.number().int().positive("Selecione a cidade"),
+  estado: z.string().optional(),
+  cidade: z.string().optional(),
+  cidade_ibge_id: z.number().optional(),
   remoto: z.boolean().default(false),
-  inicio: z.string().regex(/^\d{4}-\d{2}$/, "Formato inválido"),
+  inicio: z.string().regex(/^\d{4}-\d{2}$/, "Selecione a data de início"),
   atualmente_trabalhando: z.boolean().default(false),
   fim: z.string().optional(),
   descricao: z.string().max(2000, "Máximo 2000 caracteres").optional(),
+}).refine((data) => {
+  // If remote work is disabled, location fields are required
+  if (!data.remoto) {
+    return !!data.estado && data.estado.length === 2;
+  }
+  return true;
+}, {
+  message: "Selecione o estado",
+  path: ["estado"],
+}).refine((data) => {
+  // If remote work is disabled, city is required
+  if (!data.remoto) {
+    return !!data.cidade && data.cidade.length >= 2;
+  }
+  return true;
+}, {
+  message: "Selecione a cidade",
+  path: ["cidade_ibge_id"],
 }).refine((data) => {
   // If not currently working, end date is required
   if (!data.atualmente_trabalhando && !data.fim) {
@@ -129,6 +148,7 @@ export function ExperienceModal({
   });
 
   const atualmenteTrabalhando = form.watch("atualmente_trabalhando");
+  const remoto = form.watch("remoto");
   const descricao = form.watch("descricao") || "";
   const selectedEstado = form.watch("estado");
 
@@ -151,8 +171,8 @@ export function ExperienceModal({
           descricao: editingExperience.descricao || "",
         });
 
-        // Load municipalities if state is set
-        if (editingExperience.estado) {
+        // Load municipalities if state is set and not remote
+        if (editingExperience.estado && !editingExperience.remoto) {
           fetchMunicipios(editingExperience.estado);
         }
       } else {
@@ -182,6 +202,16 @@ export function ExperienceModal({
     }
   }, [atualmenteTrabalhando, form]);
 
+  // Clear location fields when remote is checked
+  useEffect(() => {
+    if (remoto) {
+      form.setValue("estado", "");
+      form.setValue("cidade", "");
+      form.setValue("cidade_ibge_id", 0);
+      clearMunicipios();
+    }
+  }, [remoto, form, clearMunicipios]);
+
   // Handle state change - fetch municipalities
   const handleEstadoChange = (sigla: string) => {
     form.setValue("estado", sigla);
@@ -203,8 +233,10 @@ export function ExperienceModal({
     try {
       setIsSubmitting(true);
 
-      // Build location string
-      const localizacao = `${data.cidade}, ${data.estado}`;
+      // Build location string based on remote status
+      const localizacao = data.remoto
+        ? "Remoto"
+        : `${data.cidade}, ${data.estado}`;
 
       // Convert dates to YYYY-MM-DD format
       const inicioDate = `${data.inicio}-01`;
@@ -215,9 +247,9 @@ export function ExperienceModal({
         empresa: data.empresa,
         tipo_emprego: data.tipo_emprego,
         localizacao,
-        cidade: data.cidade,
-        estado: data.estado,
-        cidade_ibge_id: data.cidade_ibge_id,
+        cidade: data.remoto ? null : data.cidade || null,
+        estado: data.remoto ? null : data.estado || null,
+        cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
         remoto: data.remoto,
         inicio: inicioDate,
         fim: fimDate,
@@ -258,199 +290,28 @@ export function ExperienceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="font-display text-xl">
             {isEditing ? "Editar Experiência" : "Adicionar Experiência"}
           </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Job Title */}
-            <FormField
-              control={form.control}
-              name="titulo_cargo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Título do cargo <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Senior Game Developer"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Company */}
-            <FormField
-              control={form.control}
-              name="empresa"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Estúdio <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Ubisoft" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Employment Type */}
-            <FormField
-              control={form.control}
-              name="tipo_emprego"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Tipo de contrato <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {tipoEmpregoOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* State and City */}
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              {/* Job Title */}
               <FormField
                 control={form.control}
-                name="estado"
+                name="titulo_cargo"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Estado <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <Select
-                      onValueChange={handleEstadoChange}
-                      value={field.value}
-                      disabled={loadingEstados}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          {loadingEstados ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>Carregando...</span>
-                            </div>
-                          ) : (
-                            <SelectValue placeholder="Selecione o estado" />
-                          )}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {estados.map((estado) => (
-                          <SelectItem key={estado.sigla} value={estado.sigla}>
-                            {estado.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="cidade_ibge_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Cidade <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <Select
-                      onValueChange={handleCidadeChange}
-                      value={field.value > 0 ? field.value.toString() : ""}
-                      disabled={!selectedEstado || loadingMunicipios}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          {loadingMunicipios ? (
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>Carregando...</span>
-                            </div>
-                          ) : (
-                            <SelectValue placeholder="Selecione a cidade" />
-                          )}
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {municipios.map((municipio) => (
-                          <SelectItem
-                            key={municipio.id}
-                            value={municipio.id.toString()}
-                          >
-                            {municipio.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Remote Work */}
-            <FormField
-              control={form.control}
-              name="remoto"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">
-                    Trabalho remoto
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
-            {/* Date Range */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="inicio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Data de início <span className="text-destructive">*</span>
+                      Título do cargo <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
-                        type="month"
-                        max={currentMonth}
+                        placeholder="Ex: Senior Game Developer"
                         {...field}
                       />
                     </FormControl>
@@ -459,71 +320,248 @@ export function ExperienceModal({
                 )}
               />
 
-              {!atualmenteTrabalhando && (
+              {/* Company */}
+              <FormField
+                control={form.control}
+                name="empresa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Estúdio <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Ubisoft" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Employment Type */}
+              <FormField
+                control={form.control}
+                name="tipo_emprego"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tipo de contrato <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {tipoEmpregoOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Remote Work - moved before location fields */}
+              <FormField
+                control={form.control}
+                name="remoto"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Trabalho remoto
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              {/* State and City - only show when not remote */}
+              {!remoto && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="estado"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Estado <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={handleEstadoChange}
+                          value={field.value}
+                          disabled={loadingEstados}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              {loadingEstados ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Carregando...</span>
+                                </div>
+                              ) : (
+                                <SelectValue placeholder="Selecione o estado" />
+                              )}
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {estados.map((estado) => (
+                              <SelectItem key={estado.sigla} value={estado.sigla}>
+                                {estado.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="cidade_ibge_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Cidade <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={handleCidadeChange}
+                          value={field.value && field.value > 0 ? field.value.toString() : ""}
+                          disabled={!selectedEstado || loadingMunicipios}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              {loadingMunicipios ? (
+                                <div className="flex items-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Carregando...</span>
+                                </div>
+                              ) : (
+                                <SelectValue placeholder="Selecione a cidade" />
+                              )}
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {municipios.map((municipio) => (
+                              <SelectItem
+                                key={municipio.id}
+                                value={municipio.id.toString()}
+                              >
+                                {municipio.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="fim"
+                  name="inicio"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Data de término <span className="text-destructive">*</span>
+                        Data de início <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="month"
-                          max={currentMonth}
-                          {...field}
+                        <MonthYearPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          maxDate={currentMonth}
+                          placeholder="Selecione a data"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              )}
+
+                {!atualmenteTrabalhando && (
+                  <FormField
+                    control={form.control}
+                    name="fim"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Data de término <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <MonthYearPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            maxDate={currentMonth}
+                            placeholder="Selecione a data"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+
+              {/* Currently Working */}
+              <FormField
+                control={form.control}
+                name="atualmente_trabalhando"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal cursor-pointer">
+                      Atualmente trabalho aqui
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="descricao"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição das atividades</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descreva suas responsabilidades, projetos e conquistas nesta posição..."
+                        className="min-h-[120px] resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <div className="text-xs text-muted-foreground text-right">
+                      {descricao.length} / 2000 caracteres
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {/* Currently Working */}
-            <FormField
-              control={form.control}
-              name="atualmente_trabalhando"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center gap-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">
-                    Atualmente trabalho aqui
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="descricao"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição das atividades</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva suas responsabilidades, projetos e conquistas nesta posição..."
-                      className="min-h-[120px] resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <div className="text-xs text-muted-foreground text-right">
-                    {descricao.length} / 2000 caracteres
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className="gap-2 pt-4">
+            <DialogFooter className="gap-2 pt-4 flex-shrink-0 border-t mt-4">
               <Button
                 type="button"
                 variant="ghost"
