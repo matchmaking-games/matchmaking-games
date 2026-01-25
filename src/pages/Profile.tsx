@@ -190,8 +190,8 @@ export default function Profile() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-xl mx-auto">
-        <Card>
+      <div className="w-full px-4">
+        <Card className="w-full max-w-xl mx-auto">
           <CardContent className="pt-6">
             <h1 className="font-display text-3xl font-bold text-foreground mb-4">
               Meu Perfil

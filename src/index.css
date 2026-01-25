@@ -156,4 +156,13 @@
     pointer-events: none;
     z-index: -10;
   }
+
+  /* Hidden scrollbar - allows scroll but hides visual scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
