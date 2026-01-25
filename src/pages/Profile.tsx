@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -138,12 +139,14 @@ export default function Profile() {
   return (
     <DashboardLayout>
       <div className="max-w-xl mx-auto">
-        <h1 className="font-display text-3xl font-bold text-foreground mb-4">
-          Meu Perfil
-        </h1>
-        <ProfileNavigation />
+        <Card>
+          <CardContent className="pt-6">
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+              Meu Perfil
+            </h1>
+            <ProfileNavigation />
 
-        {isLoading ? (
+            {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
@@ -253,8 +256,10 @@ export default function Profile() {
                 )}
               </Button>
             </form>
-          </>
-        )}
+            </>
+          )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
