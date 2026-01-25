@@ -72,3 +72,54 @@ export function formatTipoEmprego(tipo: string): string {
   };
   return map[tipo] || tipo;
 }
+
+/**
+ * Converts education type enum to readable text
+ * graduacao → "Graduação", pos → "Pós-graduação", etc.
+ */
+export function formatTipoEducacao(tipo: string): string {
+  const map: Record<string, string> = {
+    graduacao: "Graduação",
+    pos: "Pós-graduação",
+    tecnico: "Técnico",
+    curso: "Curso",
+    certificacao: "Certificação",
+  };
+  return map[tipo] || tipo;
+}
+
+/**
+ * Formats education period
+ * Examples:
+ * - "Concluído em 2024"
+ * - "Mar 2020 - Dez 2024"
+ * - "Mar 2020 - Em andamento"
+ * - "2024" (if only end date)
+ */
+export function formatEducationPeriod(
+  inicio: string | null,
+  fim: string | null,
+  concluido: boolean | null
+): string {
+  if (!inicio && !fim) {
+    return concluido ? "Concluído" : "Em andamento";
+  }
+
+  if (fim) {
+    const endDate = new Date(fim);
+    const endFormatted = capitalize(format(endDate, "MMM yyyy", { locale: ptBR }));
+    
+    if (!inicio) {
+      return concluido ? `Concluído em ${endFormatted}` : endFormatted;
+    }
+    
+    const startDate = new Date(inicio);
+    const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
+    return `${startFormatted} - ${endFormatted}`;
+  }
+
+  // Has start but no end
+  const startDate = new Date(inicio!);
+  const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
+  return `${startFormatted} - Em andamento`;
+}

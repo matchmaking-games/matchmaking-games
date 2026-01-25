@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import ProfilePortfolio from "./pages/ProfilePortfolio";
 import Skills from "./pages/Skills";
 import Experience from "./pages/Experience";
+import Education from "./pages/Education";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -67,6 +68,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Experience />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/profile/education"
+            element={
+              <ProtectedRoute>
+                <Education />
               </ProtectedRoute>
             }
           />
