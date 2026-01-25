@@ -22,9 +22,9 @@ export function ProfileNavigation() {
   const activeTab = getActiveTab();
 
   return (
-    <nav className="relative mb-6">
+    <nav className="relative mb-6 w-full max-w-full overflow-hidden">
       {/* Scroll container with hidden scrollbar */}
-      <div className="overflow-x-auto scrollbar-hide">
+      <div className="w-full overflow-x-auto scrollbar-hide">
         <div className="flex gap-6 border-b border-border min-w-max">
           {navItems.map((item) => {
             const isActive = activeTab === item.value;
