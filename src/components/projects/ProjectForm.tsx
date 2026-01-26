@@ -3,32 +3,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Star } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -38,33 +19,15 @@ import type { Project, ProjectInsert, ProjectUpdate } from "@/hooks/useProjects"
 
 // Schema with corrected URL validation (accepts empty string OR valid URL)
 const projectSchema = z.object({
-  titulo: z
-    .string()
-    .min(2, "Mínimo 2 caracteres")
-    .max(100, "Máximo 100 caracteres"),
-  slug: z
-    .string()
-    .min(2, "Mínimo 2 caracteres")
-    .max(100, "Máximo 100 caracteres"),
+  titulo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
+  slug: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
-  papel: z
-    .string()
-    .max(100, "Máximo 100 caracteres")
-    .optional()
-    .or(z.literal("")),
-  descricao_curta: z
-    .string()
-    .max(200, "Máximo 200 caracteres")
-    .optional()
-    .or(z.literal("")),
+  papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
+  descricao_curta: z.string().max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
   status: z.enum(["publicado", "em_desenvolvimento", "arquivado"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
-  video_url: z
-    .union([z.literal(""), z.string().url("URL inválida")])
-    .optional(),
-  codigo_url: z
-    .union([z.literal(""), z.string().url("URL inválida")])
-    .optional(),
+  video_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
+  codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   destaque: z.boolean().default(false),
 });
 
@@ -75,17 +38,12 @@ interface ProjectFormProps {
   onOpenChange: (open: boolean) => void;
   editingProject: Project | null;
   onSuccess: () => void;
-  createProject: (
-    data: Omit<ProjectInsert, "user_id" | "ordem">
-  ) => Promise<Project>;
+  createProject: (data: Omit<ProjectInsert, "user_id" | "ordem">) => Promise<Project>;
   updateProject: (id: string, data: ProjectUpdate) => Promise<Project>;
 }
 
 // Simple debounce function
-function debounce<T extends (...args: unknown[]) => void>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
+function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): (...args: Parameters<T>) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId);
@@ -113,11 +71,7 @@ export function ProjectForm({
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
-          .from("users")
-          .select("slug")
-          .eq("id", user.id)
-          .single();
+        const { data } = await supabase.from("users").select("slug").eq("id", user.id).single();
         if (data) setUserSlug(data.slug);
       }
     };
@@ -188,7 +142,7 @@ export function ProjectForm({
           setPreviousGeneratedSlug(newSlug);
         }
       }, 300),
-    [previousGeneratedSlug, form]
+    [previousGeneratedSlug, form],
   );
 
   const handleTituloChange = useCallback(
@@ -196,7 +150,7 @@ export function ProjectForm({
       onChange(value);
       debouncedGenerateSlug(value);
     },
-    [debouncedGenerateSlug]
+    [debouncedGenerateSlug],
   );
 
   const onSubmit = async (values: ProjectFormValues) => {
@@ -235,9 +189,7 @@ export function ProjectForm({
       onSuccess();
     } catch (error) {
       toast({
-        title: editingProject
-          ? "Erro ao atualizar projeto"
-          : "Erro ao criar projeto",
+        title: editingProject ? "Erro ao atualizar projeto" : "Erro ao criar projeto",
         description: "Tente novamente.",
         variant: "destructive",
       });
@@ -252,11 +204,9 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] w-[95vw] max-w-[95vw] sm:w-auto">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px]">
         <DialogHeader>
-          <DialogTitle>
-            {editingProject ? "Editar Projeto" : "Novo Projeto"}
-          </DialogTitle>
+          <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -275,9 +225,7 @@ export function ProjectForm({
                       placeholder="Ex: Space Shooter Indie"
                       maxLength={100}
                       {...field}
-                      onChange={(e) =>
-                        handleTituloChange(e.target.value, field.onChange)
-                      }
+                      onChange={(e) => handleTituloChange(e.target.value, field.onChange)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -295,11 +243,7 @@ export function ProjectForm({
                     Slug <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="space-shooter-indie"
-                      maxLength={100}
-                      {...field}
-                    />
+                    <Input placeholder="space-shooter-indie" maxLength={100} {...field} />
                   </FormControl>
                   {slugValue && userSlug && (
                     <p className="text-xs text-muted-foreground">
@@ -322,20 +266,14 @@ export function ProjectForm({
                     <FormLabel>
                       Tipo <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="profissional">
-                          Profissional
-                        </SelectItem>
+                        <SelectItem value="profissional">Profissional</SelectItem>
                         <SelectItem value="pessoal">Pessoal</SelectItem>
                         <SelectItem value="game_jam">Game Jam</SelectItem>
                         <SelectItem value="open_source">Open Source</SelectItem>
@@ -354,11 +292,7 @@ export function ProjectForm({
                   <FormItem>
                     <FormLabel>Seu papel</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Ex: Lead Programmer"
-                        maxLength={100}
-                        {...field}
-                      />
+                      <Input placeholder="Ex: Lead Programmer" maxLength={100} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -384,9 +318,7 @@ export function ProjectForm({
                   </FormControl>
                   <div className="flex justify-between">
                     <FormMessage />
-                    <span className="text-xs text-muted-foreground">
-                      {descricaoCurtaValue.length}/200 caracteres
-                    </span>
+                    <span className="text-xs text-muted-foreground">{descricaoCurtaValue.length}/200 caracteres</span>
                   </div>
                 </FormItem>
               )}
@@ -414,14 +346,8 @@ export function ProjectForm({
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="em_desenvolvimento"
-                          id="em_desenvolvimento"
-                        />
-                        <Label
-                          htmlFor="em_desenvolvimento"
-                          className="font-normal"
-                        >
+                        <RadioGroupItem value="em_desenvolvimento" id="em_desenvolvimento" />
+                        <Label htmlFor="em_desenvolvimento" className="font-normal">
                           Em desenvolvimento
                         </Label>
                       </div>
@@ -499,25 +425,19 @@ export function ProjectForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="flex items-center gap-2">
                       <Star
                         className={`h-4 w-4 ${
-                          destaqueValue
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-muted-foreground"
+                          destaqueValue ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
                         }`}
                       />
                       Destacar no topo do portfólio
                     </FormLabel>
                     <p className="text-xs text-muted-foreground">
-                      Projetos destacados aparecem primeiro na sua página
-                      pública
+                      Projetos destacados aparecem primeiro na sua página pública
                     </p>
                   </div>
                 </FormItem>
@@ -525,19 +445,10 @@ export function ProjectForm({
             />
 
             <DialogFooter className="flex-col sm:flex-row gap-2 pt-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                className="w-full sm:w-auto"
-              >
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto"
-              >
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
