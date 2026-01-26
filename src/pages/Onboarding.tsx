@@ -245,7 +245,7 @@ const Onboarding = () => {
               </Label>
               <div className="flex items-center bg-input border border-border rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
                 <span className="pl-3 pr-2 text-muted-foreground text-sm whitespace-nowrap">
-                  matchmaking.games/
+                  matchmaking.games/p/
                 </span>
                 <Input id="username" type="text" placeholder="seu-username" value={username} onChange={handleUsernameChange} maxLength={30} className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-11 text-foreground" disabled={isLoading} />
                 <div className="px-3">{renderUsernameStatusIcon()}</div>

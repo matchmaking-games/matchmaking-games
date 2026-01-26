@@ -140,7 +140,7 @@ const Index = () => {
         <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-4">
           <div className="flex items-center bg-input border border-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
             <span className="pl-4 pr-2 text-muted-foreground font-medium text-sm whitespace-nowrap">
-              matchmaking.games/
+              matchmaking.games/p/
             </span>
             <Input
               type="text"
