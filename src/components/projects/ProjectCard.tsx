@@ -10,12 +10,12 @@ import {
 import { MoreVertical, Pencil, Star, Trash2, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
-import type { Project } from "@/hooks/useProjects";
+import type { ProjectWithSkills } from "@/hooks/useProjects";
 
 interface ProjectCardProps {
-  project: Project;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
+  project: ProjectWithSkills;
+  onEdit: (project: ProjectWithSkills) => void;
+  onDelete: (project: ProjectWithSkills) => void;
   onToggleDestaque: (id: string, currentValue: boolean) => void;
 }
 
@@ -38,6 +38,16 @@ function getStatusBadgeClasses(status: string): string {
   return map[status] || "bg-muted text-muted-foreground border-border";
 }
 
+function getSkillBadgeClasses(categoria: string): string {
+  const map: Record<string, string> = {
+    engine: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+    linguagem: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    ferramenta: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+    soft_skill: "bg-green-500/20 text-green-300 border-green-500/30",
+  };
+  return map[categoria] || "bg-muted text-muted-foreground border-border";
+}
+
 export function ProjectCard({
   project,
   onEdit,
@@ -46,9 +56,17 @@ export function ProjectCard({
 }: ProjectCardProps) {
   return (
     <Card className="overflow-hidden group relative">
-      {/* Image placeholder with aspect ratio */}
-      <div className="aspect-video bg-muted relative flex items-center justify-center">
-        <Gamepad2 className="h-12 w-12 text-muted-foreground/50" />
+      {/* Image or placeholder with aspect ratio */}
+      <div className="aspect-video bg-muted relative flex items-center justify-center overflow-hidden">
+        {project.imagem_capa_url ? (
+          <img
+            src={project.imagem_capa_url}
+            alt={project.titulo}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Gamepad2 className="h-12 w-12 text-muted-foreground/50" />
+        )}
 
         {/* Dropdown menu */}
         <DropdownMenu>
@@ -120,6 +138,28 @@ export function ProjectCard({
             <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 ml-auto" />
           )}
         </div>
+
+        {/* Skills badges */}
+        {project.projeto_habilidades && project.projeto_habilidades.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-border">
+            {project.projeto_habilidades.slice(0, 5).map((ph) => (
+              <span
+                key={ph.id}
+                className={cn(
+                  "text-xs px-1.5 py-0.5 rounded border",
+                  getSkillBadgeClasses(ph.habilidade.categoria)
+                )}
+              >
+                {ph.habilidade.nome}
+              </span>
+            ))}
+            {project.projeto_habilidades.length > 5 && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                +{project.projeto_habilidades.length - 5}
+              </span>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
