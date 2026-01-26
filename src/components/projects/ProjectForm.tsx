@@ -205,8 +205,8 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90dvh] overflow-hidden">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col h-[90dvh] sm:h-[85vh] overflow-hidden">
+        <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
         </DialogHeader>
 
@@ -447,7 +447,7 @@ export function ProjectForm({
               </div>
             </ScrollArea>
 
-            <DialogFooter className="flex-col sm:flex-row gap-2 border-t p-6 pt-4">
+            <DialogFooter className="flex-col sm:flex-row gap-2 border-t p-6 pt-4 shrink-0">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
