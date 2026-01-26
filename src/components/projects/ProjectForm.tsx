@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,7 +16,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { generateSlug } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
-import type { Project, ProjectInsert, ProjectUpdate } from "@/hooks/useProjects";
+import { ProjectImageUpload } from "./ProjectImageUpload";
+import { ProjectSkillsSelect } from "./ProjectSkillsSelect";
+import type { ProjectWithSkills, ProjectInsert, ProjectUpdate } from "@/hooks/useProjects";
 
 // Schema with corrected URL validation (accepts empty string OR valid URL)
 const projectSchema = z.object({
@@ -30,6 +32,7 @@ const projectSchema = z.object({
   video_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   destaque: z.boolean().default(false),
+  imagem_capa_url: z.string().url().nullable().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -37,10 +40,11 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 interface ProjectFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editingProject: Project | null;
+  editingProject: ProjectWithSkills | null;
   onSuccess: () => void;
-  createProject: (data: Omit<ProjectInsert, "user_id" | "ordem">) => Promise<Project>;
-  updateProject: (id: string, data: ProjectUpdate) => Promise<Project>;
+  createProject: (data: Omit<ProjectInsert, "user_id" | "ordem"> & { id?: string }) => Promise<ProjectWithSkills>;
+  updateProject: (id: string, data: ProjectUpdate) => Promise<ProjectWithSkills>;
+  saveProjectSkills?: (projectId: string, skillIds: string[]) => Promise<void>;
 }
 
 // Simple debounce function
@@ -59,24 +63,31 @@ export function ProjectForm({
   onSuccess,
   createProject,
   updateProject,
+  saveProjectSkills,
 }: ProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previousGeneratedSlug, setPreviousGeneratedSlug] = useState("");
   const [userSlug, setUserSlug] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  // State for skills and temp project ID
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const tempProjectIdRef = useRef<string | null>(null);
 
-  // Fetch user slug for preview
+  // Fetch user info
   useEffect(() => {
-    const fetchUserSlug = async () => {
+    const fetchUserInfo = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        setUserId(user.id);
         const { data } = await supabase.from("users").select("slug").eq("id", user.id).single();
         if (data) setUserSlug(data.slug);
       }
     };
-    fetchUserSlug();
+    fetchUserInfo();
   }, []);
 
   const form = useForm<ProjectFormValues>({
@@ -92,6 +103,7 @@ export function ProjectForm({
       video_url: "",
       codigo_url: "",
       destaque: false,
+      imagem_capa_url: null,
     },
   });
 
@@ -110,8 +122,12 @@ export function ProjectForm({
           video_url: editingProject.video_url ?? "",
           codigo_url: editingProject.codigo_url ?? "",
           destaque: editingProject.destaque ?? false,
+          imagem_capa_url: editingProject.imagem_capa_url ?? null,
         });
         setPreviousGeneratedSlug(editingProject.slug ?? "");
+        // Load existing skills
+        const skillIds = editingProject.projeto_habilidades?.map((ph) => ph.habilidade_id) || [];
+        setSelectedSkillIds(skillIds);
       } else {
         form.reset({
           titulo: "",
@@ -124,9 +140,13 @@ export function ProjectForm({
           video_url: "",
           codigo_url: "",
           destaque: false,
+          imagem_capa_url: null,
         });
         setPreviousGeneratedSlug("");
+        setSelectedSkillIds([]);
       }
+      // Reset temp project ID when modal opens
+      tempProjectIdRef.current = null;
     }
   }, [open, editingProject, form]);
 
@@ -154,39 +174,50 @@ export function ProjectForm({
     [debouncedGenerateSlug],
   );
 
+  const handleImageUploaded = useCallback((url: string | null, usedProjectId: string) => {
+    form.setValue("imagem_capa_url", url);
+    // Store the project ID used for upload (for new projects)
+    if (!editingProject) {
+      tempProjectIdRef.current = usedProjectId;
+    }
+  }, [editingProject, form]);
+
   const onSubmit = async (values: ProjectFormValues) => {
     setIsSubmitting(true);
 
     try {
+      let project: ProjectWithSkills;
+
+      const projectData = {
+        titulo: values.titulo,
+        slug: values.slug,
+        tipo: values.tipo,
+        papel: values.papel || null,
+        descricao_curta: values.descricao_curta || null,
+        status: values.status,
+        demo_url: values.demo_url || null,
+        video_url: values.video_url || null,
+        codigo_url: values.codigo_url || null,
+        destaque: values.destaque,
+        imagem_capa_url: values.imagem_capa_url || null,
+      };
+
       if (editingProject) {
-        await updateProject(editingProject.id, {
-          titulo: values.titulo,
-          slug: values.slug,
-          tipo: values.tipo,
-          papel: values.papel || null,
-          descricao_curta: values.descricao_curta || null,
-          status: values.status,
-          demo_url: values.demo_url || null,
-          video_url: values.video_url || null,
-          codigo_url: values.codigo_url || null,
-          destaque: values.destaque,
-        });
-        toast({ title: "Projeto atualizado com sucesso!" });
+        project = await updateProject(editingProject.id, projectData);
       } else {
-        await createProject({
-          titulo: values.titulo,
-          slug: values.slug,
-          tipo: values.tipo,
-          papel: values.papel || null,
-          descricao_curta: values.descricao_curta || null,
-          status: values.status,
-          demo_url: values.demo_url || null,
-          video_url: values.video_url || null,
-          codigo_url: values.codigo_url || null,
-          destaque: values.destaque,
-        });
-        toast({ title: "Projeto criado com sucesso!" });
+        // Use temp project ID if image was uploaded
+        const createData = tempProjectIdRef.current
+          ? { ...projectData, id: tempProjectIdRef.current }
+          : projectData;
+        project = await createProject(createData);
       }
+
+      // Save skills if function is available
+      if (saveProjectSkills) {
+        await saveProjectSkills(project.id, selectedSkillIds);
+      }
+
+      toast({ title: editingProject ? "Projeto atualizado com sucesso!" : "Projeto criado com sucesso!" });
       onSuccess();
     } catch (error) {
       toast({
@@ -202,6 +233,7 @@ export function ProjectForm({
   const descricaoCurtaValue = form.watch("descricao_curta") || "";
   const slugValue = form.watch("slug");
   const destaqueValue = form.watch("destaque");
+  const imagemCapaUrl = form.watch("imagem_capa_url");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -257,6 +289,17 @@ export function ProjectForm({
                     </FormItem>
                   )}
                 />
+
+                {/* Cover Image Upload */}
+                {userId && (
+                  <ProjectImageUpload
+                    userId={userId}
+                    projectId={editingProject?.id || null}
+                    currentImageUrl={imagemCapaUrl ?? null}
+                    onImageUploaded={handleImageUploaded}
+                    disabled={isSubmitting}
+                  />
+                )}
 
                 {/* Type and Role in 2 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -418,6 +461,14 @@ export function ProjectForm({
                     )}
                   />
                 </div>
+
+                {/* Skills Selection */}
+                <ProjectSkillsSelect
+                  selectedSkillIds={selectedSkillIds}
+                  onSkillsChange={setSelectedSkillIds}
+                  disabled={isSubmitting}
+                  maxSkills={10}
+                />
 
                 {/* Highlight checkbox */}
                 <FormField

@@ -2,13 +2,13 @@ import { Briefcase, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectCard } from "./ProjectCard";
-import type { Project } from "@/hooks/useProjects";
+import type { ProjectWithSkills } from "@/hooks/useProjects";
 
 interface ProjectsListProps {
-  projects: Project[];
+  projects: ProjectWithSkills[];
   loading: boolean;
-  onEdit: (project: Project) => void;
-  onDelete: (project: Project) => void;
+  onEdit: (project: ProjectWithSkills) => void;
+  onDelete: (project: ProjectWithSkills) => void;
   onToggleDestaque: (id: string, currentValue: boolean) => void;
   onAddFirst: () => void;
 }

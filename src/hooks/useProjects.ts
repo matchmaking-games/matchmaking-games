@@ -7,7 +7,7 @@ export type Project = Database["public"]["Tables"]["projetos"]["Row"];
 export type ProjectInsert = Database["public"]["Tables"]["projetos"]["Insert"];
 export type ProjectUpdate = Database["public"]["Tables"]["projetos"]["Update"];
 
-// Type prepared for TASK-318 (skills linking)
+// Type with skills relationship (TASK-318)
 export type ProjectWithSkills = Project & {
   projeto_habilidades?: Array<{
     id: string;
@@ -15,26 +15,27 @@ export type ProjectWithSkills = Project & {
     habilidade: {
       id: string;
       nome: string;
-      categoria: string;
+      categoria: "engine" | "linguagem" | "ferramenta" | "soft_skill";
     };
   }>;
 };
 
 interface UseProjectsReturn {
-  projects: Project[];
+  projects: ProjectWithSkills[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
   createProject: (
-    data: Omit<ProjectInsert, "user_id" | "ordem">
+    data: Omit<ProjectInsert, "user_id" | "ordem"> & { id?: string }
   ) => Promise<Project>;
   updateProject: (id: string, data: ProjectUpdate) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
   toggleDestaque: (id: string, currentValue: boolean) => Promise<void>;
+  saveProjectSkills: (projectId: string, skillIds: string[]) => Promise<void>;
 }
 
 export function useProjects(): UseProjectsReturn {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectWithSkills[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -59,27 +60,25 @@ export function useProjects(): UseProjectsReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from("projetos")
-        .select("*") // Basic fields only for now
-        // TODO TASK-318: Add skills relationship
-        // .select(`
-        //   *,
-        //   projeto_habilidades (
-        //     id,
-        //     habilidade_id,
-        //     habilidade:habilidades (
-        //       id,
-        //       nome,
-        //       categoria
-        //     )
-        //   )
-        // `)
+        .select(`
+          *,
+          projeto_habilidades (
+            id,
+            habilidade_id,
+            habilidade:habilidades (
+              id,
+              nome,
+              categoria
+            )
+          )
+        `)
         .eq("user_id", userId)
         .order("destaque", { ascending: false })
         .order("ordem", { ascending: true })
         .order("criado_em", { ascending: false });
 
       if (fetchError) throw fetchError;
-      setProjects(data || []);
+      setProjects((data as ProjectWithSkills[]) || []);
     } catch (err) {
       console.error("Error fetching projects:", err);
       setError("Erro ao carregar projetos.");
@@ -95,7 +94,7 @@ export function useProjects(): UseProjectsReturn {
   }, [userId, fetchProjects]);
 
   const createProject = async (
-    data: Omit<ProjectInsert, "user_id" | "ordem">
+    data: Omit<ProjectInsert, "user_id" | "ordem"> & { id?: string }
   ): Promise<Project> => {
     if (!userId) throw new Error("Usuário não autenticado");
 
@@ -113,14 +112,20 @@ export function useProjects(): UseProjectsReturn {
     // Generate slug from title if not provided
     const slug = data.slug || generateSlug(data.titulo);
 
+    // Extract id if provided (from temp UUID for image upload)
+    const { id: providedId, ...restData } = data;
+
+    const insertData = {
+      ...restData,
+      slug,
+      user_id: userId,
+      ordem: novaOrdem,
+      ...(providedId ? { id: providedId } : {}),
+    };
+
     const { data: newProject, error: insertError } = await supabase
       .from("projetos")
-      .insert({
-        ...data,
-        slug,
-        user_id: userId,
-        ordem: novaOrdem,
-      })
+      .insert(insertData)
       .select()
       .single();
 
@@ -159,6 +164,23 @@ export function useProjects(): UseProjectsReturn {
   const deleteProject = async (id: string): Promise<void> => {
     if (!userId) throw new Error("Usuário não autenticado");
 
+    // 1. Delete skill relationships first
+    await supabase
+      .from("projeto_habilidades")
+      .delete()
+      .eq("projeto_id", id);
+
+    // 2. Delete all images in project folder
+    const { data: files } = await supabase.storage
+      .from("project-images")
+      .list(`${userId}/${id}`);
+
+    if (files && files.length > 0) {
+      const filePaths = files.map((f) => `${userId}/${id}/${f.name}`);
+      await supabase.storage.from("project-images").remove(filePaths);
+    }
+
+    // 3. Delete project
     const { error: deleteError } = await supabase
       .from("projetos")
       .delete()
@@ -171,6 +193,36 @@ export function useProjects(): UseProjectsReturn {
     }
 
     await fetchProjects();
+  };
+
+  const saveProjectSkills = async (
+    projectId: string,
+    skillIds: string[]
+  ): Promise<void> => {
+    if (!userId) throw new Error("Usuário não autenticado");
+
+    // 1. Delete old relationships
+    await supabase
+      .from("projeto_habilidades")
+      .delete()
+      .eq("projeto_id", projectId);
+
+    // 2. Insert new relationships
+    if (skillIds.length > 0) {
+      const relacionamentos = skillIds.map((habilidadeId) => ({
+        projeto_id: projectId,
+        habilidade_id: habilidadeId,
+      }));
+
+      const { error } = await supabase
+        .from("projeto_habilidades")
+        .insert(relacionamentos);
+
+      if (error) {
+        console.error("Error saving project skills:", error);
+        throw new Error("Erro ao salvar habilidades do projeto.");
+      }
+    }
   };
 
   const toggleDestaque = async (
@@ -202,5 +254,6 @@ export function useProjects(): UseProjectsReturn {
     updateProject,
     deleteProject,
     toggleDestaque,
+    saveProjectSkills,
   };
 }

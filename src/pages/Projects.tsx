@@ -5,7 +5,7 @@ import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useProjects, type Project } from "@/hooks/useProjects";
+import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
 import { ProjectsList } from "@/components/projects/ProjectsList";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectDeleteDialog } from "@/components/projects/ProjectDeleteDialog";
@@ -18,12 +18,13 @@ export default function ProjectsPage() {
     updateProject,
     deleteProject,
     toggleDestaque,
+    saveProjectSkills,
   } = useProjects();
   const { toast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectWithSkills | null>(null);
+  const [deletingProject, setDeletingProject] = useState<ProjectWithSkills | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAdd = () => {
@@ -31,12 +32,12 @@ export default function ProjectsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (project: Project) => {
+  const handleEdit = (project: ProjectWithSkills) => {
     setEditingProject(project);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (project: Project) => {
+  const handleDelete = (project: ProjectWithSkills) => {
     setDeletingProject(project);
   };
 
@@ -115,6 +116,7 @@ export default function ProjectsPage() {
         onSuccess={handleSuccess}
         createProject={createProject}
         updateProject={updateProject}
+        saveProjectSkills={saveProjectSkills}
       />
 
       <ProjectDeleteDialog
