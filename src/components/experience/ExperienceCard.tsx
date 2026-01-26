@@ -20,14 +20,21 @@ const tipoEmpregoStyles: Record<string, string> = {
 };
 
 export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardProps) {
-  const dateRange = formatDateRange(
-    experience.inicio,
-    experience.fim,
-    experience.atualmente_trabalhando
-  );
+  // Safely access fields with fallbacks
+  const inicio = experience.inicio;
+  const fim = experience.fim;
+  const atualmenteTrabalhando = experience.atualmente_trabalhando;
+  const tipoEmprego = experience.tipo_emprego || "clt";
+  const tituloCargo = experience.titulo_cargo || "";
+  const descricao = experience.descricao;
+  const habilidadesUsadas = experience.habilidades_usadas;
 
-  const tipoEmpregoLabel = formatTipoEmprego(experience.tipo_emprego);
-  const tipoEmpregoStyle = tipoEmpregoStyles[experience.tipo_emprego] || tipoEmpregoStyles.clt;
+  const dateRange = inicio 
+    ? formatDateRange(inicio, fim, atualmenteTrabalhando)
+    : "Período não informado";
+
+  const tipoEmpregoLabel = formatTipoEmprego(tipoEmprego);
+  const tipoEmpregoStyle = tipoEmpregoStyles[tipoEmprego] || tipoEmpregoStyles.clt;
 
   return (
     <Card className="group transition-all hover:border-primary/30">
@@ -46,7 +53,7 @@ export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardP
             <div className="flex-1 min-w-0 space-y-2">
               {/* Title */}
               <h3 className="font-semibold text-lg text-foreground truncate">
-                {experience.titulo_cargo}
+                {tituloCargo || "Cargo não informado"}
               </h3>
 
               {/* Company + Employment Type */}
@@ -78,16 +85,16 @@ export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardP
               )}
 
               {/* Description */}
-              {experience.descricao && (
+              {descricao && (
                 <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">
-                  {experience.descricao}
+                  {descricao}
                 </p>
               )}
 
               {/* Skills used */}
-              {experience.habilidades_usadas && experience.habilidades_usadas.length > 0 && (
+              {habilidadesUsadas && habilidadesUsadas.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {experience.habilidades_usadas.map((skill) => (
+                  {habilidadesUsadas.map((skill) => (
                     <Badge
                       key={skill}
                       variant="secondary"
