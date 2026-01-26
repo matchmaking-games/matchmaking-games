@@ -203,17 +203,15 @@ export function ProjectForm({
   const slugValue = form.watch("slug");
   const destaqueValue = form.watch("destaque");
 
-return (
+  return (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90vh] overflow-hidden">
-      {/* Header fixo */}
       <DialogHeader className="p-6 pb-4">
         <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
       </DialogHeader>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-          {/* Body rolável */}
           <ScrollArea className="flex-1 min-h-0 px-6">
             <div className="space-y-4 pb-6">
               {/* Title */}
@@ -447,7 +445,6 @@ return (
             </div>
           </ScrollArea>
 
-          {/* Footer fixo */}
           <DialogFooter className="flex-col sm:flex-row gap-2 border-t p-6 pt-4">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Cancelar
