@@ -204,266 +204,269 @@ export function ProjectForm({
   const destaqueValue = form.watch("destaque");
 
   return (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90vh] overflow-hidden">
-      <DialogHeader className="p-6 pb-4">
-        <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
-      </DialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90vh] overflow-hidden">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
+        </DialogHeader>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-          <ScrollArea className="flex-1 min-h-0 px-6">
-            <div className="space-y-4 pb-6">
-              {/* Title */}
-              <FormField
-                control={form.control}
-                name="titulo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Título <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex: Space Shooter Indie"
-                        maxLength={100}
-                        {...field}
-                        onChange={(e) => handleTituloChange(e.target.value, field.onChange)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Slug */}
-              <FormField
-                control={form.control}
-                name="slug"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Slug <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="space-shooter-indie" maxLength={100} {...field} />
-                    </FormControl>
-                    {slugValue && userSlug && (
-                      <p className="text-xs text-muted-foreground">
-                        matchmaking.games/profile/{userSlug}#{slugValue}
-                      </p>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Type and Role in 2 columns */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Type */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <ScrollArea className="flex-1 min-h-0 px-6">
+              <div className="space-y-4 pb-6">
+                {/* Title */}
                 <FormField
                   control={form.control}
-                  name="tipo"
+                  name="titulo"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Tipo <span className="text-destructive">*</span>
+                        Título <span className="text-destructive">*</span>
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="profissional">Profissional</SelectItem>
-                          <SelectItem value="pessoal">Pessoal</SelectItem>
-                          <SelectItem value="game_jam">Game Jam</SelectItem>
-                          <SelectItem value="open_source">Open Source</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Role */}
-                <FormField
-                  control={form.control}
-                  name="papel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Seu papel</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Lead Programmer" maxLength={100} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Short Description */}
-              <FormField
-                control={form.control}
-                name="descricao_curta"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição curta</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Jogo de nave arcade com mecânicas roguelike..."
-                        className="resize-none"
-                        rows={3}
-                        maxLength={200}
-                        {...field}
-                      />
-                    </FormControl>
-                    <div className="flex justify-between">
-                      <FormMessage />
-                      <span className="text-xs text-muted-foreground">{descricaoCurtaValue.length}/200 caracteres</span>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              {/* Status */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Status <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="flex flex-col sm:flex-row gap-4"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="publicado" id="publicado" />
-                          <Label htmlFor="publicado" className="font-normal">
-                            Publicado
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="em_desenvolvimento" id="em_desenvolvimento" />
-                          <Label htmlFor="em_desenvolvimento" className="font-normal">
-                            Em desenvolvimento
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="arquivado" id="arquivado" />
-                          <Label htmlFor="arquivado" className="font-normal">
-                            Arquivado
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Links section */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-foreground">Links</h4>
-
-                {/* Demo URL */}
-                <FormField
-                  control={form.control}
-                  name="demo_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Demo / Jogo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://itch.io/..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Video URL */}
-                <FormField
-                  control={form.control}
-                  name="video_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vídeo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://youtube.com/..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Code URL */}
-                <FormField
-                  control={form.control}
-                  name="codigo_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Código</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://github.com/..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Highlight checkbox */}
-              <FormField
-                control={form.control}
-                name="destaque"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="flex items-center gap-2">
-                        <Star
-                          className={`h-4 w-4 ${
-                            destaqueValue ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-                          }`}
+                        <Input
+                          placeholder="Ex: Space Shooter Indie"
+                          maxLength={100}
+                          {...field}
+                          onChange={(e) => handleTituloChange(e.target.value, field.onChange)}
                         />
-                        Destacar no topo do portfólio
-                      </FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        Projetos destacados aparecem primeiro na sua página pública
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </ScrollArea>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 border-t p-6 pt-4">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Salvando...
-                </>
-              ) : editingProject ? (
-                "Salvar Alterações"
-              ) : (
-                "Salvar Projeto"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </Form>
-    </DialogContent>
-  </Dialog>
-);
+                {/* Slug */}
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Slug <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="space-shooter-indie" maxLength={100} {...field} />
+                      </FormControl>
+                      {slugValue && userSlug && (
+                        <p className="text-xs text-muted-foreground">
+                          matchmaking.games/profile/{userSlug}#{slugValue}
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Type and Role in 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Type */}
+                  <FormField
+                    control={form.control}
+                    name="tipo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Tipo <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="profissional">Profissional</SelectItem>
+                            <SelectItem value="pessoal">Pessoal</SelectItem>
+                            <SelectItem value="game_jam">Game Jam</SelectItem>
+                            <SelectItem value="open_source">Open Source</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Role */}
+                  <FormField
+                    control={form.control}
+                    name="papel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Seu papel</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Lead Programmer" maxLength={100} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Short Description */}
+                <FormField
+                  control={form.control}
+                  name="descricao_curta"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição curta</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Jogo de nave arcade com mecânicas roguelike..."
+                          className="resize-none"
+                          rows={3}
+                          maxLength={200}
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="flex justify-between">
+                        <FormMessage />
+                        <span className="text-xs text-muted-foreground">
+                          {descricaoCurtaValue.length}/200 caracteres
+                        </span>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Status */}
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Status <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col sm:flex-row gap-4"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="publicado" id="publicado" />
+                            <Label htmlFor="publicado" className="font-normal">
+                              Publicado
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="em_desenvolvimento" id="em_desenvolvimento" />
+                            <Label htmlFor="em_desenvolvimento" className="font-normal">
+                              Em desenvolvimento
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="arquivado" id="arquivado" />
+                            <Label htmlFor="arquivado" className="font-normal">
+                              Arquivado
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Links section */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-foreground">Links</h4>
+
+                  {/* Demo URL */}
+                  <FormField
+                    control={form.control}
+                    name="demo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Demo / Jogo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://itch.io/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Video URL */}
+                  <FormField
+                    control={form.control}
+                    name="video_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Vídeo</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://youtube.com/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Code URL */}
+                  <FormField
+                    control={form.control}
+                    name="codigo_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://github.com/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Highlight checkbox */}
+                <FormField
+                  control={form.control}
+                  name="destaque"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          <Star
+                            className={`h-4 w-4 ${
+                              destaqueValue ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                            }`}
+                          />
+                          Destacar no topo do portfólio
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Projetos destacados aparecem primeiro na sua página pública
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </ScrollArea>
+
+            <DialogFooter className="flex-col sm:flex-row gap-2 border-t p-6 pt-4">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : editingProject ? (
+                  "Salvar Alterações"
+                ) : (
+                  "Salvar Projeto"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
