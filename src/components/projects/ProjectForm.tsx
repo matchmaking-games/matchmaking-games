@@ -252,7 +252,7 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-w-[95vw] sm:w-auto max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[750px] w-[95vw] max-w-[95vw] sm:w-auto">
         <DialogHeader>
           <DialogTitle>
             {editingProject ? "Editar Projeto" : "Novo Projeto"}
