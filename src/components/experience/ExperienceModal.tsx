@@ -3,28 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,63 +16,74 @@ import { useExperiences, type Experience } from "@/hooks/useExperiences";
 import { MonthYearPicker } from "./MonthYearPicker";
 
 // Zod validation schema with conditional location validation
-const experienceSchema = z.object({
-  titulo_cargo: z
-    .string()
-    .min(2, "Mínimo 2 caracteres")
-    .max(100, "Máximo 100 caracteres"),
-  empresa: z
-    .string()
-    .min(2, "Mínimo 2 caracteres")
-    .max(100, "Máximo 100 caracteres"),
-  tipo_emprego: z.enum(["clt", "pj", "freelance", "estagio"], {
-    required_error: "Selecione o tipo de contrato",
-  }),
-  estado: z.string().optional(),
-  cidade: z.string().optional(),
-  cidade_ibge_id: z.number().optional(),
-  remoto: z.boolean().default(false),
-  inicio: z.string().regex(/^\d{4}-\d{2}$/, "Selecione a data de início"),
-  atualmente_trabalhando: z.boolean().default(false),
-  fim: z.string().optional(),
-  descricao: z.string().max(2000, "Máximo 2000 caracteres").optional(),
-}).refine((data) => {
-  // If remote work is disabled, location fields are required
-  if (!data.remoto) {
-    return !!data.estado && data.estado.length === 2;
-  }
-  return true;
-}, {
-  message: "Selecione o estado",
-  path: ["estado"],
-}).refine((data) => {
-  // If remote work is disabled, city is required
-  if (!data.remoto) {
-    return !!data.cidade && data.cidade.length >= 2;
-  }
-  return true;
-}, {
-  message: "Selecione a cidade",
-  path: ["cidade_ibge_id"],
-}).refine((data) => {
-  // If not currently working, end date is required
-  if (!data.atualmente_trabalhando && !data.fim) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Data de término é obrigatória",
-  path: ["fim"],
-}).refine((data) => {
-  // End date must be >= start date
-  if (data.fim && data.inicio > data.fim) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Data de término deve ser igual ou posterior ao início",
-  path: ["fim"],
-});
+const experienceSchema = z
+  .object({
+    titulo_cargo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
+    empresa: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
+    tipo_emprego: z.enum(["clt", "pj", "freelance", "estagio"], {
+      required_error: "Selecione o tipo de contrato",
+    }),
+    estado: z.string().optional(),
+    cidade: z.string().optional(),
+    cidade_ibge_id: z.number().optional(),
+    remoto: z.boolean().default(false),
+    inicio: z.string().regex(/^\d{4}-\d{2}$/, "Selecione a data de início"),
+    atualmente_trabalhando: z.boolean().default(false),
+    fim: z.string().optional(),
+    descricao: z.string().max(2000, "Máximo 2000 caracteres").optional(),
+  })
+  .refine(
+    (data) => {
+      // If remote work is disabled, location fields are required
+      if (!data.remoto) {
+        return !!data.estado && data.estado.length === 2;
+      }
+      return true;
+    },
+    {
+      message: "Selecione o estado",
+      path: ["estado"],
+    },
+  )
+  .refine(
+    (data) => {
+      // If remote work is disabled, city is required
+      if (!data.remoto) {
+        return !!data.cidade && data.cidade.length >= 2;
+      }
+      return true;
+    },
+    {
+      message: "Selecione a cidade",
+      path: ["cidade_ibge_id"],
+    },
+  )
+  .refine(
+    (data) => {
+      // If not currently working, end date is required
+      if (!data.atualmente_trabalhando && !data.fim) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Data de término é obrigatória",
+      path: ["fim"],
+    },
+  )
+  .refine(
+    (data) => {
+      // End date must be >= start date
+      if (data.fim && data.inicio > data.fim) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Data de término deve ser igual ou posterior ao início",
+      path: ["fim"],
+    },
+  );
 
 type ExperienceFormData = z.infer<typeof experienceSchema>;
 
@@ -109,22 +101,11 @@ interface ExperienceModalProps {
   onSuccess: () => void;
 }
 
-export function ExperienceModal({
-  open,
-  onOpenChange,
-  editingExperience,
-  onSuccess,
-}: ExperienceModalProps) {
+export function ExperienceModal({ open, onOpenChange, editingExperience, onSuccess }: ExperienceModalProps) {
   const { toast } = useToast();
   const { addExperience, updateExperience } = useExperiences();
-  const {
-    estados,
-    loadingEstados,
-    municipios,
-    loadingMunicipios,
-    fetchMunicipios,
-    clearMunicipios,
-  } = useIBGELocations();
+  const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
+    useIBGELocations();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -234,9 +215,7 @@ export function ExperienceModal({
       setIsSubmitting(true);
 
       // Build location string based on remote status
-      const localizacao = data.remoto
-        ? "Remoto"
-        : `${data.cidade}, ${data.estado}`;
+      const localizacao = data.remoto ? "Remoto" : `${data.cidade}, ${data.estado}`;
 
       // Convert dates to YYYY-MM-DD format
       const inicioDate = `${data.inicio}-01`;
@@ -290,7 +269,7 @@ export function ExperienceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] w-[95vw] max-w-[95vw] sm:w-auto">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px]">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
             {isEditing ? "Editar Experiência" : "Adicionar Experiência"}
@@ -309,10 +288,7 @@ export function ExperienceModal({
                     Título do cargo <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Ex: Senior Game Developer"
-                      {...field}
-                    />
+                    <Input placeholder="Ex: Senior Game Developer" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -345,11 +321,7 @@ export function ExperienceModal({
                   <FormLabel>
                     Tipo de contrato <span className="text-destructive">*</span>
                   </FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione o tipo" />
@@ -379,11 +351,7 @@ export function ExperienceModal({
                       <FormLabel>
                         Estado <span className="text-destructive">*</span>
                       </FormLabel>
-                      <Select
-                        onValueChange={handleEstadoChange}
-                        value={field.value}
-                        disabled={loadingEstados}
-                      >
+                      <Select onValueChange={handleEstadoChange} value={field.value} disabled={loadingEstados}>
                         <FormControl>
                           <SelectTrigger>
                             {loadingEstados ? (
@@ -436,10 +404,7 @@ export function ExperienceModal({
                         </FormControl>
                         <SelectContent>
                           {municipios.map((municipio) => (
-                            <SelectItem
-                              key={municipio.id}
-                              value={municipio.id.toString()}
-                            >
+                            <SelectItem key={municipio.id} value={municipio.id.toString()}>
                               {municipio.nome}
                             </SelectItem>
                           ))}
@@ -459,14 +424,9 @@ export function ExperienceModal({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center gap-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">
-                    Trabalho remoto
-                  </FormLabel>
+                  <FormLabel className="font-normal cursor-pointer">Trabalho remoto</FormLabel>
                 </FormItem>
               )}
             />
@@ -527,14 +487,9 @@ export function ExperienceModal({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center gap-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
-                  <FormLabel className="font-normal cursor-pointer">
-                    Atualmente trabalho aqui
-                  </FormLabel>
+                  <FormLabel className="font-normal cursor-pointer">Atualmente trabalho aqui</FormLabel>
                 </FormItem>
               )}
             />
@@ -553,9 +508,7 @@ export function ExperienceModal({
                       {...field}
                     />
                   </FormControl>
-                  <div className="text-xs text-muted-foreground text-right">
-                    {descricao.length} / 2000 caracteres
-                  </div>
+                  <div className="text-xs text-muted-foreground text-right">{descricao.length} / 2000 caracteres</div>
                   <FormMessage />
                 </FormItem>
               )}
