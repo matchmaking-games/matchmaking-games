@@ -205,15 +205,15 @@ export function ProjectForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90vh] overflow-hidden">
+      <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col max-h-[90dvh] overflow-hidden">
         <DialogHeader className="p-6 pb-4">
           <DialogTitle>{editingProject ? "Editar Projeto" : "Novo Projeto"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-            <ScrollArea className="flex-1 min-h-0 px-6">
-              <div className="space-y-4 pb-6">
+            <ScrollArea type="always" className="flex-1 min-h-0">
+              <div className="space-y-4 px-6 pb-6 pr-8">
                 {/* Title */}
                 <FormField
                   control={form.control}
