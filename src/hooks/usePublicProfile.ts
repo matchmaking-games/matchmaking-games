@@ -1,0 +1,186 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
+type TipoEducacao = Database["public"]["Enums"]["tipo_educacao"];
+type TipoProjeto = Database["public"]["Enums"]["tipo_projeto"];
+type StatusProjeto = Database["public"]["Enums"]["status_projeto"];
+type NivelHabilidade = Database["public"]["Enums"]["nivel_habilidade"];
+type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
+
+export interface PublicUserData {
+  id: string;
+  nome_exibicao: string | null;
+  nome_completo: string;
+  titulo_profissional: string | null;
+  bio_curta: string | null;
+  sobre: string | null;
+  localizacao: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  disponivel_para_trabalho: boolean | null;
+  website: string | null;
+  linkedin_url: string | null;
+  github_url: string | null;
+  portfolio_url: string | null;
+  email: string;
+  telefone: string | null;
+  mostrar_email: boolean | null;
+  mostrar_telefone: boolean | null;
+  slug: string;
+}
+
+export interface PublicProjectData {
+  id: string;
+  titulo: string;
+  descricao_curta: string | null;
+  imagem_capa_url: string | null;
+  tipo: TipoProjeto;
+  status: StatusProjeto;
+  demo_url: string | null;
+  video_url: string | null;
+  codigo_url: string | null;
+  ordem: number | null;
+  projeto_habilidades: {
+    id: string;
+    habilidade: {
+      id: string;
+      nome: string;
+      categoria: CategoriaHabilidade;
+    } | null;
+  }[];
+}
+
+export interface PublicSkillData {
+  id: string;
+  nivel: NivelHabilidade;
+  ordem: number | null;
+  anos_experiencia: number | null;
+  habilidade: {
+    id: string;
+    nome: string;
+    categoria: CategoriaHabilidade;
+  } | null;
+}
+
+export interface PublicExperienceData {
+  id: string;
+  titulo_cargo: string;
+  empresa: string;
+  tipo_emprego: TipoEmprego;
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  localizacao: string | null;
+  cidade: string | null;
+  estado: string | null;
+  remoto: boolean | null;
+  estudio_id: string | null;
+}
+
+export interface PublicEducationData {
+  id: string;
+  titulo: string;
+  instituicao: string;
+  tipo: TipoEducacao;
+  area: string | null;
+  inicio: string | null;
+  fim: string | null;
+  concluido: boolean | null;
+  credencial_url: string | null;
+  descricao: string | null;
+  ordem: number | null;
+}
+
+export interface PublicProfileData {
+  user: PublicUserData | null;
+  projects: PublicProjectData[];
+  skills: PublicSkillData[];
+  experiences: PublicExperienceData[];
+  educations: PublicEducationData[];
+}
+
+async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
+  // 1. Buscar usuário pelo slug
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select(`
+      id, nome_exibicao, nome_completo, titulo_profissional,
+      bio_curta, sobre, localizacao, avatar_url, banner_url,
+      disponivel_para_trabalho, website, linkedin_url, github_url,
+      portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug
+    `)
+    .eq("slug", slug)
+    .single();
+
+  if (userError || !user) {
+    return {
+      user: null,
+      projects: [],
+      skills: [],
+      experiences: [],
+      educations: [],
+    };
+  }
+
+  // 2. Buscar projetos em destaque (não arquivados) - em paralelo
+  const [projectsRes, skillsRes, experiencesRes, educationsRes] = await Promise.all([
+    supabase
+      .from("projetos")
+      .select(`
+        id, titulo, descricao_curta, imagem_capa_url, tipo, status,
+        demo_url, video_url, codigo_url, ordem,
+        projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))
+      `)
+      .eq("user_id", user.id)
+      .eq("destaque", true)
+      .neq("status", "arquivado")
+      .order("ordem"),
+
+    // 3. Buscar habilidades com join
+    supabase
+      .from("user_habilidades")
+      .select(`id, nivel, ordem, anos_experiencia, habilidade:habilidades(id, nome, categoria)`)
+      .eq("user_id", user.id)
+      .order("ordem"),
+
+    // 4. Buscar experiências (mais recentes primeiro)
+    supabase
+      .from("experiencia")
+      .select(`
+        id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
+        atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id
+      `)
+      .eq("user_id", user.id)
+      .order("inicio", { ascending: false }),
+
+    // 5. Buscar educação
+    supabase
+      .from("educacao")
+      .select(`
+        id, titulo, instituicao, tipo, area, inicio, fim,
+        concluido, credencial_url, descricao, ordem
+      `)
+      .eq("user_id", user.id)
+      .order("ordem"),
+  ]);
+
+  return {
+    user: user as PublicUserData,
+    projects: (projectsRes.data || []) as PublicProjectData[],
+    skills: (skillsRes.data || []) as PublicSkillData[],
+    experiences: (experiencesRes.data || []) as PublicExperienceData[],
+    educations: (educationsRes.data || []) as PublicEducationData[],
+  };
+}
+
+export function usePublicProfile(slug: string | undefined) {
+  return useQuery({
+    queryKey: ["public-profile", slug],
+    queryFn: () => fetchPublicProfile(slug!),
+    enabled: !!slug,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}

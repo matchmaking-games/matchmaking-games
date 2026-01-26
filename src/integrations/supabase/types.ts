@@ -700,6 +700,7 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           avatar_url: string | null
+          banner_url: string | null
           bio_curta: string | null
           criado_em: string | null
           disponivel_para_trabalho: boolean | null
@@ -725,6 +726,7 @@ export type Database = {
         Insert: {
           atualizado_em?: string | null
           avatar_url?: string | null
+          banner_url?: string | null
           bio_curta?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
@@ -750,6 +752,7 @@ export type Database = {
         Update: {
           atualizado_em?: string | null
           avatar_url?: string | null
+          banner_url?: string | null
           bio_curta?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
