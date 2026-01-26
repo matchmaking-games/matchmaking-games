@@ -126,7 +126,7 @@ export default function ExperiencePage() {
             <AlertDialogTitle>Remover experiência?</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover a experiência de{" "}
-              <strong>{deletingExperience?.titulo_cargo}</strong> na{" "}
+              <strong>{deletingExperience?.titulo_cargo || "cargo"}</strong> na{" "}
               <strong>{deletingExperience?.empresa}</strong>?
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>

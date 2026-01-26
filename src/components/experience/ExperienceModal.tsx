@@ -140,9 +140,9 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
       if (editingExperience) {
         // Populate form with existing data
         form.reset({
-          titulo_cargo: editingExperience.titulo_cargo,
+          titulo_cargo: editingExperience.titulo_cargo || "",
           empresa: editingExperience.empresa,
-          tipo_emprego: editingExperience.tipo_emprego as ExperienceFormData["tipo_emprego"],
+          tipo_emprego: (editingExperience.tipo_emprego || "clt") as ExperienceFormData["tipo_emprego"],
           estado: editingExperience.estado || "",
           cidade: editingExperience.cidade || "",
           cidade_ibge_id: editingExperience.cidade_ibge_id || 0,
