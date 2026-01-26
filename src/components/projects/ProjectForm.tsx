@@ -282,7 +282,7 @@ export function ProjectForm({
                       </FormControl>
                       {slugValue && userSlug && (
                         <p className="text-xs text-muted-foreground">
-                          matchmaking.games/profile/{userSlug}#{slugValue}
+                          matchmaking.games/p/{userSlug}#{slugValue}
                         </p>
                       )}
                       <FormMessage />

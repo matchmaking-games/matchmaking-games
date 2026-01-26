@@ -156,7 +156,7 @@ const Signup = () => {
               <p className="text-sm text-foreground">
                 Estamos reservando{" "}
                 <span className="text-primary font-semibold">
-                  matchmaking.games/{slug}
+                  matchmaking.games/p/{slug}
                 </span>{" "}
                 para você!
               </p>
