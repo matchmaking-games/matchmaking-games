@@ -14,6 +14,7 @@ import ProfilePortfolio from "./pages/ProfilePortfolio";
 import Skills from "./pages/Skills";
 import Experience from "./pages/Experience";
 import Education from "./pages/Education";
+import Projects from "./pages/Projects";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -76,6 +77,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Education />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/profile/projects"
+            element={
+              <ProtectedRoute>
+                <Projects />
               </ProtectedRoute>
             }
           />

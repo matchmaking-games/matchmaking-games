@@ -123,3 +123,44 @@ export function formatEducationPeriod(
   const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
   return `${startFormatted} - Em andamento`;
 }
+
+/**
+ * Converts project type enum to readable text
+ * profissional -> "Profissional", game_jam -> "Game Jam", etc.
+ */
+export function formatTipoProjeto(tipo: string): string {
+  const map: Record<string, string> = {
+    profissional: "Profissional",
+    pessoal: "Pessoal",
+    game_jam: "Game Jam",
+    open_source: "Open Source",
+  };
+  return map[tipo] || tipo;
+}
+
+/**
+ * Converts project status enum to readable text
+ */
+export function formatStatusProjeto(status: string): string {
+  const map: Record<string, string> = {
+    publicado: "Publicado",
+    em_desenvolvimento: "Em desenvolvimento",
+    arquivado: "Arquivado",
+  };
+  return map[status] || status;
+}
+
+/**
+ * Generates a URL-friendly slug from a title
+ * "Space Shooter!" -> "space-shooter"
+ */
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/[^a-z0-9\s-]/g, "")    // Remove special characters
+    .trim()
+    .replace(/\s+/g, "-")            // Spaces become hyphens
+    .replace(/-+/g, "-");            // Remove duplicate hyphens
+}
