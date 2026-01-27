@@ -90,27 +90,19 @@ export default function ExperiencePage() {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
-              Meu Perfil
-            </h1>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">Meu Perfil</h1>
 
             <ProfileNavigation />
 
             <div className="flex items-start justify-between gap-4 mb-6">
-              <p className="text-muted-foreground">
-                Adicione suas experiências profissionais na indústria de games
-              </p>
+              <p className="text-muted-foreground">Adicione suas experiências profissionais na indústria de games</p>
               <Button onClick={handleAdd} className="flex-shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
             </div>
 
-            {error && (
-              <div className="text-destructive text-sm mb-4">
-                {error}
-              </div>
-            )}
+            {error && <div className="text-destructive text-sm mb-4">{error}</div>}
 
             <ExperienceList
               experiences={experiences}
@@ -134,30 +126,21 @@ export default function ExperiencePage() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deletingExperience}
-        onOpenChange={(open) => !open && setDeletingExperience(null)}
-      >
+      <AlertDialog open={!!deletingExperience} onOpenChange={(open) => !open && setDeletingExperience(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover experiência?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover a experiência de{" "}
-              <strong>{deletingExperience?.titulo_cargo}</strong> na{" "}
-              <strong>{deletingExperience?.empresa}</strong>?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover a experiência de <strong>{deletingExperience?.titulo_cargo}</strong> na{" "}
+              <strong>{deletingExperience?.empresa}</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Removendo..." : "Remover"}
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+                {isDeleting ? "Removendo..." : "Remover"}
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

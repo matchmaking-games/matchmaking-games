@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ProjectDeleteDialogProps {
   open: boolean;
@@ -32,26 +33,20 @@ export function ProjectDeleteDialog({
           <AlertDialogDescription>
             {projectTitle ? (
               <>
-                O projeto <strong>"{projectTitle}"</strong> será removido
-                permanentemente do seu portfólio. Esta ação não pode ser
-                desfeita.
+                O projeto <strong>"{projectTitle}"</strong> será removido permanentemente do seu portfólio. Esta ação
+                não pode ser desfeita.
               </>
             ) : (
-              <>
-                Esta ação não pode ser desfeita. O projeto será removido
-                permanentemente do seu portfólio.
-              </>
+              <>Esta ação não pode ser desfeita. O projeto será removido permanentemente do seu portfólio.</>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isDeleting ? "Excluindo..." : "Excluir"}
+          <AlertDialogAction asChild>
+            <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
