@@ -1,14 +1,22 @@
-import { Briefcase, Calendar, MapPin, Pencil, Trash2 } from "lucide-react";
+import { Briefcase, Calendar, MapPin, EllipsisVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatDateRange, formatTipoEmprego } from "@/lib/formatters";
-import type { Experience } from "@/hooks/useExperiences";
+import type { ExperienceWithCargos, CargoExperiencia } from "@/hooks/useExperiences";
 
 interface ExperienceCardProps {
-  experience: Experience;
-  onEdit: (experience: Experience) => void;
-  onDelete: (experience: Experience) => void;
+  experience: ExperienceWithCargos;
+  onEdit: (experience: ExperienceWithCargos) => void;
+  onDelete: (experience: ExperienceWithCargos) => void;
+  onAddCargo: (experience: ExperienceWithCargos) => void;
 }
 
 // Badge color configuration for employment types
@@ -19,7 +27,120 @@ const tipoEmpregoStyles: Record<string, string> = {
   estagio: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
 };
 
-export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardProps) {
+function CargoTimelineItem({ cargo }: { cargo: CargoExperiencia }) {
+  const dateRange = formatDateRange(
+    cargo.inicio,
+    cargo.fim,
+    cargo.atualmente_trabalhando
+  );
+  const tipoEmpregoLabel = formatTipoEmprego(cargo.tipo_emprego);
+  const tipoEmpregoStyle = tipoEmpregoStyles[cargo.tipo_emprego] || tipoEmpregoStyles.clt;
+
+  return (
+    <div className="relative pb-6 last:pb-0">
+      {/* Dot da timeline */}
+      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
+      
+      {/* Info do cargo */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="font-medium text-foreground">{cargo.titulo_cargo}</h4>
+          <Badge variant="outline" className={tipoEmpregoStyle}>
+            {tipoEmpregoLabel}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {dateRange}
+        </p>
+        {cargo.descricao && (
+          <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">
+            {cargo.descricao}
+          </p>
+        )}
+        {cargo.habilidades_usadas && cargo.habilidades_usadas.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {cargo.habilidades_usadas.map((skill) => (
+              <Badge key={skill} variant="secondary" className="text-xs">
+                {skill}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: ExperienceCardProps) {
+  const hasCargos = experience.cargos && experience.cargos.length > 0;
+
+  // DropdownMenu comum a ambos os layouts
+  const ActionsDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+          <EllipsisVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(experience)}>
+          <Pencil className="h-4 w-4 mr-2" />
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAddCargo(experience)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar cargo
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={() => onDelete(experience)}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  // Layout COM multiplos cargos (timeline interna)
+  if (hasCargos) {
+    return (
+      <Card className="group transition-all hover:border-primary/30">
+        <CardContent className="pt-6">
+          {/* Header: Empresa */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Briefcase className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-foreground">{experience.empresa}</h3>
+                {(experience.localizacao || experience.remoto) && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> 
+                    {experience.localizacao}
+                    {experience.localizacao && experience.remoto && " • "}
+                    {experience.remoto && <span className="text-primary">Remoto</span>}
+                  </p>
+                )}
+              </div>
+            </div>
+            <ActionsDropdown />
+          </div>
+          
+          {/* Timeline interna de cargos */}
+          <div className="relative ml-5 pl-6 border-l-2 border-border">
+            {experience.cargos.map((cargo) => (
+              <CargoTimelineItem key={cargo.id} cargo={cargo} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Layout SEM cargos extras (cargo unico - layout original)
   const dateRange = formatDateRange(
     experience.inicio,
     experience.fim,
@@ -101,26 +222,8 @@ export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardP
             </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(experience)}
-              className="h-8 w-8"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(experience)}
-              className="h-8 w-8 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Action dropdown */}
+          <ActionsDropdown />
         </div>
       </CardContent>
     </Card>

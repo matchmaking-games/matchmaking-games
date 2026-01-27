@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useExperiences, type Experience } from "@/hooks/useExperiences";
+import { useExperiences, type ExperienceWithCargos } from "@/hooks/useExperiences";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ExperiencePage() {
@@ -24,27 +24,41 @@ export default function ExperiencePage() {
   const { toast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
-  const [deletingExperience, setDeletingExperience] = useState<Experience | null>(null);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "add-position">("create");
+  const [editingExperience, setEditingExperience] = useState<ExperienceWithCargos | null>(null);
+  const [parentExperience, setParentExperience] = useState<ExperienceWithCargos | null>(null);
+  const [deletingExperience, setDeletingExperience] = useState<ExperienceWithCargos | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAdd = () => {
+    setModalMode("create");
     setEditingExperience(null);
+    setParentExperience(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (experience: Experience) => {
+  const handleEdit = (experience: ExperienceWithCargos) => {
+    setModalMode("edit");
     setEditingExperience(experience);
+    setParentExperience(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (experience: Experience) => {
+  const handleAddCargo = (experience: ExperienceWithCargos) => {
+    setModalMode("add-position");
+    setEditingExperience(null);
+    setParentExperience(experience);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (experience: ExperienceWithCargos) => {
     setDeletingExperience(experience);
   };
 
   const handleSuccess = () => {
     setIsModalOpen(false);
     setEditingExperience(null);
+    setParentExperience(null);
     refetch();
   };
 
@@ -103,6 +117,7 @@ export default function ExperiencePage() {
               loading={loading}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onAddCargo={handleAddCargo}
             />
           </CardContent>
         </Card>
@@ -114,6 +129,8 @@ export default function ExperiencePage() {
         onOpenChange={setIsModalOpen}
         editingExperience={editingExperience}
         onSuccess={handleSuccess}
+        mode={modalMode}
+        parentExperience={parentExperience}
       />
 
       {/* Delete Confirmation Dialog */}
