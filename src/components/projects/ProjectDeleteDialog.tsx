@@ -43,10 +43,8 @@ export function ProjectDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-              {isDeleting ? "Excluindo..." : "Excluir"}
-            </Button>
+          <AlertDialogAction variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+            {isDeleting ? "Removendo..." : "Remover"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
