@@ -2,8 +2,6 @@ import { useState } from "react";
 import { MapPin, Home } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { format, differenceInMonths, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { PublicExperienceData } from "@/hooks/usePublicProfile";
@@ -66,95 +64,98 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
   const hasLongDescription = experience.descricao && experience.descricao.length > 300;
 
   return (
-    <div className="space-y-2 py-4 first:pt-0 last:pb-0">
-      {/* Title and type */}
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="font-semibold text-foreground">
-          {experience.titulo_cargo}
-        </h3>
-        <Badge className={`border-0 ${typeColors[experience.tipo_emprego]}`}>
-          {typeLabels[experience.tipo_emprego]}
-        </Badge>
-      </div>
+    <div className="relative pl-8 pb-8 last:pb-0">
+      {/* Timeline line */}
+      <div className="absolute left-[7px] top-3 bottom-0 w-0.5 bg-border last:hidden" />
+      
+      {/* Timeline dot */}
+      <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-primary border-4 border-background" />
 
-      {/* Company */}
-      <p className="text-muted-foreground">{experience.empresa}</p>
-
-      {/* Period */}
-      <p className="text-sm text-muted-foreground">
-        {formatPeriod(experience.inicio, experience.fim, experience.atualmente_trabalhando)}{" "}
-        <span className="text-muted-foreground/70">
-          {formatDuration(experience.inicio, experience.fim)}
-        </span>
-      </p>
-
-      {/* Location and remote */}
-      {(location || experience.remoto) && (
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          {location && (
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" />
-              {location}
-            </span>
-          )}
-          {experience.remoto && (
-            <Badge variant="outline" className="text-xs py-0">
-              <Home className="w-3 h-3 mr-1" />
-              Remoto
-            </Badge>
-          )}
+      <div className="space-y-2">
+        {/* Title and type */}
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-semibold text-foreground">
+            {experience.titulo_cargo}
+          </h3>
+          <Badge className={`border-0 ${typeColors[experience.tipo_emprego]}`}>
+            {typeLabels[experience.tipo_emprego]}
+          </Badge>
         </div>
-      )}
 
-      {/* Description */}
-      {experience.descricao && (
-        <div className="pt-2">
-          <p
-            className={`text-sm text-muted-foreground whitespace-pre-wrap ${
-              !expanded && hasLongDescription ? "line-clamp-4" : ""
-            }`}
-          >
-            {experience.descricao}
-          </p>
-          {hasLongDescription && (
-            <Button
-              variant="link"
-              size="sm"
-              className="px-0 h-auto text-primary"
-              onClick={() => setExpanded(!expanded)}
+        {/* Company */}
+        <p className="text-muted-foreground">{experience.empresa}</p>
+
+        {/* Period */}
+        <p className="text-sm text-muted-foreground">
+          {formatPeriod(experience.inicio, experience.fim, experience.atualmente_trabalhando)}{" "}
+          <span className="text-muted-foreground/70">
+            {formatDuration(experience.inicio, experience.fim)}
+          </span>
+        </p>
+
+        {/* Location and remote */}
+        {(location || experience.remoto) && (
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            {location && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                {location}
+              </span>
+            )}
+            {experience.remoto && (
+              <Badge variant="outline" className="text-xs py-0">
+                <Home className="w-3 h-3 mr-1" />
+                Remoto
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Description */}
+        {experience.descricao && (
+          <div className="pt-2">
+            <p
+              className={`text-sm text-muted-foreground whitespace-pre-wrap ${
+                !expanded && hasLongDescription ? "line-clamp-4" : ""
+              }`}
             >
-              {expanded ? "Ler menos" : "Ler mais"}
-            </Button>
-          )}
-        </div>
-      )}
+              {experience.descricao}
+            </p>
+            {hasLongDescription && (
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 h-auto text-primary"
+                onClick={() => setExpanded(!expanded)}
+              >
+                {expanded ? "Ler menos" : "Ler mais"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 export function ExperienceSection({ experiences }: ExperienceSectionProps) {
   return (
-    <section id="experiencia" className="scroll-mt-20">
-      <Card>
-        <CardHeader>
-          <h2 className="text-xl font-display font-semibold text-foreground">
-            Experiência Profissional
-          </h2>
-        </CardHeader>
-        <CardContent>
-          {experiences.length === 0 ? (
-            <p className="text-muted-foreground italic">
-              Nenhuma experiência adicionada ainda.
-            </p>
-          ) : (
-            <div className="divide-y divide-border">
-              {experiences.map((experience) => (
-                <ExperienceItem key={experience.id} experience={experience} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <section id="experiencia" className="scroll-mt-20 space-y-6">
+      <h2 className="text-xl font-display font-semibold text-foreground">
+        Experiência Profissional
+      </h2>
+
+      {experiences.length === 0 ? (
+        <p className="text-muted-foreground italic">
+          Nenhuma experiência adicionada ainda.
+        </p>
+      ) : (
+        <div className="relative">
+          {experiences.map((experience) => (
+            <ExperienceItem key={experience.id} experience={experience} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

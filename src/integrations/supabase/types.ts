@@ -66,53 +66,6 @@ export type Database = {
           },
         ]
       }
-      cargos_experiencia: {
-        Row: {
-          atualmente_trabalhando: boolean | null
-          descricao: string | null
-          experiencia_id: string
-          fim: string | null
-          habilidades_usadas: string[] | null
-          id: string
-          inicio: string
-          ordem: number | null
-          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
-          titulo_cargo: string
-        }
-        Insert: {
-          atualmente_trabalhando?: boolean | null
-          descricao?: string | null
-          experiencia_id: string
-          fim?: string | null
-          habilidades_usadas?: string[] | null
-          id?: string
-          inicio: string
-          ordem?: number | null
-          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
-          titulo_cargo: string
-        }
-        Update: {
-          atualmente_trabalhando?: boolean | null
-          descricao?: string | null
-          experiencia_id?: string
-          fim?: string | null
-          habilidades_usadas?: string[] | null
-          id?: string
-          inicio?: string
-          ordem?: number | null
-          tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
-          titulo_cargo?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cargos_experiencia_experiencia_id_fkey"
-            columns: ["experiencia_id"]
-            isOneToOne: false
-            referencedRelation: "experiencia"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       educacao: {
         Row: {
           area: string | null
@@ -368,42 +321,63 @@ export type Database = {
       }
       experiencia: {
         Row: {
+          atualmente_trabalhando: boolean | null
           cidade: string | null
           cidade_ibge_id: number | null
           criado_em: string | null
+          descricao: string | null
           empresa: string
           estado: string | null
           estudio_id: string | null
+          fim: string | null
+          habilidades_usadas: string[] | null
           id: string
+          inicio: string
           localizacao: string | null
           ordem: number | null
           remoto: boolean | null
+          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
+          titulo_cargo: string
           user_id: string
         }
         Insert: {
+          atualmente_trabalhando?: boolean | null
           cidade?: string | null
           cidade_ibge_id?: number | null
           criado_em?: string | null
+          descricao?: string | null
           empresa: string
           estado?: string | null
           estudio_id?: string | null
+          fim?: string | null
+          habilidades_usadas?: string[] | null
           id?: string
+          inicio: string
           localizacao?: string | null
           ordem?: number | null
           remoto?: boolean | null
+          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
+          titulo_cargo: string
           user_id: string
         }
         Update: {
+          atualmente_trabalhando?: boolean | null
           cidade?: string | null
           cidade_ibge_id?: number | null
           criado_em?: string | null
+          descricao?: string | null
           empresa?: string
           estado?: string | null
           estudio_id?: string | null
+          fim?: string | null
+          habilidades_usadas?: string[] | null
           id?: string
+          inicio?: string
           localizacao?: string | null
           ordem?: number | null
           remoto?: boolean | null
+          tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
+          titulo_cargo?: string
           user_id?: string
         }
         Relationships: [

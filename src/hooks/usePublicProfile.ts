@@ -146,18 +146,15 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       .eq("user_id", user.id)
       .order("ordem"),
 
-    // 4. Buscar experiências com cargos (mais recentes primeiro)
+    // 4. Buscar experiências (mais recentes primeiro)
     supabase
       .from("experiencia")
       .select(`
-        id, empresa, localizacao, cidade, estado, remoto, estudio_id,
-        cargos_experiencia (
-          id, titulo_cargo, tipo_emprego, inicio, fim,
-          atualmente_trabalhando, descricao
-        )
+        id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
+        atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id
       `)
       .eq("user_id", user.id)
-      .order("ordem", { ascending: true }),
+      .order("inicio", { ascending: false }),
 
     // 5. Buscar educação
     supabase
@@ -170,43 +167,11 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       .order("ordem"),
   ]);
 
-  // Transform experiences to flatten cargos_experiencia
-  const transformedExperiences: PublicExperienceData[] = (experiencesRes.data || []).flatMap((exp) => {
-    const cargos = (exp as any).cargos_experiencia || [];
-    if (cargos.length === 0) return [];
-    
-    // Sort cargos by inicio descending
-    const sortedCargos = cargos.sort((a: any, b: any) => 
-      new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-    );
-
-    return sortedCargos.map((cargo: any) => ({
-      id: cargo.id,
-      titulo_cargo: cargo.titulo_cargo,
-      empresa: exp.empresa,
-      tipo_emprego: cargo.tipo_emprego,
-      inicio: cargo.inicio,
-      fim: cargo.fim,
-      atualmente_trabalhando: cargo.atualmente_trabalhando,
-      descricao: cargo.descricao,
-      localizacao: exp.localizacao,
-      cidade: exp.cidade,
-      estado: exp.estado,
-      remoto: exp.remoto,
-      estudio_id: exp.estudio_id,
-    }));
-  });
-
-  // Sort by most recent inicio first
-  transformedExperiences.sort((a, b) => 
-    new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-  );
-
   return {
     user: user as PublicUserData,
     projects: (projectsRes.data || []) as PublicProjectData[],
     skills: (skillsRes.data || []) as PublicSkillData[],
-    experiences: transformedExperiences,
+    experiences: (experiencesRes.data || []) as PublicExperienceData[],
     educations: (educationsRes.data || []) as PublicEducationData[],
   };
 }
