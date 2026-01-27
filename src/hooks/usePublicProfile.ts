@@ -64,6 +64,18 @@ export interface PublicSkillData {
   } | null;
 }
 
+// Tipo para cargo individual (de cargos_experiencia)
+export interface PublicCargoData {
+  id: string;
+  titulo_cargo: string;
+  tipo_emprego: TipoEmprego;
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  ordem: number | null;
+}
+
 export interface PublicExperienceData {
   id: string;
   titulo_cargo: string;
@@ -78,6 +90,7 @@ export interface PublicExperienceData {
   estado: string | null;
   remoto: boolean | null;
   estudio_id: string | null;
+  cargos: PublicCargoData[];
 }
 
 export interface PublicEducationData {
@@ -146,12 +159,16 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       .eq("user_id", user.id)
       .order("ordem"),
 
-    // 4. Buscar experiências (mais recentes primeiro)
+    // 4. Buscar experiências (mais recentes primeiro) com cargos
     supabase
       .from("experiencia")
       .select(`
         id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
-        atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id
+        atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id,
+        cargos:cargos_experiencia(
+          id, titulo_cargo, tipo_emprego, inicio, fim,
+          atualmente_trabalhando, descricao, ordem
+        )
       `)
       .eq("user_id", user.id)
       .order("inicio", { ascending: false }),
@@ -167,11 +184,19 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       .order("ordem"),
   ]);
 
+  // Ordenar cargos client-side (mais recente primeiro)
+  const experiencesWithSortedCargos = (experiencesRes.data || []).map(exp => ({
+    ...exp,
+    cargos: (exp.cargos || []).sort((a: PublicCargoData, b: PublicCargoData) => 
+      new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
+    )
+  }));
+
   return {
     user: user as PublicUserData,
     projects: (projectsRes.data || []) as PublicProjectData[],
     skills: (skillsRes.data || []) as PublicSkillData[],
-    experiences: (experiencesRes.data || []) as PublicExperienceData[],
+    experiences: experiencesWithSortedCargos as PublicExperienceData[],
     educations: (educationsRes.data || []) as PublicEducationData[],
   };
 }

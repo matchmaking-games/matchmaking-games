@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useExperiences, type Experience } from "@/hooks/useExperiences";
+import { useExperiences, type ExperienceWithCargos } from "@/hooks/useExperiences";
 import { MonthYearPicker } from "./MonthYearPicker";
 
 // Zod validation schema with conditional location validation
@@ -98,19 +98,29 @@ const tipoEmpregoOptions = [
 interface ExperienceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  editingExperience: Experience | null;
+  editingExperience: ExperienceWithCargos | null;
   onSuccess: () => void;
+  mode?: "create" | "edit" | "add-position";
+  parentExperience?: ExperienceWithCargos | null;
 }
 
-export function ExperienceModal({ open, onOpenChange, editingExperience, onSuccess }: ExperienceModalProps) {
+export function ExperienceModal({ 
+  open, 
+  onOpenChange, 
+  editingExperience, 
+  onSuccess,
+  mode = "create",
+  parentExperience = null,
+}: ExperienceModalProps) {
   const { toast } = useToast();
-  const { addExperience, updateExperience } = useExperiences();
+  const { addExperience, updateExperience, addCargo } = useExperiences();
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
     useIBGELocations();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isEditing = !!editingExperience;
+  const isEditing = mode === "edit" && !!editingExperience;
+  const isAddingPosition = mode === "add-position" && !!parentExperience;
 
   const form = useForm<ExperienceFormData>({
     resolver: zodResolver(experienceSchema),
@@ -134,11 +144,42 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
   const descricao = form.watch("descricao") || "";
   const selectedEstado = form.watch("estado");
 
-  // Reset form when modal opens/closes or when editing experience changes
+  // Get modal title based on mode
+  const getModalTitle = () => {
+    if (isAddingPosition && parentExperience) {
+      return `Adicionar Cargo - ${parentExperience.empresa}`;
+    }
+    if (isEditing) {
+      return "Editar Experiência";
+    }
+    return "Adicionar Experiência";
+  };
+
+  // Reset form when modal opens/closes or when mode changes
   useEffect(() => {
     if (open) {
-      if (editingExperience) {
-        // Populate form with existing data
+      if (isAddingPosition && parentExperience) {
+        // Mode: add-position - pre-fill company and location
+        form.reset({
+          titulo_cargo: "",  // EMPTY - user fills
+          empresa: parentExperience.empresa,  // PRE-FILLED
+          tipo_emprego: "clt",  // Default - user chooses
+          estado: parentExperience.estado || "",  // PRE-FILLED but EDITABLE
+          cidade: parentExperience.cidade || "",  // PRE-FILLED but EDITABLE
+          cidade_ibge_id: parentExperience.cidade_ibge_id || 0,
+          remoto: parentExperience.remoto || false,  // PRE-FILLED but EDITABLE
+          inicio: "",  // EMPTY - user fills
+          atualmente_trabalhando: false,
+          fim: "",
+          descricao: "",
+        });
+        
+        // Load municipalities if state is set and not remote
+        if (parentExperience.estado && !parentExperience.remoto) {
+          fetchMunicipios(parentExperience.estado);
+        }
+      } else if (isEditing && editingExperience) {
+        // Mode: edit - populate form with existing data
         form.reset({
           titulo_cargo: editingExperience.titulo_cargo,
           empresa: editingExperience.empresa,
@@ -158,7 +199,7 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
           fetchMunicipios(editingExperience.estado);
         }
       } else {
-        // Reset to defaults for new experience
+        // Mode: create - reset to defaults for new experience
         form.reset({
           titulo_cargo: "",
           empresa: "",
@@ -175,7 +216,7 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
         clearMunicipios();
       }
     }
-  }, [open, editingExperience, form, fetchMunicipios, clearMunicipios]);
+  }, [open, mode, editingExperience, parentExperience, form, fetchMunicipios, clearMunicipios, isAddingPosition, isEditing]);
 
   // Clear end date when "currently working" is checked
   useEffect(() => {
@@ -222,28 +263,61 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
       const inicioDate = `${data.inicio}-01`;
       const fimDate = data.fim ? `${data.fim}-01` : null;
 
-      const experienceData = {
-        titulo_cargo: data.titulo_cargo,
-        empresa: data.empresa,
-        tipo_emprego: data.tipo_emprego,
-        localizacao,
-        cidade: data.remoto ? null : data.cidade || null,
-        estado: data.remoto ? null : data.estado || null,
-        cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
-        remoto: data.remoto,
-        inicio: inicioDate,
-        fim: fimDate,
-        atualmente_trabalhando: data.atualmente_trabalhando,
-        descricao: data.descricao || null,
-      };
-
-      if (isEditing) {
+      if (isAddingPosition && parentExperience) {
+        // Mode: add-position - create new cargo
+        await addCargo(parentExperience.id, {
+          titulo_cargo: data.titulo_cargo,
+          tipo_emprego: data.tipo_emprego,
+          inicio: inicioDate,
+          fim: fimDate,
+          atualmente_trabalhando: data.atualmente_trabalhando,
+          descricao: data.descricao || null,
+          habilidades_usadas: null,
+        });
+        
+        toast({
+          title: "Cargo adicionado",
+          description: `Novo cargo "${data.titulo_cargo}" adicionado com sucesso.`,
+        });
+      } else if (isEditing && editingExperience) {
+        // Mode: edit - update existing experience
+        const experienceData = {
+          titulo_cargo: data.titulo_cargo,
+          empresa: data.empresa,
+          tipo_emprego: data.tipo_emprego,
+          localizacao,
+          cidade: data.remoto ? null : data.cidade || null,
+          estado: data.remoto ? null : data.estado || null,
+          cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
+          remoto: data.remoto,
+          inicio: inicioDate,
+          fim: fimDate,
+          atualmente_trabalhando: data.atualmente_trabalhando,
+          descricao: data.descricao || null,
+        };
+        
         await updateExperience(editingExperience.id, experienceData);
         toast({
           title: "Experiência atualizada",
           description: "Suas alterações foram salvas com sucesso.",
         });
       } else {
+        // Mode: create - create new experience
+        const experienceData = {
+          titulo_cargo: data.titulo_cargo,
+          empresa: data.empresa,
+          tipo_emprego: data.tipo_emprego,
+          localizacao,
+          cidade: data.remoto ? null : data.cidade || null,
+          estado: data.remoto ? null : data.estado || null,
+          cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
+          remoto: data.remoto,
+          inicio: inicioDate,
+          fim: fimDate,
+          atualmente_trabalhando: data.atualmente_trabalhando,
+          descricao: data.descricao || null,
+        };
+        
         await addExperience(experienceData);
         toast({
           title: "Experiência adicionada",
@@ -273,7 +347,7 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
       <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-[750px] p-0 flex flex-col h-[90dvh] sm:h-[85vh] overflow-hidden">
         <DialogHeader className="p-6 pb-4 shrink-0">
           <DialogTitle className="font-display text-xl">
-            {isEditing ? "Editar Experiência" : "Adicionar Experiência"}
+            {getModalTitle()}
           </DialogTitle>
         </DialogHeader>
 
@@ -298,7 +372,7 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
                   )}
                 />
 
-                {/* Company */}
+                {/* Company - disabled in add-position mode */}
                 <FormField
                   control={form.control}
                   name="empresa"
@@ -308,7 +382,12 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
                         Estúdio <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Ubisoft" {...field} />
+                        <Input 
+                          placeholder="Ex: Ubisoft" 
+                          {...field} 
+                          disabled={isAddingPosition}
+                          className={isAddingPosition ? "bg-muted cursor-not-allowed" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -537,6 +616,8 @@ export function ExperienceModal({ open, onOpenChange, editingExperience, onSucce
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Salvando...
                   </>
+                ) : isAddingPosition ? (
+                  "Adicionar Cargo"
                 ) : isEditing ? (
                   "Atualizar"
                 ) : (
