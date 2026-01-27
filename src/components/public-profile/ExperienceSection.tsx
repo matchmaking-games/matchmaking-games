@@ -126,14 +126,14 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
         </div>
 
         {/* Timeline interna de cargos */}
-        <div className="relative ml-5 overflow-visible">
-  {/* Linha */}
-  <div className="absolute left-0 top-0 bottom-0 w-1 bg-border"/>
-  {experience.cargos.map((cargo) => (
-    <CargoItem key={cargo.id} cargo={cargo} />
-  ))}
-</div>
-}
+        <div className="relative ml-5 border-l-2 border-border overflow-visible">
+          {experience.cargos.map((cargo) => (
+            <CargoItem key={cargo.id} cargo={cargo} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Layout SEM cargos extras (cargo unico - layout original sem timeline)
   const hasLongDescription = experience.descricao && experience.descricao.length > 300;
