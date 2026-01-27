@@ -103,7 +103,6 @@ export default {
   				'sans-serif'
   			],
   			mono: [
-  				'Geist Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
