@@ -5,44 +5,37 @@ import { Button } from "@/components/ui/button";
 import { format, differenceInMonths, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { PublicExperienceData, PublicCargoData } from "@/hooks/usePublicProfile";
-
 interface ExperienceSectionProps {
   experiences: PublicExperienceData[];
 }
-
 const typeLabels: Record<string, string> = {
   clt: "CLT",
   pj: "PJ",
   freelance: "Freelance",
-  estagio: "Estágio",
+  estagio: "Estágio"
 };
-
 const typeColors: Record<string, string> = {
   clt: "bg-blue-500/10 text-blue-500",
   pj: "bg-purple-500/10 text-purple-500",
   freelance: "bg-orange-500/10 text-orange-500",
-  estagio: "bg-green-500/10 text-green-500",
+  estagio: "bg-green-500/10 text-green-500"
 };
-
 function formatPeriod(inicio: string, fim: string | null, atualmente: boolean | null): string {
   const startDate = new Date(inicio);
   const endDate = fim ? new Date(fim) : new Date();
-  
-  const startFormatted = format(startDate, "MMM yyyy", { locale: ptBR });
-  const endFormatted = atualmente || !fim 
-    ? "Atualmente" 
-    : format(endDate, "MMM yyyy", { locale: ptBR });
-
+  const startFormatted = format(startDate, "MMM yyyy", {
+    locale: ptBR
+  });
+  const endFormatted = atualmente || !fim ? "Atualmente" : format(endDate, "MMM yyyy", {
+    locale: ptBR
+  });
   return `${startFormatted} - ${endFormatted}`;
 }
-
 function formatDuration(inicio: string, fim: string | null): string {
   const startDate = new Date(inicio);
   const endDate = fim ? new Date(fim) : new Date();
-  
   const years = differenceInYears(endDate, startDate);
   const months = differenceInMonths(endDate, startDate) % 12;
-
   const parts: string[] = [];
   if (years > 0) {
     parts.push(`${years} ${years === 1 ? "ano" : "anos"}`);
@@ -50,17 +43,18 @@ function formatDuration(inicio: string, fim: string | null): string {
   if (months > 0) {
     parts.push(`${months} ${months === 1 ? "mês" : "meses"}`);
   }
-
   return parts.length > 0 ? `(${parts.join(" e ")})` : "";
 }
 
 // Component for individual cargo in timeline
-function CargoItem({ cargo }: { cargo: PublicCargoData }) {
+function CargoItem({
+  cargo
+}: {
+  cargo: PublicCargoData;
+}) {
   const [expanded, setExpanded] = useState(false);
   const hasLongDescription = cargo.descricao && cargo.descricao.length > 300;
-
-  return (
-    <div className="relative pb-6 last:pb-0">
+  return <div className="relative pb-6 last:pb-0">
       {/* Timeline dot */}
       <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
       
@@ -79,85 +73,57 @@ function CargoItem({ cargo }: { cargo: PublicCargoData }) {
           </span>
         </p>
 
-        {cargo.descricao && (
-          <div className="pt-1">
-            <p
-              className={`text-sm text-muted-foreground whitespace-pre-wrap ${
-                !expanded && hasLongDescription ? "line-clamp-3" : ""
-              }`}
-            >
+        {cargo.descricao && <div className="pt-1">
+            <p className={`text-sm text-muted-foreground whitespace-pre-wrap ${!expanded && hasLongDescription ? "line-clamp-3" : ""}`}>
               {cargo.descricao}
             </p>
-            {hasLongDescription && (
-              <Button
-                variant="link"
-                size="sm"
-                className="px-0 h-auto text-primary"
-                onClick={() => setExpanded(!expanded)}
-              >
+            {hasLongDescription && <Button variant="link" size="sm" className="px-0 h-auto text-primary" onClick={() => setExpanded(!expanded)}>
                 {expanded ? "Ler menos" : "Ler mais"}
-              </Button>
-            )}
-          </div>
-        )}
+              </Button>}
+          </div>}
       </div>
-    </div>
-  );
+    </div>;
 }
-
-function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
+function ExperienceItem({
+  experience
+}: {
+  experience: PublicExperienceData;
+}) {
   const [expanded, setExpanded] = useState(false);
   const hasCargos = experience.cargos && experience.cargos.length > 0;
-  
-  const location = experience.cidade && experience.estado
-    ? `${experience.cidade}, ${experience.estado}`
-    : experience.localizacao;
+  const location = experience.cidade && experience.estado ? `${experience.cidade}, ${experience.estado}` : experience.localizacao;
 
   // Layout COM multiplos cargos (timeline interna)
   if (hasCargos) {
-    return (
-      <div className="space-y-4">
+    return <div className="space-y-4">
         {/* Header da empresa */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="h-5 w-5 text-primary" />
-          </div>
+          
           <div>
             <h3 className="font-semibold text-foreground">{experience.empresa}</h3>
-            {(location || experience.remoto) && (
-              <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
-                {location && (
-                  <span className="inline-flex items-center gap-1">
+            {(location || experience.remoto) && <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-2">
+                {location && <span className="inline-flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
                     {location}
-                  </span>
-                )}
-                {experience.remoto && (
-                  <Badge variant="outline" className="text-xs py-0">
+                  </span>}
+                {experience.remoto && <Badge variant="outline" className="text-xs py-0">
                     <Home className="w-3 h-3 mr-1" />
                     Remoto
-                  </Badge>
-                )}
-              </p>
-            )}
+                  </Badge>}
+              </p>}
           </div>
         </div>
 
         {/* Timeline interna de cargos */}
         <div className="relative ml-5 pl-6 border-l-2 border-border">
-          {experience.cargos.map((cargo) => (
-            <CargoItem key={cargo.id} cargo={cargo} />
-          ))}
+          {experience.cargos.map(cargo => <CargoItem key={cargo.id} cargo={cargo} />)}
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Layout SEM cargos extras (cargo unico - layout original sem timeline)
   const hasLongDescription = experience.descricao && experience.descricao.length > 300;
-
-  return (
-    <div className="space-y-2">
+  return <div className="space-y-2">
       {/* Title and type */}
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-semibold text-foreground">
@@ -180,67 +146,40 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
       </p>
 
       {/* Location and remote */}
-      {(location || experience.remoto) && (
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          {location && (
-            <span className="inline-flex items-center gap-1">
+      {(location || experience.remoto) && <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          {location && <span className="inline-flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5" />
               {location}
-            </span>
-          )}
-          {experience.remoto && (
-            <Badge variant="outline" className="text-xs py-0">
+            </span>}
+          {experience.remoto && <Badge variant="outline" className="text-xs py-0">
               <Home className="w-3 h-3 mr-1" />
               Remoto
-            </Badge>
-          )}
-        </div>
-      )}
+            </Badge>}
+        </div>}
 
       {/* Description */}
-      {experience.descricao && (
-        <div className="pt-2">
-          <p
-            className={`text-sm text-muted-foreground whitespace-pre-wrap ${
-              !expanded && hasLongDescription ? "line-clamp-4" : ""
-            }`}
-          >
+      {experience.descricao && <div className="pt-2">
+          <p className={`text-sm text-muted-foreground whitespace-pre-wrap ${!expanded && hasLongDescription ? "line-clamp-4" : ""}`}>
             {experience.descricao}
           </p>
-          {hasLongDescription && (
-            <Button
-              variant="link"
-              size="sm"
-              className="px-0 h-auto text-primary"
-              onClick={() => setExpanded(!expanded)}
-            >
+          {hasLongDescription && <Button variant="link" size="sm" className="px-0 h-auto text-primary" onClick={() => setExpanded(!expanded)}>
               {expanded ? "Ler menos" : "Ler mais"}
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </Button>}
+        </div>}
+    </div>;
 }
-
-export function ExperienceSection({ experiences }: ExperienceSectionProps) {
-  return (
-    <section id="experiencia" className="scroll-mt-20 space-y-6">
+export function ExperienceSection({
+  experiences
+}: ExperienceSectionProps) {
+  return <section id="experiencia" className="scroll-mt-20 space-y-6">
       <h2 className="text-xl font-display font-semibold text-foreground">
         Experiência Profissional
       </h2>
 
-      {experiences.length === 0 ? (
-        <p className="text-muted-foreground italic">
+      {experiences.length === 0 ? <p className="text-muted-foreground italic">
           Nenhuma experiência adicionada ainda.
-        </p>
-      ) : (
-        <div className="space-y-8">
-          {experiences.map((experience) => (
-            <ExperienceItem key={experience.id} experience={experience} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
+        </p> : <div className="space-y-8">
+          {experiences.map(experience => <ExperienceItem key={experience.id} experience={experience} />)}
+        </div>}
+    </section>;
 }
