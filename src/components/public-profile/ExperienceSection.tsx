@@ -126,7 +126,7 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
         </div>
 
         {/* Timeline interna de cargos */}
-        <div className="relative ml-[19px] border-l-2 border-border overflow-visible">
+        <div className="relative ml-[18px] border-l-2 border-border overflow-visible">
           {experience.cargos.map((cargo) => (
             <CargoItem key={cargo.id} cargo={cargo} />
           ))}
