@@ -1,22 +1,14 @@
-import { Briefcase, Calendar, MapPin, Pencil, Trash2, EllipsisVertical, Plus } from "lucide-react";
+import { Briefcase, Calendar, MapPin, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { formatDateRange, formatTipoEmprego } from "@/lib/formatters";
-import type { Experience, Cargo } from "@/hooks/useExperiences";
+import type { Experience } from "@/hooks/useExperiences";
 
 interface ExperienceCardProps {
   experience: Experience;
   onEdit: (experience: Experience) => void;
   onDelete: (experience: Experience) => void;
-  onAddPosition: (experience: Experience) => void;
 }
 
 // Badge color configuration for employment types
@@ -27,58 +19,15 @@ const tipoEmpregoStyles: Record<string, string> = {
   estagio: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
 };
 
-export function ExperienceCard({ experience, onEdit, onDelete, onAddPosition }: ExperienceCardProps) {
-  // Safely access fields with fallbacks
-  const inicio = experience.inicio;
-  const fim = experience.fim;
-  const atualmenteTrabalhando = experience.atualmente_trabalhando;
-  const tipoEmprego = experience.tipo_emprego || "clt";
-  const tituloCargo = experience.titulo_cargo || "";
-  const descricao = experience.descricao;
-  const habilidadesUsadas = experience.habilidades_usadas;
-  const cargos = experience.cargos || [];
-  const hasMultipleCargos = cargos.length > 1;
+export function ExperienceCard({ experience, onEdit, onDelete }: ExperienceCardProps) {
+  const dateRange = formatDateRange(
+    experience.inicio,
+    experience.fim,
+    experience.atualmente_trabalhando
+  );
 
-  const dateRange = inicio
-    ? formatDateRange(inicio, fim, atualmenteTrabalhando)
-    : "Período não informado";
-
-  const tipoEmpregoLabel = formatTipoEmprego(tipoEmprego);
-  const tipoEmpregoStyle = tipoEmpregoStyles[tipoEmprego] || tipoEmpregoStyles.clt;
-
-  // Render a single cargo item (for timeline)
-  const renderCargoItem = (cargo: Cargo) => {
-    const cargoDateRange = cargo.inicio
-      ? formatDateRange(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)
-      : "Período não informado";
-    const cargoTipoStyle = tipoEmpregoStyles[cargo.tipo_emprego] || tipoEmpregoStyles.clt;
-
-    return (
-      <div key={cargo.id} className="relative">
-        {/* Dot na timeline */}
-        <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-
-        {/* Info do cargo */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="font-medium text-foreground">{cargo.titulo_cargo}</h4>
-            <Badge variant="outline" className={cargoTipoStyle}>
-              {formatTipoEmprego(cargo.tipo_emprego)}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>{cargoDateRange}</span>
-          </div>
-          {cargo.descricao && (
-            <p className="text-sm text-muted-foreground whitespace-pre-line">
-              {cargo.descricao}
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const tipoEmpregoLabel = formatTipoEmprego(experience.tipo_emprego);
+  const tipoEmpregoStyle = tipoEmpregoStyles[experience.tipo_emprego] || tipoEmpregoStyles.clt;
 
   return (
     <Card className="group transition-all hover:border-primary/30">
@@ -95,9 +44,9 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddPosition }: 
 
             {/* Details */}
             <div className="flex-1 min-w-0 space-y-2">
-              {/* Primary cargo title */}
+              {/* Title */}
               <h3 className="font-semibold text-lg text-foreground truncate">
-                {tituloCargo || "Cargo não informado"}
+                {experience.titulo_cargo}
               </h3>
 
               {/* Company + Employment Type */}
@@ -129,16 +78,16 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddPosition }: 
               )}
 
               {/* Description */}
-              {descricao && (
+              {experience.descricao && (
                 <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">
-                  {descricao}
+                  {experience.descricao}
                 </p>
               )}
 
               {/* Skills used */}
-              {habilidadesUsadas && habilidadesUsadas.length > 0 && (
+              {experience.habilidades_usadas && experience.habilidades_usadas.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {habilidadesUsadas.map((skill) => (
+                  {experience.habilidades_usadas.map((skill) => (
                     <Badge
                       key={skill}
                       variant="secondary"
@@ -149,47 +98,28 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddPosition }: 
                   ))}
                 </div>
               )}
-
-              {/* Timeline for multiple cargos */}
-              {hasMultipleCargos && (
-                <div className="mt-6 ml-1 border-l-2 border-primary/30 pl-4 space-y-4">
-                  {cargos.slice(1).map(renderCargoItem)}
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Dropdown Action menu */}
-          <div className="flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-                >
-                  <EllipsisVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(experience)}>
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onAddPosition(experience)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar cargo
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onDelete(experience)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Action buttons */}
+          <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEdit(experience)}
+              className="h-8 w-8"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(experience)}
+              className="h-8 w-8 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>

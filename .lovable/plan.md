@@ -1,582 +1,505 @@
 
-
-## Plano: Melhorias na Pagina de Experiencias Profissionais
+## Plano: Pagina de Perfil Publico (/p/{slug})
 
 ### Visao Geral
 
-Implementar 3 melhorias principais na pagina de gerenciamento de experiencias (`/dashboard/profile/experience`):
-1. Condicionar timeline para aparecer apenas quando houver multiplos cargos na mesma empresa
-2. Substituir icones de edicao/exclusao por menu dropdown com 3 opcoes
-3. Adicionar funcionalidade de "Adicionar Cargo" para progressao de carreira
+Criar a pagina publica de perfil de profissionais acessivel em `/p/{slug}`, permitindo que qualquer pessoa (mesmo sem login) visualize o portfolio completo de um profissional. A pagina sera a principal ferramenta de marketing pessoal da plataforma.
+
+---
+
+### Pre-requisitos Verificados
+
+| Item | Status |
+|------|--------|
+| Coluna `banner_url` na tabela `users` | Existe |
+| Coluna `anos_experiencia` em `user_habilidades` | Existe |
+| RLS permite leitura publica de `users` | Policy "Perfis sao publicos" ativa |
+| RLS permite leitura publica de projetos/skills/etc | Todas as tabelas tem SELECT publico |
+
+**Nenhuma migracao de banco necessaria.**
 
 ---
 
 ### Estrutura de Arquivos
 
-| Arquivo | Acao | Descricao |
-|---------|------|-----------|
-| `src/hooks/useExperiences.ts` | Modificar | Adicionar funcao `addCargo` e retornar cargos na estrutura |
-| `src/components/experience/ExperienceList.tsx` | Modificar | Remover timeline global, agrupar por empresa |
-| `src/components/experience/ExperienceCard.tsx` | Modificar | Substituir icones por dropdown menu + prop para timeline |
-| `src/components/experience/ExperienceModal.tsx` | Modificar | Adicionar modo "adicionar cargo" com campos pre-preenchidos |
-| `src/pages/Experience.tsx` | Modificar | Adicionar handler `handleAddPosition` |
+| Acao | Arquivo | Descricao |
+|------|---------|-----------|
+| Criar | `src/pages/PublicProfile.tsx` | Pagina principal do perfil publico |
+| Criar | `src/hooks/usePublicProfile.ts` | Hook para buscar dados publicos do perfil |
+| Criar | `src/components/public-profile/ProfileHero.tsx` | Hero section com banner e foto |
+| Criar | `src/components/public-profile/ProfileNav.tsx` | Navegacao sticky entre secoes |
+| Criar | `src/components/public-profile/AboutSection.tsx` | Secao Sobre com bio e links |
+| Criar | `src/components/public-profile/ProjectsSection.tsx` | Secao de projetos em destaque |
+| Criar | `src/components/public-profile/SkillsSection.tsx` | Secao de habilidades agrupadas |
+| Criar | `src/components/public-profile/ExperienceSection.tsx` | Timeline de experiencias |
+| Criar | `src/components/public-profile/EducationSection.tsx` | Lista de educacao |
+| Criar | `src/components/public-profile/ProfileNotFound.tsx` | Estado de erro 404 |
+| Modificar | `src/App.tsx` | Adicionar rota `/p/:slug` |
 
 ---
 
-### Parte 1: Atualizar Hook useExperiences
+### Hook usePublicProfile
 
-**Arquivo:** `src/hooks/useExperiences.ts`
+**Arquivo:** `src/hooks/usePublicProfile.ts`
 
-**Alteracoes:**
-
-1. Modificar tipo `Experience` para incluir array de cargos:
+Query unica que busca todos os dados do perfil:
 
 ```typescript
-export interface Cargo {
-  id: string;
-  titulo_cargo: string;
-  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
-  inicio: string;
-  fim: string | null;
-  atualmente_trabalhando: boolean | null;
-  descricao: string | null;
-  habilidades_usadas: string[] | null;
-  ordem: number;
+// Tipos retornados
+interface PublicProfileData {
+  user: UserData | null;
+  projects: ProjectData[];
+  skills: SkillData[];
+  experiences: ExperienceData[];
+  educations: EducationData[];
 }
 
-export interface Experience extends ExperienciaRow {
-  // Cargo primario (mais recente) - para compatibilidade
-  cargo_id: string | null;
-  titulo_cargo: string;
-  tipo_emprego: ...;
-  // ... campos existentes ...
-  
-  // NOVO: Todos os cargos da experiencia
-  cargos: Cargo[];
-}
-```
-
-2. Modificar `fetchExperiences` para popular o array `cargos`
-
-3. Adicionar nova funcao `addCargo`:
-
-```typescript
-export interface CargoInsertData {
-  experiencia_id: string;
-  titulo_cargo: string;
-  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
-  inicio: string;
-  fim?: string | null;
-  atualmente_trabalhando?: boolean;
-  descricao?: string | null;
-}
-
-const addCargo = useCallback(async (data: CargoInsertData): Promise<Cargo> => {
-  // Validar datas (sem overlap)
-  const existingExp = experiences.find(e => e.id === data.experiencia_id);
-  if (!existingExp) throw new Error("Experiencia nao encontrada");
-  
-  // Verificar overlap de datas com cargos existentes
-  for (const cargo of existingExp.cargos) {
-    if (datesOverlap(cargo.inicio, cargo.fim, data.inicio, data.fim)) {
-      throw new Error("Periodo conflita com outro cargo nesta empresa");
-    }
-  }
-  
-  // Calcular ordem baseado na data
-  const ordem = existingExp.cargos.length;
-  
-  // Inserir cargo
-  const { data: newCargo, error } = await supabase
-    .from("cargos_experiencia")
-    .insert({
-      experiencia_id: data.experiencia_id,
-      titulo_cargo: data.titulo_cargo,
-      tipo_emprego: data.tipo_emprego,
-      inicio: data.inicio,
-      fim: data.fim,
-      atualmente_trabalhando: data.atualmente_trabalhando,
-      descricao: data.descricao,
-      ordem,
-    })
-    .select()
+// Busca por slug
+const fetchPublicProfile = async (slug: string) => {
+  // 1. Buscar usuario pelo slug
+  const { data: user } = await supabase
+    .from("users")
+    .select(`
+      id, nome_exibicao, nome_completo, titulo_profissional,
+      bio_curta, sobre, localizacao, avatar_url, banner_url,
+      disponivel_para_trabalho, website, linkedin_url, github_url,
+      portfolio_url, email, telefone, mostrar_email, mostrar_telefone
+    `)
+    .eq("slug", slug)
     .single();
-    
-  return newCargo;
-}, [experiences]);
-```
 
-4. Adicionar funcao helper para validar overlap de datas:
+  if (!user) return { user: null, ... };
 
-```typescript
-function datesOverlap(
-  start1: string, end1: string | null,
-  start2: string, end2: string | null | undefined
-): boolean {
-  const s1 = new Date(start1);
-  const e1 = end1 ? new Date(end1) : new Date();
-  const s2 = new Date(start2);
-  const e2 = end2 ? new Date(end2) : new Date();
-  
-  return s1 <= e2 && s2 <= e1;
-}
-```
+  // 2. Buscar projetos em destaque (nao arquivados)
+  const { data: projects } = await supabase
+    .from("projetos")
+    .select(`*, projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))`)
+    .eq("user_id", user.id)
+    .eq("destaque", true)
+    .neq("status", "arquivado")
+    .order("ordem");
 
-5. Exportar `addCargo` no retorno do hook
+  // 3. Buscar habilidades com join
+  const { data: skills } = await supabase
+    .from("user_habilidades")
+    .select(`id, nivel, ordem, anos_experiencia, habilidade:habilidades(id, nome, categoria)`)
+    .eq("user_id", user.id)
+    .order("ordem");
 
----
+  // 4. Buscar experiencias (mais recentes primeiro)
+  const { data: experiences } = await supabase
+    .from("experiencia")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("inicio", { ascending: false });
 
-### Parte 2: Atualizar ExperienceList (Remover Timeline Global)
+  // 5. Buscar educacao
+  const { data: educations } = await supabase
+    .from("educacao")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("ordem");
 
-**Arquivo:** `src/components/experience/ExperienceList.tsx`
-
-**Alteracoes:**
-
-1. REMOVER timeline vertical global (linhas 52-53):
-
-```typescript
-// REMOVER:
-{/* Vertical timeline line - desktop only */}
-<div className="hidden md:block absolute left-4 top-6 bottom-6 w-0.5 bg-border" />
-```
-
-2. REMOVER timeline dot individual (linhas 58-59):
-
-```typescript
-// REMOVER:
-{/* Timeline dot - desktop only */}
-<div className="hidden md:block absolute left-2.5 top-8 w-3 h-3 rounded-full bg-primary border-2 border-background z-10" />
-```
-
-3. REMOVER padding left do container (linha 57):
-
-```typescript
-// Antes:
-<div key={experience.id} className="relative md:pl-10">
-
-// Depois:
-<div key={experience.id} className="relative">
-```
-
-4. Adicionar props `onAddPosition` ao componente e repassar para `ExperienceCard`:
-
-```typescript
-interface ExperienceListProps {
-  experiences: Experience[];
-  loading: boolean;
-  onEdit: (experience: Experience) => void;
-  onDelete: (experience: Experience) => void;
-  onAddPosition: (experience: Experience) => void; // NOVO
-}
-```
-
-5. Repassar para cada ExperienceCard:
-
-```typescript
-<ExperienceCard
-  experience={experience}
-  onEdit={onEdit}
-  onDelete={onDelete}
-  onAddPosition={onAddPosition}
-  showTimeline={experience.cargos.length > 1} // Timeline so aparece com 2+ cargos
-/>
+  return { user, projects, skills, experiences, educations };
+};
 ```
 
 ---
 
-### Parte 3: Atualizar ExperienceCard (Dropdown Menu)
+### Componente ProfileHero
 
-**Arquivo:** `src/components/experience/ExperienceCard.tsx`
+**Arquivo:** `src/components/public-profile/ProfileHero.tsx`
 
-**Alteracoes:**
-
-1. Adicionar imports:
-
-```typescript
-import { EllipsisVertical, Plus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+**Estrutura visual:**
+```text
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│              BANNER (240px desktop / 160px mobile)         │
+│                                                            │
+│  ┌──────────┐                                              │
+│  │          │                                              │
+└──│  AVATAR  │──────────────────────────────────────────────┘
+   │ (160px)  │
+   └──────────┘
+   Nome de Exibicao                            [Compartilhar]
+   Titulo Profissional
+   📍 Localizacao
+   ┌─────────────────────────┐
+   │ ✓ Disponivel p/ trabalho│  (badge verde se true)
+   └─────────────────────────┘
 ```
 
-2. Adicionar prop `onAddPosition`:
+**Implementacao:**
+- Banner: `aspect-[4/1]` no desktop, `aspect-[3/1]` no mobile
+- Se `banner_url` existir: `<img>` com `object-cover`
+- Fallback: gradiente sutil `from-primary/10 to-primary/5`
+- Avatar: posicionamento absoluto com `bottom: -60px` (metade fora)
+- Borda branca grossa: `border-4 border-background`
+- Botao compartilhar: copia `https://matchmaking.games/p/{slug}` e mostra toast
 
+---
+
+### Componente ProfileNav (Sticky)
+
+**Arquivo:** `src/components/public-profile/ProfileNav.tsx`
+
+**Comportamento:**
+- `position: sticky; top: 0; z-index: 40`
+- Links: Sobre | Projetos | Skills | Experiencia | Educacao
+- Usa `IntersectionObserver` para destacar secao visivel
+- Scroll suave com `scrollIntoView({ behavior: 'smooth' })`
+- No mobile: `overflow-x-auto` + `scrollbar-hide`
+
+**Visual:**
 ```typescript
-interface ExperienceCardProps {
-  experience: Experience;
-  onEdit: (experience: Experience) => void;
-  onDelete: (experience: Experience) => void;
-  onAddPosition: (experience: Experience) => void; // NOVO
-  showTimeline?: boolean; // NOVO
-}
-```
-
-3. Substituir botoes de acao (linhas 111-130) por dropdown menu:
-
-```typescript
-{/* Action menu */}
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
-    >
-      <EllipsisVertical className="h-4 w-4" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end">
-    <DropdownMenuItem onClick={() => onEdit(experience)}>
-      <Pencil className="h-4 w-4 mr-2" />
-      Editar
-    </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => onAddPosition(experience)}>
-      <Plus className="h-4 w-4 mr-2" />
-      Adicionar cargo
-    </DropdownMenuItem>
-    <DropdownMenuSeparator />
-    <DropdownMenuItem 
-      onClick={() => onDelete(experience)}
-      className="text-destructive focus:text-destructive"
-    >
-      <Trash2 className="h-4 w-4 mr-2" />
-      Excluir
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
-```
-
-4. Adicionar renderizacao de multiplos cargos quando `showTimeline = true`:
-
-```typescript
-// Dentro do card, apos o conteudo principal:
-{showTimeline && experience.cargos.length > 1 && (
-  <div className="mt-4 ml-6 border-l-2 border-primary/30 pl-4 space-y-4">
-    {experience.cargos.slice(1).map((cargo) => (
-      <div key={cargo.id} className="relative">
-        {/* Dot na timeline */}
-        <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-primary" />
-        
-        {/* Info do cargo */}
-        <div>
-          <h4 className="font-medium">{cargo.titulo_cargo}</h4>
-          <div className="text-sm text-muted-foreground">
-            {formatDateRange(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)}
-          </div>
-          {cargo.descricao && (
-            <p className="text-sm text-muted-foreground mt-1">{cargo.descricao}</p>
+<nav className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+  <div className="max-w-4xl mx-auto px-4">
+    <div className="flex gap-6 overflow-x-auto scrollbar-hide py-4">
+      {sections.map(section => (
+        <button
+          key={section.id}
+          onClick={() => scrollTo(section.id)}
+          className={cn(
+            "whitespace-nowrap text-sm font-medium transition-colors",
+            activeSection === section.id
+              ? "text-primary border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
           )}
-        </div>
-      </div>
-    ))}
+        >
+          {section.label}
+        </button>
+      ))}
+    </div>
   </div>
-)}
+</nav>
 ```
 
 ---
 
-### Parte 4: Atualizar ExperienceModal (Modo Adicionar Cargo)
+### Componente AboutSection
 
-**Arquivo:** `src/components/experience/ExperienceModal.tsx`
+**Arquivo:** `src/components/public-profile/AboutSection.tsx`
 
-**Alteracoes:**
+**Conteudo:**
+- `bio_curta` em destaque (se existir)
+- Links sociais em linha (icones clicaveis):
+  - Globe (website), LinkedIn, GitHub, Briefcase (portfolio)
+  - Cada link abre em nova aba
+- Contato (condicional):
+  - Email (se `mostrar_email = true`)
+  - Telefone (se `mostrar_telefone = true`)
 
-1. Adicionar prop `mode`:
+---
 
-```typescript
-type ModalMode = "create" | "edit" | "add-position";
+### Componente ProjectsSection
 
-interface ExperienceModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editingExperience: Experience | null;
-  onSuccess: () => void;
-  mode?: ModalMode; // NOVO - default "create" ou "edit" baseado em editingExperience
-}
-```
+**Arquivo:** `src/components/public-profile/ProjectsSection.tsx`
 
-2. Determinar modo no componente:
+**Grid responsivo:**
+- Desktop: `grid-cols-3`
+- Tablet: `grid-cols-2`
+- Mobile: `grid-cols-1`
 
-```typescript
-const mode: ModalMode = props.mode || (editingExperience ? "edit" : "create");
-const isAddingPosition = mode === "add-position";
-```
+**Cada card mostra:**
+- Imagem de capa (16:9, object-cover) ou placeholder
+- Badge de tipo no canto superior
+- Titulo
+- `descricao_curta` (max 2 linhas com `line-clamp-2`)
+- Footer com icones de links: Demo, Video, Codigo (se existirem)
 
-3. Modificar titulo do modal:
-
-```typescript
-<DialogTitle className="font-display text-xl">
-  {mode === "add-position" 
-    ? `Adicionar Cargo - ${editingExperience?.empresa}`
-    : mode === "edit"
-    ? "Editar Experiência"
-    : "Adicionar Experiência"
-  }
-</DialogTitle>
-```
-
-4. No `useEffect` de reset do form, adicionar logica para modo "add-position":
-
-```typescript
-useEffect(() => {
-  if (open) {
-    if (mode === "add-position" && editingExperience) {
-      // Pre-preencher empresa e localizacao, deixar cargo vazio
-      form.reset({
-        titulo_cargo: "", // Vazio - usuario deve preencher
-        empresa: editingExperience.empresa, // Pre-preenchido
-        tipo_emprego: "clt", // Default
-        estado: editingExperience.estado || "",
-        cidade: editingExperience.cidade || "",
-        cidade_ibge_id: editingExperience.cidade_ibge_id || 0,
-        remoto: editingExperience.remoto || false,
-        inicio: "", // Vazio - usuario deve preencher
-        atualmente_trabalhando: false,
-        fim: "",
-        descricao: "",
-      });
-      
-      if (editingExperience.estado && !editingExperience.remoto) {
-        fetchMunicipios(editingExperience.estado);
-      }
-    } else if (editingExperience) {
-      // ... logica existente de edicao ...
-    } else {
-      // ... logica existente de criacao ...
-    }
-  }
-}, [open, editingExperience, mode, form, fetchMunicipios, clearMunicipios]);
-```
-
-5. Desabilitar campo "Empresa" quando estiver adicionando cargo:
-
-```typescript
-<FormField
-  control={form.control}
-  name="empresa"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>
-        Estudio <span className="text-destructive">*</span>
-      </FormLabel>
-      <FormControl>
-        <Input 
-          placeholder="Ex: Ubisoft" 
-          {...field} 
-          disabled={isAddingPosition} // NOVO
-          className={isAddingPosition ? "bg-muted" : ""} // NOVO
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-```
-
-6. Modificar `onSubmit` para lidar com modo "add-position":
-
-```typescript
-const onSubmit = async (data: ExperienceFormData) => {
-  try {
-    setIsSubmitting(true);
-    
-    if (isAddingPosition && editingExperience) {
-      // Adicionar cargo a experiencia existente
-      await addCargo({
-        experiencia_id: editingExperience.id,
-        titulo_cargo: data.titulo_cargo,
-        tipo_emprego: data.tipo_emprego,
-        inicio: `${data.inicio}-01`,
-        fim: data.fim ? `${data.fim}-01` : null,
-        atualmente_trabalhando: data.atualmente_trabalhando,
-        descricao: data.descricao || null,
-      });
-      
-      toast({
-        title: "Cargo adicionado",
-        description: `Novo cargo adicionado em ${editingExperience.empresa}`,
-      });
-    } else if (isEditing) {
-      // ... logica existente de update ...
-    } else {
-      // ... logica existente de create ...
-    }
-    
-    onSuccess();
-    onOpenChange(false);
-  } catch (error) {
-    // ... tratamento de erro ...
-  }
-};
-```
-
-7. Adicionar validacao de overlap de datas no submit:
-
-```typescript
-// Antes de adicionar cargo, validar overlap
-if (isAddingPosition && editingExperience) {
-  const inicioDate = new Date(`${data.inicio}-01`);
-  const fimDate = data.fim ? new Date(`${data.fim}-01`) : new Date();
-  
-  for (const cargo of editingExperience.cargos || []) {
-    const cargoInicio = new Date(cargo.inicio);
-    const cargoFim = cargo.fim ? new Date(cargo.fim) : new Date();
-    
-    if (inicioDate <= cargoFim && cargoInicio <= fimDate) {
-      toast({
-        title: "Periodo invalido",
-        description: "O periodo conflita com outro cargo nesta empresa",
-        variant: "destructive",
-      });
-      return;
-    }
-  }
-}
+**Estado vazio:**
+```text
+"Nenhum projeto em destaque ainda"
 ```
 
 ---
 
-### Parte 5: Atualizar Experience.tsx (Handler para Adicionar Cargo)
+### Componente SkillsSection
 
-**Arquivo:** `src/pages/Experience.tsx`
+**Arquivo:** `src/components/public-profile/SkillsSection.tsx`
 
-**Alteracoes:**
+**Agrupamento por categoria:**
+```text
+ENGINES
+┌─────────────────┐ ┌─────────────────┐
+│ Unity     ●●●●○ │ │ Unreal   ●●●○○ │
+│ 5 anos          │ │ 2 anos          │
+└─────────────────┘ └─────────────────┘
 
-1. Adicionar estado para modo do modal:
-
-```typescript
-const [modalMode, setModalMode] = useState<"create" | "edit" | "add-position">("create");
+LINGUAGENS
+┌─────────────────┐ ┌─────────────────┐
+│ C#        ●●●●○ │ │ Python   ●●○○○ │
+└─────────────────┘ └─────────────────┘
 ```
 
-2. Modificar handlers:
-
+**Mapeamento de nivel para bolinhas:**
 ```typescript
-const handleAdd = () => {
-  setModalMode("create");
-  setEditingExperience(null);
-  setIsModalOpen(true);
-};
-
-const handleEdit = (experience: Experience) => {
-  setModalMode("edit");
-  setEditingExperience(experience);
-  setIsModalOpen(true);
-};
-
-const handleAddPosition = (experience: Experience) => {
-  setModalMode("add-position");
-  setEditingExperience(experience);
-  setIsModalOpen(true);
+const levelDots: Record<string, number> = {
+  basico: 1,
+  intermediario: 2,
+  avancado: 3,
+  expert: 4,
 };
 ```
 
-3. Passar `onAddPosition` para ExperienceList:
-
-```typescript
-<ExperienceList
-  experiences={experiences}
-  loading={loading}
-  onEdit={handleEdit}
-  onDelete={handleDelete}
-  onAddPosition={handleAddPosition} // NOVO
-/>
-```
-
-4. Passar `mode` para ExperienceModal:
-
-```typescript
-<ExperienceModal
-  open={isModalOpen}
-  onOpenChange={setIsModalOpen}
-  editingExperience={editingExperience}
-  onSuccess={handleSuccess}
-  mode={modalMode} // NOVO
-/>
-```
+**Categoria headers:**
+- engine: "Engines"
+- linguagem: "Linguagens"
+- ferramenta: "Ferramentas"
+- soft_skill: "Soft Skills"
 
 ---
 
-### Resultado Visual Esperado
+### Componente ExperienceSection
 
-**Antes (Timeline incorreta):**
+**Arquivo:** `src/components/public-profile/ExperienceSection.tsx`
+
+**Timeline vertical:**
 ```text
 │
 ├── ● Game Developer
-│     Ubisoft                    ← Timeline conectando
-│                                   empresas diferentes
+│     Ubisoft · CLT
+│     Jan 2022 - Atualmente (2 anos)
+│     📍 Sao Paulo, SP · Remoto
+│     Descricao truncada em 4 linhas...
+│     [Ler mais]
+│
 ├── ● Game Designer
-│     Indie Studio
+│     Indie Studio · PJ
+│     Mar 2020 - Dez 2021 (1 ano e 9 meses)
 │
 ```
 
-**Depois (Sem timeline entre empresas):**
-```text
-┌─────────────────────────────────────┐
-│ Game Developer                   ⋮  │  ← Dropdown menu
-│ Ubisoft • CLT                       │
-│ Jan 2022 - Atual                    │
-└─────────────────────────────────────┘
+**Implementacao:**
+- Linha vertical: `border-l-2 border-border ml-4`
+- Ponto: `absolute -left-[9px] w-4 h-4 rounded-full bg-primary`
+- Badges coloridos para tipo de emprego (reutilizar cores do ExperienceCard)
+- Descricao com `line-clamp-4` + "Ler mais" toggle
 
-┌─────────────────────────────────────┐
-│ Game Designer                    ⋮  │
-│ Indie Studio • PJ                   │
-│ Mar 2020 - Dez 2021                 │
-└─────────────────────────────────────┘
+---
+
+### Componente EducationSection
+
+**Arquivo:** `src/components/public-profile/EducationSection.tsx`
+
+**Lista simples (sem timeline):**
+```text
+┌─────────────────────────────────────────────────┐
+│ [Badge Graduacao]                               │
+│ Ciencia da Computacao                           │
+│ Universidade de Sao Paulo                       │
+│ 2015 - 2019 · Concluido                         │
+│ [Link credencial]                               │
+└─────────────────────────────────────────────────┘
 ```
 
-**Com multiplos cargos (timeline aparece):**
+**Badges coloridos por tipo** (reutilizar cores do EducationCard)
+
+---
+
+### Componente ProfileNotFound
+
+**Arquivo:** `src/components/public-profile/ProfileNotFound.tsx`
+
+**Layout:**
 ```text
-┌─────────────────────────────────────┐
-│ Senior Developer                 ⋮  │
-│ Ubisoft • CLT                       │
-│ Jan 2023 - Atual                    │
-│ │                                   │
-│ ├─ ● Mid Developer                  │  ← Timeline interna
-│ │    Jan 2022 - Dez 2022            │
-│ │                                   │
-│ └─ ● Junior Developer               │
-│      Jan 2020 - Dez 2021            │
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│                   404                   │
+│                                         │
+│       Perfil nao encontrado             │
+│                                         │
+│   O perfil que voce procura nao existe  │
+│   ou foi removido.                      │
+│                                         │
+│          [Voltar para Home]             │
+└─────────────────────────────────────────┘
 ```
 
-**Dropdown menu:**
-```text
-┌─────────────────┐
-│ ✏️ Editar       │
-│ ➕ Adicionar cargo │
-│ ─────────────── │
-│ 🗑️ Excluir      │  ← Texto vermelho
-└─────────────────┘
+---
+
+### Pagina PublicProfile (Principal)
+
+**Arquivo:** `src/pages/PublicProfile.tsx`
+
+**Estrutura:**
+```tsx
+export default function PublicProfile() {
+  const { slug } = useParams<{ slug: string }>();
+  const { data, loading, error } = usePublicProfile(slug);
+
+  // SEO: Document title e meta tags
+  useEffect(() => {
+    if (data?.user) {
+      document.title = `${data.user.nome_exibicao || data.user.nome_completo} - ${data.user.titulo_profissional || 'Profissional'} | Matchmaking`;
+    }
+  }, [data]);
+
+  if (loading) return <LoadingState />;
+  if (error || !data?.user) return <ProfileNotFound />;
+
+  const { user, projects, skills, experiences, educations } = data;
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero com banner + avatar + info basica */}
+      <ProfileHero user={user} />
+
+      {/* Navegacao sticky */}
+      <ProfileNav />
+
+      {/* Secoes */}
+      <main className="max-w-4xl mx-auto px-4 pb-16 space-y-16">
+        <AboutSection id="sobre" user={user} />
+        <ProjectsSection id="projetos" projects={projects} />
+        <SkillsSection id="skills" skills={skills} />
+        <ExperienceSection id="experiencia" experiences={experiences} />
+        <EducationSection id="educacao" educations={educations} />
+      </main>
+    </div>
+  );
+}
+```
+
+---
+
+### Modificar App.tsx
+
+Adicionar rota publica (fora de ProtectedRoute):
+
+```tsx
+// Nova importacao
+import PublicProfile from "./pages/PublicProfile";
+
+// Adicionar antes do catch-all "*"
+<Route path="/p/:slug" element={<PublicProfile />} />
+```
+
+**Posicao na lista de rotas:**
+```tsx
+<Route path="/onboarding" element={<Onboarding />} />
+{/* ... rotas do dashboard ... */}
+<Route path="/p/:slug" element={<PublicProfile />} />  {/* NOVA */}
+{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+<Route path="*" element={<NotFound />} />
+```
+
+---
+
+### SEO (Meta Tags Dinamicas)
+
+No `PublicProfile.tsx`, usar `useEffect` para atualizar meta tags:
+
+```typescript
+useEffect(() => {
+  if (!data?.user) return;
+
+  const { user } = data;
+  const name = user.nome_exibicao || user.nome_completo;
+  const title = user.titulo_profissional || 'Profissional';
+  const description = user.bio_curta?.slice(0, 160) || `Perfil de ${name}`;
+  const image = user.banner_url || user.avatar_url;
+  const url = `https://matchmaking.games/p/${slug}`;
+
+  // Title
+  document.title = `${name} - ${title} | Matchmaking`;
+
+  // Meta description
+  updateMetaTag('description', description);
+
+  // Open Graph
+  updateMetaTag('og:title', `${name} - ${title}`);
+  updateMetaTag('og:description', description);
+  updateMetaTag('og:image', image || '');
+  updateMetaTag('og:url', url);
+  updateMetaTag('og:type', 'profile');
+
+  // Twitter Card
+  updateMetaTag('twitter:card', 'summary_large_image');
+  updateMetaTag('twitter:title', `${name} - ${title}`);
+  updateMetaTag('twitter:description', description);
+  updateMetaTag('twitter:image', image || '');
+
+  // Canonical
+  updateLinkTag('canonical', url);
+}, [data, slug]);
+
+function updateMetaTag(name: string, content: string) {
+  let tag = document.querySelector(`meta[property="${name}"], meta[name="${name}"]`);
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute(name.startsWith('og:') ? 'property' : 'name', name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('content', content);
+}
+
+function updateLinkTag(rel: string, href: string) {
+  let tag = document.querySelector(`link[rel="${rel}"]`);
+  if (!tag) {
+    tag = document.createElement('link');
+    tag.setAttribute('rel', rel);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute('href', href);
+}
+```
+
+---
+
+### Responsividade do Banner
+
+| Breakpoint | Banner | Avatar |
+|------------|--------|--------|
+| Desktop (>1024px) | 240px altura | 160px |
+| Tablet (768-1023px) | 200px altura | 140px |
+| Mobile (<768px) | 160px altura | 120px |
+
+**Classes Tailwind:**
+```typescript
+// Banner
+className="h-40 md:h-[200px] lg:h-[240px]"
+
+// Avatar
+className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] lg:w-[160px] lg:h-[160px]"
 ```
 
 ---
 
 ### Ordem de Implementacao
 
-| Ordem | Arquivo | Complexidade |
-|-------|---------|--------------|
-| 1 | `src/hooks/useExperiences.ts` | Media (adicionar tipo Cargo, funcao addCargo) |
-| 2 | `src/components/experience/ExperienceCard.tsx` | Media (dropdown menu + timeline interna) |
-| 3 | `src/components/experience/ExperienceList.tsx` | Baixa (remover timeline global, passar props) |
-| 4 | `src/components/experience/ExperienceModal.tsx` | Alta (modo add-position, campos desabilitados) |
-| 5 | `src/pages/Experience.tsx` | Baixa (adicionar modalMode e handler) |
+| Ordem | Arquivo | Tipo |
+|-------|---------|------|
+| 1 | `src/hooks/usePublicProfile.ts` | Criar |
+| 2 | `src/components/public-profile/ProfileNotFound.tsx` | Criar |
+| 3 | `src/components/public-profile/ProfileHero.tsx` | Criar |
+| 4 | `src/components/public-profile/ProfileNav.tsx` | Criar |
+| 5 | `src/components/public-profile/AboutSection.tsx` | Criar |
+| 6 | `src/components/public-profile/ProjectsSection.tsx` | Criar |
+| 7 | `src/components/public-profile/SkillsSection.tsx` | Criar |
+| 8 | `src/components/public-profile/ExperienceSection.tsx` | Criar |
+| 9 | `src/components/public-profile/EducationSection.tsx` | Criar |
+| 10 | `src/pages/PublicProfile.tsx` | Criar |
+| 11 | `src/App.tsx` | Modificar |
 
 ---
 
 ### Checklist de Validacoes
 
-| Item | Validacao |
-|------|-----------|
-| Timeline nao aparece entre empresas diferentes | Condicional `showTimeline` |
-| Timeline aparece quando 2+ cargos na mesma empresa | Prop baseada em `cargos.length > 1` |
-| Dropdown menu funciona | Testes manuais de click |
-| Editar ainda funciona | Funcionalidade mantida |
-| Excluir ainda funciona | Funcionalidade mantida |
-| Adicionar cargo pre-preenche empresa | Campo `empresa` disabled |
-| Validacao de overlap de datas | Erro mostrado no toast |
-| Lista atualiza apos adicionar cargo | `refetch()` chamado |
+| Regra | Implementacao |
+|-------|---------------|
+| NAO mostrar email se `mostrar_email = false` | Condicional em AboutSection |
+| NAO mostrar telefone se `mostrar_telefone = false` | Condicional em AboutSection |
+| NAO exigir autenticacao | Rota fora de ProtectedRoute |
+| NAO mostrar projetos arquivados | Filtro `.neq("status", "arquivado")` |
+| Slug inexistente = 404 | ProfileNotFound se user null |
+
+---
+
+### Resultado Esperado
+
+| URL | Comportamento |
+|-----|---------------|
+| `/p/joaosilva` | Perfil publico do usuario com slug "joaosilva" |
+| `/p/inexistente` | Tela 404 com "Perfil nao encontrado" |
+| `/dashboard/profile` | Dashboard (nao alterado) |
 
