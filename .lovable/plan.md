@@ -1,22 +1,32 @@
 
-## Plano: Pagina de Perfil Publico (/p/{slug})
+
+## Plano Corrigido: Funcionalidade de Progressao de Carreira (Adicionar Cargo)
 
 ### Visao Geral
 
-Criar a pagina publica de perfil de profissionais acessivel em `/p/{slug}`, permitindo que qualquer pessoa (mesmo sem login) visualize o portfolio completo de um profissional. A pagina sera a principal ferramenta de marketing pessoal da plataforma.
+Implementar a funcionalidade de adicionar multiplos cargos a uma mesma empresa, permitindo representar progressao de carreira. O plano incorpora TODAS as correcoes criticas mencionadas.
 
 ---
 
-### Pre-requisitos Verificados
+### Correcoes Criticas Incorporadas
 
-| Item | Status |
-|------|--------|
-| Coluna `banner_url` na tabela `users` | Existe |
-| Coluna `anos_experiencia` em `user_habilidades` | Existe |
-| RLS permite leitura publica de `users` | Policy "Perfis sao publicos" ativa |
-| RLS permite leitura publica de projetos/skills/etc | Todas as tabelas tem SELECT publico |
+| Correcao | Status |
+|----------|--------|
+| NAO limpar campos de `experiencia` (manter dados duplicados) | Incorporado |
+| Implementar `validateDatesOverlap` completo | Incorporado |
+| Atualizar `usePublicProfile.ts` com cargos | Incorporado |
+| Atualizar `ExperienceSection.tsx` (perfil publico) | Incorporado |
+| Ordenacao client-side apos fetch | Incorporado |
 
-**Nenhuma migracao de banco necessaria.**
+---
+
+### Pre-requisitos
+
+| Item | Status | Acao |
+|------|--------|------|
+| Tabela `cargos_experiencia` no banco | Existe | Nenhuma |
+| Tipos TypeScript para `cargos_experiencia` | NAO EXISTE | Migracao vazia para regenerar |
+| RLS policies para `cargos_experiencia` | Existe | Nenhuma |
 
 ---
 
@@ -24,337 +34,874 @@ Criar a pagina publica de perfil de profissionais acessivel em `/p/{slug}`, perm
 
 | Acao | Arquivo | Descricao |
 |------|---------|-----------|
-| Criar | `src/pages/PublicProfile.tsx` | Pagina principal do perfil publico |
-| Criar | `src/hooks/usePublicProfile.ts` | Hook para buscar dados publicos do perfil |
-| Criar | `src/components/public-profile/ProfileHero.tsx` | Hero section com banner e foto |
-| Criar | `src/components/public-profile/ProfileNav.tsx` | Navegacao sticky entre secoes |
-| Criar | `src/components/public-profile/AboutSection.tsx` | Secao Sobre com bio e links |
-| Criar | `src/components/public-profile/ProjectsSection.tsx` | Secao de projetos em destaque |
-| Criar | `src/components/public-profile/SkillsSection.tsx` | Secao de habilidades agrupadas |
-| Criar | `src/components/public-profile/ExperienceSection.tsx` | Timeline de experiencias |
-| Criar | `src/components/public-profile/EducationSection.tsx` | Lista de educacao |
-| Criar | `src/components/public-profile/ProfileNotFound.tsx` | Estado de erro 404 |
-| Modificar | `src/App.tsx` | Adicionar rota `/p/:slug` |
+| Criar | Migracao SQL | Migracao vazia para regenerar tipos |
+| Modificar | `src/hooks/useExperiences.ts` | Query com cargos + addCargo + validacao |
+| Modificar | `src/hooks/usePublicProfile.ts` | Query com cargos |
+| Modificar | `src/components/experience/ExperienceModal.tsx` | Modo add-position |
+| Modificar | `src/components/experience/ExperienceCard.tsx` | DropdownMenu + timeline interna |
+| Modificar | `src/components/experience/ExperienceList.tsx` | Prop onAddCargo + remover timeline global |
+| Modificar | `src/pages/Experience.tsx` | Estado do modo + handler addCargo |
+| Modificar | `src/components/public-profile/ExperienceSection.tsx` | Timeline condicional |
 
 ---
 
-### Hook usePublicProfile
+### Secao Tecnica
 
-**Arquivo:** `src/hooks/usePublicProfile.ts`
+#### 1. Migracao SQL (Regenerar Tipos)
 
-Query unica que busca todos os dados do perfil:
+```sql
+-- Migracao vazia para forcar regeneracao dos tipos TypeScript
+-- A tabela cargos_experiencia ja existe no banco
+SELECT 1;
+```
+
+---
+
+#### 2. useExperiences.ts - Alteracoes Completas
+
+**2.1 Novos Tipos**
 
 ```typescript
-// Tipos retornados
-interface PublicProfileData {
-  user: UserData | null;
-  projects: ProjectData[];
-  skills: SkillData[];
-  experiences: ExperienceData[];
-  educations: EducationData[];
+// Tipo para cargo individual (de cargos_experiencia)
+export interface CargoExperiencia {
+  id: string;
+  experiencia_id: string;
+  titulo_cargo: string;
+  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  habilidades_usadas: string[] | null;
+  ordem: number | null;
 }
 
-// Busca por slug
-const fetchPublicProfile = async (slug: string) => {
-  // 1. Buscar usuario pelo slug
-  const { data: user } = await supabase
-    .from("users")
+// Experience expandida com cargos
+export interface ExperienceWithCargos extends Experience {
+  cargos: CargoExperiencia[];
+}
+
+// Insert para cargo
+export interface CargoInsert {
+  titulo_cargo: string;
+  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  habilidades_usadas: string[] | null;
+}
+```
+
+**2.2 Query Expandida com JOIN**
+
+```typescript
+const fetchExperiences = useCallback(async () => {
+  if (!userId) return;
+
+  const { data, error } = await supabase
+    .from("experiencia")
     .select(`
-      id, nome_exibicao, nome_completo, titulo_profissional,
-      bio_curta, sobre, localizacao, avatar_url, banner_url,
-      disponivel_para_trabalho, website, linkedin_url, github_url,
-      portfolio_url, email, telefone, mostrar_email, mostrar_telefone
+      *,
+      cargos:cargos_experiencia(
+        id,
+        experiencia_id,
+        titulo_cargo,
+        tipo_emprego,
+        inicio,
+        fim,
+        atualmente_trabalhando,
+        descricao,
+        habilidades_usadas,
+        ordem
+      )
     `)
-    .eq("slug", slug)
+    .eq("user_id", userId)
+    .order("ordem");
+
+  if (error) throw error;
+
+  // Ordenacao client-side: cargos por data (mais recente primeiro)
+  const experiencesWithSortedCargos = (data || []).map(exp => ({
+    ...exp,
+    cargos: (exp.cargos || []).sort((a, b) => 
+      new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
+    )
+  }));
+
+  setExperiences(experiencesWithSortedCargos);
+}, [userId]);
+```
+
+**2.3 Funcoes de Validacao de Overlap (COMPLETAS)**
+
+```typescript
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// Auxiliar: verificar se dois periodos se sobrepoem
+function checkPeriodsOverlap(
+  start1: Date,
+  end1: Date | null,
+  start2: Date,
+  end2: Date | null
+): boolean {
+  // Tratar "atualmente trabalhando" como fim em 2099
+  const effectiveEnd1 = end1 || new Date(2099, 11, 31);
+  const effectiveEnd2 = end2 || new Date(2099, 11, 31);
+  
+  // Periodos sobrepoem se: inicio1 <= fim2 E inicio2 <= fim1
+  return start1 <= effectiveEnd2 && start2 <= effectiveEnd1;
+}
+
+// Auxiliar: formatar mes/ano para mensagens
+function formatMonth(date: Date): string {
+  return format(date, "MMM yyyy", { locale: ptBR });
+}
+
+// Funcao principal de validacao
+function validateDatesOverlap(
+  newCargo: { inicio: string; fim: string | null; atualmente: boolean | null },
+  existingCargos: Array<{ inicio: string; fim: string | null; atualmente: boolean | null }>
+): string | null {
+  const newStart = new Date(newCargo.inicio);
+  const newEnd = newCargo.atualmente ? null : (newCargo.fim ? new Date(newCargo.fim) : null);
+
+  for (const existing of existingCargos) {
+    const existingStart = new Date(existing.inicio);
+    const existingEnd = existing.atualmente ? null : (existing.fim ? new Date(existing.fim) : null);
+
+    // Caso especial: dois cargos "atualmente trabalhando"
+    if (newCargo.atualmente && existing.atualmente) {
+      return "Voce ja possui um cargo ativo (Atualmente trabalhando) nesta empresa. " +
+             "Defina uma data de termino para o cargo atual antes de adicionar um novo cargo ativo.";
+    }
+
+    // Verificar sobreposicao de periodos
+    const hasOverlap = checkPeriodsOverlap(newStart, newEnd, existingStart, existingEnd);
+    
+    if (hasOverlap) {
+      const existingPeriod = existing.atualmente 
+        ? `desde ${formatMonth(existingStart)}`
+        : `de ${formatMonth(existingStart)} ate ${formatMonth(existingEnd!)}`;
+      
+      return `Este cargo conflita com um periodo existente (${existingPeriod}). ` +
+             `As datas nao podem se sobrepor. O novo cargo comeca em ${formatMonth(newStart)}.`;
+    }
+  }
+
+  return null; // Sem conflito
+}
+```
+
+**2.4 Funcao addCargo (CORRIGIDA - SEM PASSO C)**
+
+```typescript
+const addCargo = useCallback(async (
+  experienceId: string,
+  cargoData: CargoInsert
+): Promise<void> => {
+  if (!userId) throw new Error("Usuario nao autenticado");
+
+  // 1. Buscar experiencia atual com cargos existentes
+  const { data: experience, error: fetchError } = await supabase
+    .from("experiencia")
+    .select(`
+      *,
+      cargos:cargos_experiencia(
+        id, titulo_cargo, tipo_emprego, inicio, fim, atualmente_trabalhando
+      )
+    `)
+    .eq("id", experienceId)
     .single();
 
-  if (!user) return { user: null, ... };
+  if (fetchError || !experience) {
+    throw new Error("Experiencia nao encontrada");
+  }
 
-  // 2. Buscar projetos em destaque (nao arquivados)
-  const { data: projects } = await supabase
-    .from("projetos")
-    .select(`*, projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))`)
-    .eq("user_id", user.id)
-    .eq("destaque", true)
-    .neq("status", "arquivado")
-    .order("ordem");
+  const existingCargos = experience.cargos || [];
+  const isFirstAdditionalCargo = existingCargos.length === 0;
 
-  // 3. Buscar habilidades com join
-  const { data: skills } = await supabase
-    .from("user_habilidades")
-    .select(`id, nivel, ordem, anos_experiencia, habilidade:habilidades(id, nome, categoria)`)
-    .eq("user_id", user.id)
-    .order("ordem");
+  // 2. Preparar lista de cargos para validacao
+  const cargosParaValidar = isFirstAdditionalCargo
+    ? [{ 
+        inicio: experience.inicio, 
+        fim: experience.fim, 
+        atualmente: experience.atualmente_trabalhando 
+      }]
+    : existingCargos.map(c => ({ 
+        inicio: c.inicio, 
+        fim: c.fim, 
+        atualmente: c.atualmente_trabalhando 
+      }));
 
-  // 4. Buscar experiencias (mais recentes primeiro)
-  const { data: experiences } = await supabase
-    .from("experiencia")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("inicio", { ascending: false });
+  // 3. Validar overlap de datas
+  const overlapError = validateDatesOverlap(
+    { 
+      inicio: cargoData.inicio, 
+      fim: cargoData.fim, 
+      atualmente: cargoData.atualmente_trabalhando 
+    },
+    cargosParaValidar
+  );
 
-  // 5. Buscar educacao
-  const { data: educations } = await supabase
-    .from("educacao")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("ordem");
+  if (overlapError) {
+    throw new Error(overlapError);
+  }
 
-  return { user, projects, skills, experiences, educations };
-};
-```
+  // 4. Se for o PRIMEIRO cargo adicional, migrar cargo original
+  if (isFirstAdditionalCargo) {
+    // PASSO A: Criar registro do cargo ORIGINAL em cargos_experiencia
+    const { error: errorOriginal } = await supabase
+      .from("cargos_experiencia")
+      .insert({
+        experiencia_id: experienceId,
+        titulo_cargo: experience.titulo_cargo,
+        tipo_emprego: experience.tipo_emprego,
+        inicio: experience.inicio,
+        fim: experience.fim,
+        atualmente_trabalhando: experience.atualmente_trabalhando,
+        descricao: experience.descricao,
+        habilidades_usadas: experience.habilidades_usadas,
+        ordem: 0
+      });
 
----
-
-### Componente ProfileHero
-
-**Arquivo:** `src/components/public-profile/ProfileHero.tsx`
-
-**Estrutura visual:**
-```text
-┌────────────────────────────────────────────────────────────┐
-│                                                            │
-│              BANNER (240px desktop / 160px mobile)         │
-│                                                            │
-│  ┌──────────┐                                              │
-│  │          │                                              │
-└──│  AVATAR  │──────────────────────────────────────────────┘
-   │ (160px)  │
-   └──────────┘
-   Nome de Exibicao                            [Compartilhar]
-   Titulo Profissional
-   📍 Localizacao
-   ┌─────────────────────────┐
-   │ ✓ Disponivel p/ trabalho│  (badge verde se true)
-   └─────────────────────────┘
-```
-
-**Implementacao:**
-- Banner: `aspect-[4/1]` no desktop, `aspect-[3/1]` no mobile
-- Se `banner_url` existir: `<img>` com `object-cover`
-- Fallback: gradiente sutil `from-primary/10 to-primary/5`
-- Avatar: posicionamento absoluto com `bottom: -60px` (metade fora)
-- Borda branca grossa: `border-4 border-background`
-- Botao compartilhar: copia `https://matchmaking.games/p/{slug}` e mostra toast
-
----
-
-### Componente ProfileNav (Sticky)
-
-**Arquivo:** `src/components/public-profile/ProfileNav.tsx`
-
-**Comportamento:**
-- `position: sticky; top: 0; z-index: 40`
-- Links: Sobre | Projetos | Skills | Experiencia | Educacao
-- Usa `IntersectionObserver` para destacar secao visivel
-- Scroll suave com `scrollIntoView({ behavior: 'smooth' })`
-- No mobile: `overflow-x-auto` + `scrollbar-hide`
-
-**Visual:**
-```typescript
-<nav className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-  <div className="max-w-4xl mx-auto px-4">
-    <div className="flex gap-6 overflow-x-auto scrollbar-hide py-4">
-      {sections.map(section => (
-        <button
-          key={section.id}
-          onClick={() => scrollTo(section.id)}
-          className={cn(
-            "whitespace-nowrap text-sm font-medium transition-colors",
-            activeSection === section.id
-              ? "text-primary border-b-2 border-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          {section.label}
-        </button>
-      ))}
-    </div>
-  </div>
-</nav>
-```
-
----
-
-### Componente AboutSection
-
-**Arquivo:** `src/components/public-profile/AboutSection.tsx`
-
-**Conteudo:**
-- `bio_curta` em destaque (se existir)
-- Links sociais em linha (icones clicaveis):
-  - Globe (website), LinkedIn, GitHub, Briefcase (portfolio)
-  - Cada link abre em nova aba
-- Contato (condicional):
-  - Email (se `mostrar_email = true`)
-  - Telefone (se `mostrar_telefone = true`)
-
----
-
-### Componente ProjectsSection
-
-**Arquivo:** `src/components/public-profile/ProjectsSection.tsx`
-
-**Grid responsivo:**
-- Desktop: `grid-cols-3`
-- Tablet: `grid-cols-2`
-- Mobile: `grid-cols-1`
-
-**Cada card mostra:**
-- Imagem de capa (16:9, object-cover) ou placeholder
-- Badge de tipo no canto superior
-- Titulo
-- `descricao_curta` (max 2 linhas com `line-clamp-2`)
-- Footer com icones de links: Demo, Video, Codigo (se existirem)
-
-**Estado vazio:**
-```text
-"Nenhum projeto em destaque ainda"
-```
-
----
-
-### Componente SkillsSection
-
-**Arquivo:** `src/components/public-profile/SkillsSection.tsx`
-
-**Agrupamento por categoria:**
-```text
-ENGINES
-┌─────────────────┐ ┌─────────────────┐
-│ Unity     ●●●●○ │ │ Unreal   ●●●○○ │
-│ 5 anos          │ │ 2 anos          │
-└─────────────────┘ └─────────────────┘
-
-LINGUAGENS
-┌─────────────────┐ ┌─────────────────┐
-│ C#        ●●●●○ │ │ Python   ●●○○○ │
-└─────────────────┘ └─────────────────┘
-```
-
-**Mapeamento de nivel para bolinhas:**
-```typescript
-const levelDots: Record<string, number> = {
-  basico: 1,
-  intermediario: 2,
-  avancado: 3,
-  expert: 4,
-};
-```
-
-**Categoria headers:**
-- engine: "Engines"
-- linguagem: "Linguagens"
-- ferramenta: "Ferramentas"
-- soft_skill: "Soft Skills"
-
----
-
-### Componente ExperienceSection
-
-**Arquivo:** `src/components/public-profile/ExperienceSection.tsx`
-
-**Timeline vertical:**
-```text
-│
-├── ● Game Developer
-│     Ubisoft · CLT
-│     Jan 2022 - Atualmente (2 anos)
-│     📍 Sao Paulo, SP · Remoto
-│     Descricao truncada em 4 linhas...
-│     [Ler mais]
-│
-├── ● Game Designer
-│     Indie Studio · PJ
-│     Mar 2020 - Dez 2021 (1 ano e 9 meses)
-│
-```
-
-**Implementacao:**
-- Linha vertical: `border-l-2 border-border ml-4`
-- Ponto: `absolute -left-[9px] w-4 h-4 rounded-full bg-primary`
-- Badges coloridos para tipo de emprego (reutilizar cores do ExperienceCard)
-- Descricao com `line-clamp-4` + "Ler mais" toggle
-
----
-
-### Componente EducationSection
-
-**Arquivo:** `src/components/public-profile/EducationSection.tsx`
-
-**Lista simples (sem timeline):**
-```text
-┌─────────────────────────────────────────────────┐
-│ [Badge Graduacao]                               │
-│ Ciencia da Computacao                           │
-│ Universidade de Sao Paulo                       │
-│ 2015 - 2019 · Concluido                         │
-│ [Link credencial]                               │
-└─────────────────────────────────────────────────┘
-```
-
-**Badges coloridos por tipo** (reutilizar cores do EducationCard)
-
----
-
-### Componente ProfileNotFound
-
-**Arquivo:** `src/components/public-profile/ProfileNotFound.tsx`
-
-**Layout:**
-```text
-┌─────────────────────────────────────────┐
-│                   404                   │
-│                                         │
-│       Perfil nao encontrado             │
-│                                         │
-│   O perfil que voce procura nao existe  │
-│   ou foi removido.                      │
-│                                         │
-│          [Voltar para Home]             │
-└─────────────────────────────────────────┘
-```
-
----
-
-### Pagina PublicProfile (Principal)
-
-**Arquivo:** `src/pages/PublicProfile.tsx`
-
-**Estrutura:**
-```tsx
-export default function PublicProfile() {
-  const { slug } = useParams<{ slug: string }>();
-  const { data, loading, error } = usePublicProfile(slug);
-
-  // SEO: Document title e meta tags
-  useEffect(() => {
-    if (data?.user) {
-      document.title = `${data.user.nome_exibicao || data.user.nome_completo} - ${data.user.titulo_profissional || 'Profissional'} | Matchmaking`;
+    if (errorOriginal) {
+      console.error("Erro ao migrar cargo original:", errorOriginal);
+      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
     }
-  }, [data]);
 
-  if (loading) return <LoadingState />;
-  if (error || !data?.user) return <ProfileNotFound />;
+    // PASSO B: Criar registro do cargo NOVO em cargos_experiencia
+    const { error: errorNovo } = await supabase
+      .from("cargos_experiencia")
+      .insert({
+        experiencia_id: experienceId,
+        titulo_cargo: cargoData.titulo_cargo,
+        tipo_emprego: cargoData.tipo_emprego,
+        inicio: cargoData.inicio,
+        fim: cargoData.fim,
+        atualmente_trabalhando: cargoData.atualmente_trabalhando,
+        descricao: cargoData.descricao,
+        habilidades_usadas: cargoData.habilidades_usadas,
+        ordem: 1
+      });
 
-  const { user, projects, skills, experiences, educations } = data;
+    if (errorNovo) {
+      console.error("Erro ao criar novo cargo:", errorNovo);
+      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
+    }
+
+    // NOTA IMPORTANTE: NAO limpar os campos de cargo em experiencia.
+    // Manter dados duplicados para garantir compatibilidade com codigo existente.
+    // A renderizacao usa: se cargos.length > 0, mostra timeline; senao, mostra experience.titulo_cargo
+  } else {
+    // 5. Se for o SEGUNDO+ cargo, apenas criar em cargos_experiencia
+    const { error } = await supabase
+      .from("cargos_experiencia")
+      .insert({
+        experiencia_id: experienceId,
+        titulo_cargo: cargoData.titulo_cargo,
+        tipo_emprego: cargoData.tipo_emprego,
+        inicio: cargoData.inicio,
+        fim: cargoData.fim,
+        atualmente_trabalhando: cargoData.atualmente_trabalhando,
+        descricao: cargoData.descricao,
+        habilidades_usadas: cargoData.habilidades_usadas,
+        ordem: existingCargos.length // Proxima posicao na ordem
+      });
+
+    if (error) {
+      console.error("Erro ao criar cargo:", error);
+      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
+    }
+  }
+}, [userId]);
+```
+
+**2.5 Retorno Atualizado do Hook**
+
+```typescript
+return {
+  experiences,
+  loading,
+  error,
+  refetch: fetchExperiences,
+  addExperience,
+  updateExperience,
+  deleteExperience,
+  addCargo, // NOVA FUNCAO
+};
+```
+
+---
+
+#### 3. usePublicProfile.ts - Query Expandida
+
+**3.1 Tipo Atualizado**
+
+```typescript
+export interface PublicCargoData {
+  id: string;
+  titulo_cargo: string;
+  tipo_emprego: TipoEmprego;
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  ordem: number | null;
+}
+
+export interface PublicExperienceData {
+  id: string;
+  titulo_cargo: string;
+  empresa: string;
+  tipo_emprego: TipoEmprego;
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  localizacao: string | null;
+  cidade: string | null;
+  estado: string | null;
+  remoto: boolean | null;
+  estudio_id: string | null;
+  cargos: PublicCargoData[]; // NOVO CAMPO
+}
+```
+
+**3.2 Query de Experiencias Expandida**
+
+```typescript
+// Na Promise.all, substituir a query de experiencias:
+supabase
+  .from("experiencia")
+  .select(`
+    id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
+    atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id,
+    cargos:cargos_experiencia(
+      id, titulo_cargo, tipo_emprego, inicio, fim,
+      atualmente_trabalhando, descricao, ordem
+    )
+  `)
+  .eq("user_id", user.id)
+  .order("ordem")
+```
+
+**3.3 Pos-processamento para Ordenar Cargos**
+
+```typescript
+// Apos o Promise.all, ordenar cargos client-side:
+const experiencesWithSortedCargos = (experiencesRes.data || []).map(exp => ({
+  ...exp,
+  cargos: (exp.cargos || []).sort((a, b) => 
+    new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
+  )
+}));
+
+return {
+  user: user as PublicUserData,
+  projects: (projectsRes.data || []) as PublicProjectData[],
+  skills: (skillsRes.data || []) as PublicSkillData[],
+  experiences: experiencesWithSortedCargos as PublicExperienceData[],
+  educations: (educationsRes.data || []) as PublicEducationData[],
+};
+```
+
+---
+
+#### 4. ExperienceModal.tsx - Modo Add-Position
+
+**4.1 Props Atualizadas**
+
+```typescript
+interface ExperienceModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  editingExperience: Experience | null;
+  onSuccess: () => void;
+  // NOVAS PROPS
+  mode?: "create" | "edit" | "add-position";
+  parentExperience?: ExperienceWithCargos | null;
+}
+```
+
+**4.2 Titulo Dinamico**
+
+```typescript
+const getModalTitle = () => {
+  if (mode === "add-position" && parentExperience) {
+    return `Adicionar Cargo - ${parentExperience.empresa}`;
+  }
+  if (editingExperience) {
+    return "Editar Experiencia";
+  }
+  return "Adicionar Experiencia";
+};
+```
+
+**4.3 Pre-preenchimento no useEffect**
+
+```typescript
+useEffect(() => {
+  if (open) {
+    if (mode === "add-position" && parentExperience) {
+      // Modo adicionar cargo: pre-preencher empresa e localizacao
+      form.reset({
+        titulo_cargo: "",  // VAZIO - usuario preenche
+        empresa: parentExperience.empresa,  // PRE-PREENCHIDO
+        tipo_emprego: "clt",  // Default - usuario escolhe
+        estado: parentExperience.estado || "",  // PRE-PREENCHIDO mas EDITAVEL
+        cidade: parentExperience.cidade || "",  // PRE-PREENCHIDO mas EDITAVEL
+        cidade_ibge_id: parentExperience.cidade_ibge_id || 0,
+        remoto: parentExperience.remoto || false,  // PRE-PREENCHIDO mas EDITAVEL
+        inicio: "",  // VAZIO - usuario preenche
+        atualmente_trabalhando: false,
+        fim: "",
+        descricao: "",
+      });
+      
+      // Carregar municipios se estado preenchido e nao remoto
+      if (parentExperience.estado && !parentExperience.remoto) {
+        fetchMunicipios(parentExperience.estado);
+      }
+    } else if (editingExperience) {
+      // Modo edicao - codigo existente
+      // ...
+    } else {
+      // Modo criacao - codigo existente
+      // ...
+    }
+  }
+}, [open, mode, parentExperience, editingExperience, ...]);
+```
+
+**4.4 Campo Empresa Desabilitado**
+
+```tsx
+<FormField
+  control={form.control}
+  name="empresa"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>
+        Estudio <span className="text-destructive">*</span>
+      </FormLabel>
+      <FormControl>
+        <Input 
+          placeholder="Ex: Ubisoft" 
+          {...field} 
+          disabled={mode === "add-position"}
+          className={mode === "add-position" ? "bg-muted cursor-not-allowed" : ""}
+        />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+**4.5 Submit Handler com Modo Add-Position**
+
+```typescript
+const onSubmit = async (data: ExperienceFormData) => {
+  try {
+    setIsSubmitting(true);
+
+    const localizacao = data.remoto ? "Remoto" : `${data.cidade}, ${data.estado}`;
+    const inicioDate = `${data.inicio}-01`;
+    const fimDate = data.fim ? `${data.fim}-01` : null;
+
+    if (mode === "add-position" && parentExperience) {
+      // Modo adicionar cargo
+      await addCargo(parentExperience.id, {
+        titulo_cargo: data.titulo_cargo,
+        tipo_emprego: data.tipo_emprego,
+        inicio: inicioDate,
+        fim: fimDate,
+        atualmente_trabalhando: data.atualmente_trabalhando,
+        descricao: data.descricao || null,
+        habilidades_usadas: null,
+      });
+      
+      toast({
+        title: "Cargo adicionado",
+        description: `Novo cargo "${data.titulo_cargo}" adicionado com sucesso.`,
+      });
+    } else if (isEditing) {
+      // Modo edicao - codigo existente
+      await updateExperience(editingExperience.id, experienceData);
+      toast({ title: "Experiencia atualizada", ... });
+    } else {
+      // Modo criacao - codigo existente
+      await addExperience(experienceData);
+      toast({ title: "Experiencia adicionada", ... });
+    }
+
+    onSuccess();
+    onOpenChange(false);
+  } catch (error) {
+    // Mostrar erro amigavel (mensagens claras da validacao)
+    toast({
+      title: "Erro ao salvar",
+      description: error instanceof Error ? error.message : "Nao foi possivel salvar.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+```
+
+---
+
+#### 5. ExperienceCard.tsx - DropdownMenu + Timeline Interna
+
+**5.1 Props Atualizadas**
+
+```typescript
+interface ExperienceCardProps {
+  experience: ExperienceWithCargos;
+  onEdit: (experience: ExperienceWithCargos) => void;
+  onDelete: (experience: ExperienceWithCargos) => void;
+  onAddCargo: (experience: ExperienceWithCargos) => void; // NOVO
+}
+```
+
+**5.2 Imports Adicionais**
+
+```typescript
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EllipsisVertical, Pencil, Plus, Trash2 } from "lucide-react";
+```
+
+**5.3 Renderizacao Condicional**
+
+```tsx
+export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: ExperienceCardProps) {
+  const hasCargos = experience.cargos && experience.cargos.length > 0;
+
+  // DropdownMenu comum a ambos os layouts
+  const ActionsDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <EllipsisVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(experience)}>
+          <Pencil className="h-4 w-4 mr-2" />
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onAddCargo(experience)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Adicionar cargo
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={() => onDelete(experience)}
+          className="text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  // Layout COM multiplos cargos (timeline interna)
+  if (hasCargos) {
+    return (
+      <Card className="group transition-all hover:border-primary/30">
+        <CardContent className="pt-6">
+          {/* Header: Empresa */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">{experience.empresa}</h3>
+                {experience.localizacao && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {experience.localizacao}
+                    {experience.remoto && " • Remoto"}
+                  </p>
+                )}
+              </div>
+            </div>
+            <ActionsDropdown />
+          </div>
+          
+          {/* Timeline interna de cargos */}
+          <div className="relative ml-5 pl-6 border-l-2 border-border">
+            {experience.cargos.map((cargo) => (
+              <div key={cargo.id} className="relative pb-6 last:pb-0">
+                {/* Dot da timeline */}
+                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
+                
+                {/* Info do cargo */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium">{cargo.titulo_cargo}</h4>
+                    <Badge variant="outline" className={tipoEmpregoStyles[cargo.tipo_emprego]}>
+                      {formatTipoEmprego(cargo.tipo_emprego)}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDateRange(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)}
+                  </p>
+                  {cargo.descricao && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {cargo.descricao}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Layout SEM cargos extras (cargo unico - layout atual)
+  return (
+    <Card className="group transition-all hover:border-primary/30">
+      <CardContent className="pt-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex gap-4 flex-1 min-w-0">
+            <div className="flex-shrink-0 mt-1">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0 space-y-2">
+              <h3 className="font-semibold text-lg text-foreground truncate">
+                {experience.titulo_cargo}
+              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-muted-foreground">{experience.empresa}</span>
+                <Badge variant="outline" className={tipoEmpregoStyles[experience.tipo_emprego]}>
+                  {formatTipoEmprego(experience.tipo_emprego)}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>{formatDateRange(experience.inicio, experience.fim, experience.atualmente_trabalhando)}</span>
+              </div>
+              {/* ... resto do layout existente ... */}
+            </div>
+          </div>
+          <ActionsDropdown />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+#### 6. ExperienceList.tsx - Remover Timeline Global
+
+**6.1 Props Atualizadas**
+
+```typescript
+interface ExperienceListProps {
+  experiences: ExperienceWithCargos[];
+  loading: boolean;
+  onEdit: (experience: ExperienceWithCargos) => void;
+  onDelete: (experience: ExperienceWithCargos) => void;
+  onAddCargo: (experience: ExperienceWithCargos) => void; // NOVO
+}
+```
+
+**6.2 Remover Timeline Global**
+
+```tsx
+// List SEM timeline global (timeline agora e interna ao card quando ha multiplos cargos)
+return (
+  <div className="space-y-4">
+    {experiences.map((experience) => (
+      <ExperienceCard
+        key={experience.id}
+        experience={experience}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onAddCargo={onAddCargo}
+      />
+    ))}
+  </div>
+);
+```
+
+---
+
+#### 7. Experience.tsx - Estado do Modo
+
+**7.1 Novos Estados**
+
+```typescript
+const [modalMode, setModalMode] = useState<"create" | "edit" | "add-position">("create");
+const [parentExperience, setParentExperience] = useState<ExperienceWithCargos | null>(null);
+```
+
+**7.2 Handlers Atualizados**
+
+```typescript
+const handleAdd = () => {
+  setModalMode("create");
+  setEditingExperience(null);
+  setParentExperience(null);
+  setIsModalOpen(true);
+};
+
+const handleEdit = (experience: ExperienceWithCargos) => {
+  setModalMode("edit");
+  setEditingExperience(experience);
+  setParentExperience(null);
+  setIsModalOpen(true);
+};
+
+const handleAddCargo = (experience: ExperienceWithCargos) => {
+  setModalMode("add-position");
+  setEditingExperience(null);
+  setParentExperience(experience);
+  setIsModalOpen(true);
+};
+```
+
+**7.3 Props do Modal**
+
+```tsx
+<ExperienceModal
+  open={isModalOpen}
+  onOpenChange={setIsModalOpen}
+  editingExperience={editingExperience}
+  onSuccess={handleSuccess}
+  mode={modalMode}
+  parentExperience={parentExperience}
+/>
+```
+
+**7.4 Props da Lista**
+
+```tsx
+<ExperienceList
+  experiences={experiences}
+  loading={loading}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onAddCargo={handleAddCargo}
+/>
+```
+
+---
+
+#### 8. ExperienceSection.tsx (Perfil Publico) - Timeline Condicional
+
+**8.1 Componente CargoItem (Novo)**
+
+```tsx
+function CargoItem({ cargo }: { cargo: PublicCargoData }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasLongDescription = cargo.descricao && cargo.descricao.length > 300;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero com banner + avatar + info basica */}
-      <ProfileHero user={user} />
+    <div className="relative pb-6 last:pb-0">
+      {/* Timeline dot */}
+      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
+      
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="font-medium text-foreground">{cargo.titulo_cargo}</h4>
+          <Badge className={`border-0 ${typeColors[cargo.tipo_emprego]}`}>
+            {typeLabels[cargo.tipo_emprego]}
+          </Badge>
+        </div>
+        
+        <p className="text-sm text-muted-foreground">
+          {formatPeriod(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)}
+          {" "}
+          <span className="text-muted-foreground/70">
+            {formatDuration(cargo.inicio, cargo.fim)}
+          </span>
+        </p>
 
-      {/* Navegacao sticky */}
-      <ProfileNav />
+        {cargo.descricao && (
+          <div className="pt-1">
+            <p className={`text-sm text-muted-foreground whitespace-pre-wrap ${
+              !expanded && hasLongDescription ? "line-clamp-3" : ""
+            }`}>
+              {cargo.descricao}
+            </p>
+            {hasLongDescription && (
+              <Button variant="link" size="sm" className="px-0 h-auto text-primary" onClick={() => setExpanded(!expanded)}>
+                {expanded ? "Ler menos" : "Ler mais"}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
 
-      {/* Secoes */}
-      <main className="max-w-4xl mx-auto px-4 pb-16 space-y-16">
-        <AboutSection id="sobre" user={user} />
-        <ProjectsSection id="projetos" projects={projects} />
-        <SkillsSection id="skills" skills={skills} />
-        <ExperienceSection id="experiencia" experiences={experiences} />
-        <EducationSection id="educacao" educations={educations} />
-      </main>
+**8.2 ExperienceItem Atualizado**
+
+```tsx
+function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
+  const hasCargos = experience.cargos && experience.cargos.length > 0;
+
+  // Layout COM multiplos cargos (timeline interna)
+  if (hasCargos) {
+    // Ordenar cargos por data (mais recente primeiro) - ja vem ordenado do hook
+    return (
+      <div className="space-y-4">
+        {/* Header da empresa */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Briefcase className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">{experience.empresa}</h3>
+            {experience.localizacao && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                {experience.localizacao}
+                {experience.remoto && (
+                  <Badge variant="outline" className="text-xs py-0 ml-2">
+                    <Home className="w-3 h-3 mr-1" />
+                    Remoto
+                  </Badge>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Timeline interna de cargos */}
+        <div className="relative ml-5 pl-6 border-l-2 border-border">
+          {experience.cargos.map((cargo) => (
+            <CargoItem key={cargo.id} cargo={cargo} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Layout SEM cargos extras (cargo unico - layout existente)
+  return (
+    <div className="space-y-2">
+      {/* ... manter layout existente com experience.titulo_cargo ... */}
     </div>
   );
 }
@@ -362,144 +909,54 @@ export default function PublicProfile() {
 
 ---
 
-### Modificar App.tsx
-
-Adicionar rota publica (fora de ProtectedRoute):
-
-```tsx
-// Nova importacao
-import PublicProfile from "./pages/PublicProfile";
-
-// Adicionar antes do catch-all "*"
-<Route path="/p/:slug" element={<PublicProfile />} />
-```
-
-**Posicao na lista de rotas:**
-```tsx
-<Route path="/onboarding" element={<Onboarding />} />
-{/* ... rotas do dashboard ... */}
-<Route path="/p/:slug" element={<PublicProfile />} />  {/* NOVA */}
-{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-<Route path="*" element={<NotFound />} />
-```
-
----
-
-### SEO (Meta Tags Dinamicas)
-
-No `PublicProfile.tsx`, usar `useEffect` para atualizar meta tags:
-
-```typescript
-useEffect(() => {
-  if (!data?.user) return;
-
-  const { user } = data;
-  const name = user.nome_exibicao || user.nome_completo;
-  const title = user.titulo_profissional || 'Profissional';
-  const description = user.bio_curta?.slice(0, 160) || `Perfil de ${name}`;
-  const image = user.banner_url || user.avatar_url;
-  const url = `https://matchmaking.games/p/${slug}`;
-
-  // Title
-  document.title = `${name} - ${title} | Matchmaking`;
-
-  // Meta description
-  updateMetaTag('description', description);
-
-  // Open Graph
-  updateMetaTag('og:title', `${name} - ${title}`);
-  updateMetaTag('og:description', description);
-  updateMetaTag('og:image', image || '');
-  updateMetaTag('og:url', url);
-  updateMetaTag('og:type', 'profile');
-
-  // Twitter Card
-  updateMetaTag('twitter:card', 'summary_large_image');
-  updateMetaTag('twitter:title', `${name} - ${title}`);
-  updateMetaTag('twitter:description', description);
-  updateMetaTag('twitter:image', image || '');
-
-  // Canonical
-  updateLinkTag('canonical', url);
-}, [data, slug]);
-
-function updateMetaTag(name: string, content: string) {
-  let tag = document.querySelector(`meta[property="${name}"], meta[name="${name}"]`);
-  if (!tag) {
-    tag = document.createElement('meta');
-    tag.setAttribute(name.startsWith('og:') ? 'property' : 'name', name);
-    document.head.appendChild(tag);
-  }
-  tag.setAttribute('content', content);
-}
-
-function updateLinkTag(rel: string, href: string) {
-  let tag = document.querySelector(`link[rel="${rel}"]`);
-  if (!tag) {
-    tag = document.createElement('link');
-    tag.setAttribute('rel', rel);
-    document.head.appendChild(tag);
-  }
-  tag.setAttribute('href', href);
-}
-```
-
----
-
-### Responsividade do Banner
-
-| Breakpoint | Banner | Avatar |
-|------------|--------|--------|
-| Desktop (>1024px) | 240px altura | 160px |
-| Tablet (768-1023px) | 200px altura | 140px |
-| Mobile (<768px) | 160px altura | 120px |
-
-**Classes Tailwind:**
-```typescript
-// Banner
-className="h-40 md:h-[200px] lg:h-[240px]"
-
-// Avatar
-className="w-[120px] h-[120px] md:w-[140px] md:h-[140px] lg:w-[160px] lg:h-[160px]"
-```
-
----
-
 ### Ordem de Implementacao
 
-| Ordem | Arquivo | Tipo |
-|-------|---------|------|
-| 1 | `src/hooks/usePublicProfile.ts` | Criar |
-| 2 | `src/components/public-profile/ProfileNotFound.tsx` | Criar |
-| 3 | `src/components/public-profile/ProfileHero.tsx` | Criar |
-| 4 | `src/components/public-profile/ProfileNav.tsx` | Criar |
-| 5 | `src/components/public-profile/AboutSection.tsx` | Criar |
-| 6 | `src/components/public-profile/ProjectsSection.tsx` | Criar |
-| 7 | `src/components/public-profile/SkillsSection.tsx` | Criar |
-| 8 | `src/components/public-profile/ExperienceSection.tsx` | Criar |
-| 9 | `src/components/public-profile/EducationSection.tsx` | Criar |
-| 10 | `src/pages/PublicProfile.tsx` | Criar |
-| 11 | `src/App.tsx` | Modificar |
+| Ordem | Arquivo | Complexidade |
+|-------|---------|--------------|
+| 1 | Migracao SQL | Baixa |
+| 2 | `useExperiences.ts` | Alta |
+| 3 | `usePublicProfile.ts` | Media |
+| 4 | `ExperienceCard.tsx` | Media |
+| 5 | `ExperienceList.tsx` | Baixa |
+| 6 | `Experience.tsx` | Baixa |
+| 7 | `ExperienceModal.tsx` | Alta |
+| 8 | `ExperienceSection.tsx` | Media |
 
 ---
 
-### Checklist de Validacoes
+### Resumo da Logica de Renderizacao
 
-| Regra | Implementacao |
-|-------|---------------|
-| NAO mostrar email se `mostrar_email = false` | Condicional em AboutSection |
-| NAO mostrar telefone se `mostrar_telefone = false` | Condicional em AboutSection |
-| NAO exigir autenticacao | Rota fora de ProtectedRoute |
-| NAO mostrar projetos arquivados | Filtro `.neq("status", "arquivado")` |
-| Slug inexistente = 404 | ProfileNotFound se user null |
+| Situacao | O que renderiza |
+|----------|-----------------|
+| `experience.cargos.length === 0` | Layout simples com `experience.titulo_cargo` |
+| `experience.cargos.length > 0` | Header com empresa + timeline interna com cargos |
 
 ---
 
-### Resultado Esperado
+### Mensagens de Erro Amigaveis
 
-| URL | Comportamento |
-|-----|---------------|
-| `/p/joaosilva` | Perfil publico do usuario com slug "joaosilva" |
-| `/p/inexistente` | Tela 404 com "Perfil nao encontrado" |
-| `/dashboard/profile` | Dashboard (nao alterado) |
+| Cenario | Mensagem |
+|---------|----------|
+| Dois cargos "atualmente trabalhando" | "Voce ja possui um cargo ativo (Atualmente trabalhando) nesta empresa. Defina uma data de termino para o cargo atual antes de adicionar um novo cargo ativo." |
+| Datas sobrepostas | "Este cargo conflita com um periodo existente (de Jan 2022 ate Dez 2023). As datas nao podem se sobrepor. O novo cargo comeca em Jun 2023." |
+| Erro generico | "Nao foi possivel adicionar o cargo. Tente novamente." |
+
+---
+
+### Checklist Final
+
+| Item | Status |
+|------|--------|
+| NAO limpar campos de `experiencia` | Corrigido |
+| Manter dados duplicados | Implementado |
+| `validateDatesOverlap` completo | Implementado |
+| `checkPeriodsOverlap` auxiliar | Implementado |
+| `formatMonth` auxiliar | Implementado |
+| `usePublicProfile.ts` com cargos | Implementado |
+| `ExperienceSection.tsx` condicional | Implementado |
+| Ordenacao client-side | Implementado |
+| Mensagens de erro claras | Implementado |
+| DropdownMenu para acoes | Implementado |
+| Timeline global removida | Implementado |
+| Timeline interna condicional | Implementado |
 
