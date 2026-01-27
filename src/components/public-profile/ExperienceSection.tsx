@@ -54,9 +54,9 @@ function CargoItem({ cargo }: { cargo: PublicCargoData }) {
   const [expanded, setExpanded] = useState(false);
   const hasLongDescription = cargo.descricao && cargo.descricao.length > 300;
   return (
-    <div className="relative pb-6 last:pb-0 pl-6">
-      {/* Timeline dot (centrado na linha do wrapper) */}
-      <div className="absolute left-0 top-1.5 h-4 w-4 -translate-x-1/2 rounded-full bg-primary border-2 border-background" />
+    <div className="relative pb-6 last:pb-0">
+      {/* Timeline dot */}
+      <div className="absolute left-0 top-1.5 h-4 w-4 -translate-x-1/2 -translate-x-px rounded-full bg-primary border-2 border-background" />
 
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -126,7 +126,7 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
         </div>
 
         {/* Timeline interna de cargos */}
-        <div className="relative ml-5 border-l-2 border-border overflow-visible">
+        <div className="relative ml-5 pl-6 border-l-2 border-border">
           {experience.cargos.map((cargo) => (
             <CargoItem key={cargo.id} cargo={cargo} />
           ))}
