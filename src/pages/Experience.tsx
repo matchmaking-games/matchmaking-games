@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExperienceList } from "@/components/experience/ExperienceList";
 import { ExperienceModal } from "@/components/experience/ExperienceModal";
+import type { VariantProps } from "class-variance-authority";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,8 +138,10 @@ export default function ExperiencePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-              {isDeleting ? "Excluindo..." : "Excluir"}
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+                {isDeleting ? "Removendo..." : "Remover"}
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

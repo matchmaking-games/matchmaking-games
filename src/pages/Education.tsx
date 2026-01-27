@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useEducations, type Education } from "@/hooks/useEducations";
+import type { VariantProps } from "class-variance-authority";
 import { useToast } from "@/hooks/use-toast";
 
 export default function EducationPage() {
@@ -115,8 +116,10 @@ export default function EducationPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-              {isDeleting ? "Excluindo..." : "Excluir"}
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+                {isDeleting ? "Removendo..." : "Remover"}
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

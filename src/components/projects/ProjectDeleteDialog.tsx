@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import type { VariantProps } from "class-variance-authority";
 
 interface ProjectDeleteDialogProps {
   open: boolean;
@@ -43,8 +44,10 @@ export function ProjectDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? "Excluindo..." : "Excluir"}
+          <AlertDialogAction asChild>
+            <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
