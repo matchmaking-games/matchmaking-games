@@ -138,10 +138,8 @@ export default function ExperiencePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
-                {isDeleting ? "Removendo..." : "Remover"}
-              </Button>
+            <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+              {isDeleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
