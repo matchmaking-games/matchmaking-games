@@ -5,22 +5,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative isolate inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background " +
+    "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
+    "disabled:pointer-events-none disabled:opacity-50 overflow-hidden " +
+    "before:pointer-events-none before:absolute before:inset-0 before:z-[-1] " +
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "relative isolate overflow-hidden bg-transparent text-primary-foreground " +
-          "transition-[filter] duration-150 ease-out hover:brightness-[1.02] hover:saturate-[1.05] hover:drop-shadow-[0_0_8px_rgba(34,228,122,0.18)] " +
-          "before:pointer-events-none before:absolute before:inset-0 before:z-[-1] " +
-          "before:bg-gradient-to-t before:from-[hsl(var(--primary))] before:to-[hsl(var(--primary-accent))]",
+          "bg-transparent text-primary-foreground transition-[filter] duration-150 ease-out " +
+          "before:bg-gradient-to-t before:from-[hsl(var(--primary))] before:to-[hsl(var(--primary-accent))] " +
+          "hover:brightness-[1.02] hover:saturate-[1.05] hover:drop-shadow-[0_0_8px_rgba(34,228,122,0.18)]",
         destructive: "before:hidden bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "before:hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "before:hidden bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "before:hidden hover:bg-accent hover:text-accent-foreground",
         link: "before:hidden text-primary underline-offset-4 hover:underline",
       },
-
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
