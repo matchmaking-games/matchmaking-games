@@ -9,7 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "... before:bg-gradient ...",
+        default:
+          "relative z-0 overflow-hidden text-primary-foreground transition-[filter] duration-150 ease-out hover:brightness-[1.02] hover:saturate-[1.05] hover:drop-shadow-[0_0_8px_rgba(34,228,122,0.18)] " +
+          "before:absolute before:inset-0 before:z-0 before:bg-gradient-to-t before:from-[hsl(var(--primary))] before:to-[hsl(var(--primary-accent))] " +
+          "[&>*]:relative [&>*]:z-10",
+
         destructive:
           "before:hidden hover:before:hidden bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "before:hidden border border-input bg-background hover:bg-accent hover:text-accent-foreground",
