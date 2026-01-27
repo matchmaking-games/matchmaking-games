@@ -56,7 +56,7 @@ function CargoItem({ cargo }: { cargo: PublicCargoData }) {
   return (
     <div className="relative pb-6 last:pb-0">
       {/* Timeline dot */}
-      <div className="absolute -left-[10px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
+      <div className="absolute -left-px top-1.5 h-4 w-4 -translate-x-1/2 rounded-full bg-primary border-2 border-background" />
 
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
