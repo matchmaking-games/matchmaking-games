@@ -15,12 +15,11 @@ const typeLabels: Record<string, string> = {
   estagio: "Estágio",
 };
 const typeColors: Record<string, string> = {
-  clt: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30",
-  pj: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30",
-  freelance: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
-  estagio: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30",
+  clt: "bg-blue-500/10 text-blue-500",
+  pj: "bg-purple-500/10 text-purple-500",
+  freelance: "bg-orange-500/10 text-orange-500",
+  estagio: "bg-green-500/10 text-green-500",
 };
-
 function formatPeriod(inicio: string, fim: string | null, atualmente: boolean | null): string {
   const startDate = new Date(inicio);
   const endDate = fim ? new Date(fim) : new Date();
