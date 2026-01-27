@@ -5,7 +5,6 @@ import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { VariantProps } from "class-variance-authority";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,11 +103,15 @@ export default function Skills() {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-4">Meu Perfil</h1>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+              Meu Perfil
+            </h1>
             <ProfileNavigation />
-
+            
             <div className="flex items-center justify-between mb-6">
-              <p className="text-muted-foreground">Adicione suas habilidades técnicas e soft skills</p>
+              <p className="text-muted-foreground">
+                Adicione suas habilidades técnicas e soft skills
+              </p>
               <Button onClick={handleOpenAddModal}>
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
@@ -133,7 +136,12 @@ export default function Skills() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {skills.map((skill) => (
-                  <SkillCard key={skill.id} skill={skill} onEdit={handleEdit} onDelete={handleDeleteClick} />
+                  <SkillCard
+                    key={skill.id}
+                    skill={skill}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteClick}
+                  />
                 ))}
               </div>
             )}
@@ -159,10 +167,12 @@ export default function Skills() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-                {isDeleting ? "Removendo..." : "Remover"}
-              </Button>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Removendo..." : "Remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
