@@ -28,19 +28,15 @@ const tipoEmpregoStyles: Record<string, string> = {
 };
 
 function CargoTimelineItem({ cargo }: { cargo: CargoExperiencia }) {
-  const dateRange = formatDateRange(
-    cargo.inicio,
-    cargo.fim,
-    cargo.atualmente_trabalhando
-  );
+  const dateRange = formatDateRange(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando);
   const tipoEmpregoLabel = formatTipoEmprego(cargo.tipo_emprego);
   const tipoEmpregoStyle = tipoEmpregoStyles[cargo.tipo_emprego] || tipoEmpregoStyles.clt;
 
   return (
-    <div className="relative pb-6 last:pb-0">
+    <div className="relative pb-6 last:pb-0 pl-6">
       {/* Dot da timeline */}
-      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
-      
+      <div className="absolute left-0 top-1.5 h-4 w-4 -translate-x-1/2 rounded-full bg-primary border-2 border-background" />
+
       {/* Info do cargo */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
@@ -49,13 +45,9 @@ function CargoTimelineItem({ cargo }: { cargo: CargoExperiencia }) {
             {tipoEmpregoLabel}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {dateRange}
-        </p>
+        <p className="text-sm text-muted-foreground">{dateRange}</p>
         {cargo.descricao && (
-          <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">
-            {cargo.descricao}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-line">{cargo.descricao}</p>
         )}
         {cargo.habilidades_usadas && cargo.habilidades_usadas.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
@@ -92,10 +84,7 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
           Adicionar cargo
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={() => onDelete(experience)}
-          className="text-destructive focus:text-destructive"
-        >
+        <DropdownMenuItem onClick={() => onDelete(experience)} className="text-destructive focus:text-destructive">
           <Trash2 className="h-4 w-4 mr-2" />
           Excluir
         </DropdownMenuItem>
@@ -118,7 +107,7 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
                 <h3 className="font-semibold text-lg text-foreground">{experience.empresa}</h3>
                 {(experience.localizacao || experience.remoto) && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> 
+                    <MapPin className="h-3 w-3" />
                     {experience.localizacao}
                     {experience.localizacao && experience.remoto && " • "}
                     {experience.remoto && <span className="text-primary">Remoto</span>}
@@ -128,9 +117,9 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
             </div>
             <ActionsDropdown />
           </div>
-          
+
           {/* Timeline interna de cargos */}
-          <div className="relative ml-5 pl-6 border-l-2 border-border">
+          <div className="relative ml-5 border-l-2 border-border overflow-visible">
             {experience.cargos.map((cargo) => (
               <CargoTimelineItem key={cargo.id} cargo={cargo} />
             ))}
@@ -141,11 +130,7 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
   }
 
   // Layout SEM cargos extras (cargo unico - layout original)
-  const dateRange = formatDateRange(
-    experience.inicio,
-    experience.fim,
-    experience.atualmente_trabalhando
-  );
+  const dateRange = formatDateRange(experience.inicio, experience.fim, experience.atualmente_trabalhando);
 
   const tipoEmpregoLabel = formatTipoEmprego(experience.tipo_emprego);
   const tipoEmpregoStyle = tipoEmpregoStyles[experience.tipo_emprego] || tipoEmpregoStyles.clt;
@@ -166,9 +151,7 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
             {/* Details */}
             <div className="flex-1 min-w-0 space-y-2">
               {/* Title */}
-              <h3 className="font-semibold text-lg text-foreground truncate">
-                {experience.titulo_cargo}
-              </h3>
+              <h3 className="font-semibold text-lg text-foreground truncate">{experience.titulo_cargo}</h3>
 
               {/* Company + Employment Type */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -191,29 +174,21 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
                   <span>
                     {experience.localizacao}
                     {experience.localizacao && experience.remoto && " • "}
-                    {experience.remoto && (
-                      <span className="text-primary">Remoto</span>
-                    )}
+                    {experience.remoto && <span className="text-primary">Remoto</span>}
                   </span>
                 </div>
               )}
 
               {/* Description */}
               {experience.descricao && (
-                <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">
-                  {experience.descricao}
-                </p>
+                <p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">{experience.descricao}</p>
               )}
 
               {/* Skills used */}
               {experience.habilidades_usadas && experience.habilidades_usadas.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {experience.habilidades_usadas.map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant="secondary"
-                      className="text-xs"
-                    >
+                    <Badge key={skill} variant="secondary" className="text-xs">
                       {skill}
                     </Badge>
                   ))}
