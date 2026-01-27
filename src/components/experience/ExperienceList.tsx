@@ -9,6 +9,7 @@ interface ExperienceListProps {
   loading: boolean;
   onEdit: (experience: Experience) => void;
   onDelete: (experience: Experience) => void;
+  onAddPosition: (experience: Experience) => void;
 }
 
 export function ExperienceList({
@@ -16,6 +17,7 @@ export function ExperienceList({
   loading,
   onEdit,
   onDelete,
+  onAddPosition,
 }: ExperienceListProps) {
   // Loading state
   if (loading) {
@@ -46,26 +48,18 @@ export function ExperienceList({
     );
   }
 
-  // List with timeline
+  // List without global timeline (timeline only appears inside cards with multiple cargos)
   return (
-    <div className="relative">
-      {/* Vertical timeline line - desktop only */}
-      <div className="hidden md:block absolute left-4 top-6 bottom-6 w-0.5 bg-border" />
-
-      <div className="space-y-4">
-        {experiences.map((experience) => (
-          <div key={experience.id} className="relative md:pl-10">
-            {/* Timeline dot - desktop only */}
-            <div className="hidden md:block absolute left-2.5 top-8 w-3 h-3 rounded-full bg-primary border-2 border-background z-10" />
-            
-            <ExperienceCard
-              experience={experience}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+      {experiences.map((experience) => (
+        <ExperienceCard
+          key={experience.id}
+          experience={experience}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onAddPosition={onAddPosition}
+        />
+      ))}
     </div>
   );
 }

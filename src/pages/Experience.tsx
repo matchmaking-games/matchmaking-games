@@ -19,21 +19,32 @@ import {
 import { useExperiences, type Experience } from "@/hooks/useExperiences";
 import { useToast } from "@/hooks/use-toast";
 
+type ModalMode = "create" | "edit" | "add-position";
+
 export default function ExperiencePage() {
   const { experiences, loading, error, refetch, deleteExperience } = useExperiences();
   const { toast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [editingExperience, setEditingExperience] = useState<Experience | null>(null);
   const [deletingExperience, setDeletingExperience] = useState<Experience | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAdd = () => {
+    setModalMode("create");
     setEditingExperience(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (experience: Experience) => {
+    setModalMode("edit");
+    setEditingExperience(experience);
+    setIsModalOpen(true);
+  };
+
+  const handleAddPosition = (experience: Experience) => {
+    setModalMode("add-position");
     setEditingExperience(experience);
     setIsModalOpen(true);
   };
@@ -103,6 +114,7 @@ export default function ExperiencePage() {
               loading={loading}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onAddPosition={handleAddPosition}
             />
           </CardContent>
         </Card>
@@ -114,6 +126,7 @@ export default function ExperiencePage() {
         onOpenChange={setIsModalOpen}
         editingExperience={editingExperience}
         onSuccess={handleSuccess}
+        mode={modalMode}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -6,9 +6,22 @@ import type { Database } from "@/integrations/supabase/types";
 type ExperienciaRow = Database["public"]["Tables"]["experiencia"]["Row"];
 type CargoExperienciaRow = Database["public"]["Tables"]["cargos_experiencia"]["Row"];
 
+// Type for individual cargo (position)
+export interface Cargo {
+  id: string;
+  titulo_cargo: string;
+  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
+  inicio: string;
+  fim: string | null;
+  atualmente_trabalhando: boolean | null;
+  descricao: string | null;
+  habilidades_usadas: string[] | null;
+  ordem: number | null;
+}
+
 // Combined type for UI - merges experiencia + cargos_experiencia
 export interface Experience extends ExperienciaRow {
-  // Cargo fields (from cargos_experiencia)
+  // Cargo primário (mais recente) - para compatibilidade
   cargo_id: string | null;
   titulo_cargo: string;
   tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
@@ -17,6 +30,8 @@ export interface Experience extends ExperienciaRow {
   atualmente_trabalhando: boolean | null;
   descricao: string | null;
   habilidades_usadas: string[] | null;
+  // NOVO: Todos os cargos da experiência
+  cargos: Cargo[];
 }
 
 // Insert type for creating new experience with cargo
@@ -55,6 +70,32 @@ export interface ExperienceUpdateData {
   descricao?: string | null;
 }
 
+// Insert type for adding cargo to existing experience
+export interface CargoInsertData {
+  experiencia_id: string;
+  titulo_cargo: string;
+  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
+  inicio: string;
+  fim?: string | null;
+  atualmente_trabalhando?: boolean;
+  descricao?: string | null;
+}
+
+// Helper function to check if dates overlap
+function datesOverlap(
+  start1: string,
+  end1: string | null,
+  start2: string,
+  end2: string | null | undefined
+): boolean {
+  const s1 = new Date(start1);
+  const e1 = end1 ? new Date(end1) : new Date();
+  const s2 = new Date(start2);
+  const e2 = end2 ? new Date(end2) : new Date();
+
+  return s1 <= e2 && s2 <= e1;
+}
+
 interface UseExperiencesReturn {
   experiences: Experience[];
   loading: boolean;
@@ -63,6 +104,7 @@ interface UseExperiencesReturn {
   addExperience: (data: ExperienceInsertData) => Promise<Experience>;
   updateExperience: (id: string, data: ExperienceUpdateData) => Promise<Experience>;
   deleteExperience: (id: string) => Promise<void>;
+  addCargo: (data: CargoInsertData) => Promise<Cargo>;
 }
 
 export function useExperiences(): UseExperiencesReturn {
@@ -107,13 +149,23 @@ export function useExperiences(): UseExperiencesReturn {
       if (fetchError) throw fetchError;
 
       // Transform data to flatten the structure
-      // For now, we take the first cargo per experience (until multi-cargo is implemented)
       const transformedData: Experience[] = (data || []).map((exp) => {
-        const cargos = exp.cargos_experiencia || [];
+        const rawCargos = exp.cargos_experiencia || [];
         // Sort by inicio descending to get the most recent cargo first
-        const sortedCargos = cargos.sort((a, b) => 
-          new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-        );
+        const sortedCargos: Cargo[] = rawCargos
+          .map((c) => ({
+            id: c.id,
+            titulo_cargo: c.titulo_cargo,
+            tipo_emprego: c.tipo_emprego,
+            inicio: c.inicio,
+            fim: c.fim,
+            atualmente_trabalhando: c.atualmente_trabalhando,
+            descricao: c.descricao,
+            habilidades_usadas: c.habilidades_usadas,
+            ordem: c.ordem,
+          }))
+          .sort((a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime());
+        
         const primaryCargo = sortedCargos[0];
 
         return {
@@ -126,11 +178,12 @@ export function useExperiences(): UseExperiencesReturn {
           atualmente_trabalhando: primaryCargo?.atualmente_trabalhando || false,
           descricao: primaryCargo?.descricao || null,
           habilidades_usadas: primaryCargo?.habilidades_usadas || null,
+          cargos: sortedCargos,
         };
       });
 
       // Sort by most recent inicio first
-      transformedData.sort((a, b) => 
+      transformedData.sort((a, b) =>
         new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
       );
 
@@ -224,6 +277,17 @@ export function useExperiences(): UseExperiencesReturn {
       atualmente_trabalhando: newCargo.atualmente_trabalhando,
       descricao: newCargo.descricao,
       habilidades_usadas: newCargo.habilidades_usadas,
+      cargos: [{
+        id: newCargo.id,
+        titulo_cargo: newCargo.titulo_cargo,
+        tipo_emprego: newCargo.tipo_emprego,
+        inicio: newCargo.inicio,
+        fim: newCargo.fim,
+        atualmente_trabalhando: newCargo.atualmente_trabalhando,
+        descricao: newCargo.descricao,
+        habilidades_usadas: newCargo.habilidades_usadas,
+        ordem: newCargo.ordem,
+      }],
     };
   }, [userId]);
 
@@ -305,8 +369,22 @@ export function useExperiences(): UseExperiencesReturn {
       throw new Error("Erro ao buscar experiência atualizada");
     }
 
-    const cargos = updatedExp.cargos_experiencia || [];
-    const primaryCargo = cargos[0];
+    const rawCargos = updatedExp.cargos_experiencia || [];
+    const sortedCargos: Cargo[] = rawCargos
+      .map((c) => ({
+        id: c.id,
+        titulo_cargo: c.titulo_cargo,
+        tipo_emprego: c.tipo_emprego,
+        inicio: c.inicio,
+        fim: c.fim,
+        atualmente_trabalhando: c.atualmente_trabalhando,
+        descricao: c.descricao,
+        habilidades_usadas: c.habilidades_usadas,
+        ordem: c.ordem,
+      }))
+      .sort((a, b) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime());
+    
+    const primaryCargo = sortedCargos[0];
 
     return {
       ...updatedExp,
@@ -318,6 +396,7 @@ export function useExperiences(): UseExperiencesReturn {
       atualmente_trabalhando: primaryCargo?.atualmente_trabalhando || false,
       descricao: primaryCargo?.descricao || null,
       habilidades_usadas: primaryCargo?.habilidades_usadas || null,
+      cargos: sortedCargos,
     };
   }, [userId, experiences]);
 
@@ -339,6 +418,65 @@ export function useExperiences(): UseExperiencesReturn {
     }
   }, [userId]);
 
+  // Add cargo to existing experience
+  const addCargo = useCallback(
+    async (data: CargoInsertData): Promise<Cargo> => {
+      if (!userId) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Find the experience
+      const existingExp = experiences.find((e) => e.id === data.experiencia_id);
+      if (!existingExp) {
+        throw new Error("Experiência não encontrada");
+      }
+
+      // Validate date overlap with existing cargos
+      for (const cargo of existingExp.cargos) {
+        if (datesOverlap(cargo.inicio, cargo.fim, data.inicio, data.fim)) {
+          throw new Error("Período conflita com outro cargo nesta empresa");
+        }
+      }
+
+      // Calculate ordem based on existing cargos
+      const ordem = existingExp.cargos.length;
+
+      // Insert new cargo
+      const { data: newCargo, error: insertError } = await supabase
+        .from("cargos_experiencia")
+        .insert({
+          experiencia_id: data.experiencia_id,
+          titulo_cargo: data.titulo_cargo,
+          tipo_emprego: data.tipo_emprego,
+          inicio: data.inicio,
+          fim: data.fim || null,
+          atualmente_trabalhando: data.atualmente_trabalhando || false,
+          descricao: data.descricao || null,
+          ordem,
+        })
+        .select()
+        .single();
+
+      if (insertError || !newCargo) {
+        console.error("Error adding cargo:", insertError);
+        throw new Error("Erro ao adicionar cargo");
+      }
+
+      return {
+        id: newCargo.id,
+        titulo_cargo: newCargo.titulo_cargo,
+        tipo_emprego: newCargo.tipo_emprego,
+        inicio: newCargo.inicio,
+        fim: newCargo.fim,
+        atualmente_trabalhando: newCargo.atualmente_trabalhando,
+        descricao: newCargo.descricao,
+        habilidades_usadas: newCargo.habilidades_usadas,
+        ordem: newCargo.ordem,
+      };
+    },
+    [userId, experiences]
+  );
+
   return {
     experiences,
     loading,
@@ -347,5 +485,6 @@ export function useExperiences(): UseExperiencesReturn {
     addExperience,
     updateExperience,
     deleteExperience,
+    addCargo,
   };
 }
