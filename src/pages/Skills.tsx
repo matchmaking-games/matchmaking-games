@@ -5,6 +5,7 @@ import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { VariantProps } from "class-variance-authority";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,8 +159,10 @@ export default function Skills() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={isDeleting}>
-              {isDeleting ? "Excluindo..." : "Excluir"}
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+                {isDeleting ? "Removendo..." : "Remover"}
+              </Button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
