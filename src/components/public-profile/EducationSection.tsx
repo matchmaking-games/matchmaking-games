@@ -16,16 +16,16 @@ const typeLabels: Record<string, string> = {
 };
 
 const typeColors: Record<string, string> = {
-  graduacao: "bg-blue-500/10 text-blue-500",
-  pos: "bg-purple-500/10 text-purple-500",
-  tecnico: "bg-orange-500/10 text-orange-500",
-  curso: "bg-green-500/10 text-green-500",
-  certificacao: "bg-yellow-500/10 text-yellow-600",
+  graduacao: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30",
+  pos: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30",
+  tecnico: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30",
+  curso: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
+  certificacao: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30",
 };
 
 function formatPeriod(inicio: string | null, fim: string | null): string {
   if (!inicio && !fim) return "";
-  
+
   const startYear = inicio ? new Date(inicio).getFullYear() : null;
   const endYear = fim ? new Date(fim).getFullYear() : null;
 
@@ -34,28 +34,21 @@ function formatPeriod(inicio: string | null, fim: string | null): string {
   }
   if (startYear) return `${startYear} - Atual`;
   if (endYear) return `${endYear}`;
-  
+
   return "";
 }
 
 export function EducationSection({ educations }: EducationSectionProps) {
   return (
     <section id="educacao" className="scroll-mt-20 space-y-6">
-      <h2 className="text-xl font-display font-semibold text-foreground">
-        Educação
-      </h2>
+      <h2 className="text-xl font-display font-semibold text-foreground">Educação</h2>
 
       {educations.length === 0 ? (
-        <p className="text-muted-foreground italic">
-          Nenhuma formação adicionada ainda.
-        </p>
+        <p className="text-muted-foreground italic">Nenhuma formação adicionada ainda.</p>
       ) : (
         <div className="space-y-4">
           {educations.map((education) => (
-            <Card
-              key={education.id}
-              className="border-border/50 hover:border-border transition-colors"
-            >
+            <Card key={education.id} className="border-border/50 hover:border-border transition-colors">
               <CardContent className="p-4 space-y-3">
                 {/* Type badge */}
                 <Badge className={`border-0 ${typeColors[education.tipo]}`}>
@@ -64,14 +57,8 @@ export function EducationSection({ educations }: EducationSectionProps) {
 
                 {/* Title */}
                 <div>
-                  <h3 className="font-semibold text-foreground">
-                    {education.titulo}
-                  </h3>
-                  {education.area && (
-                    <p className="text-sm text-muted-foreground">
-                      {education.area}
-                    </p>
-                  )}
+                  <h3 className="font-semibold text-foreground">{education.titulo}</h3>
+                  {education.area && <p className="text-sm text-muted-foreground">{education.area}</p>}
                 </div>
 
                 {/* Institution */}
@@ -80,9 +67,7 @@ export function EducationSection({ educations }: EducationSectionProps) {
                 {/* Period and status */}
                 <div className="flex flex-wrap items-center gap-3 text-sm">
                   {(education.inicio || education.fim) && (
-                    <span className="text-muted-foreground">
-                      {formatPeriod(education.inicio, education.fim)}
-                    </span>
+                    <span className="text-muted-foreground">{formatPeriod(education.inicio, education.fim)}</span>
                   )}
                   {education.concluido && (
                     <Badge variant="outline" className="text-xs py-0">
@@ -106,9 +91,7 @@ export function EducationSection({ educations }: EducationSectionProps) {
 
                 {/* Description */}
                 {education.descricao && (
-                  <p className="text-sm text-muted-foreground pt-2 border-t border-border">
-                    {education.descricao}
-                  </p>
+                  <p className="text-sm text-muted-foreground pt-2 border-t border-border">{education.descricao}</p>
                 )}
               </CardContent>
             </Card>
