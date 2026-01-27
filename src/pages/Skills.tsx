@@ -158,8 +158,6 @@ export default function Skills() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            // Adicionar ao import existente import {Button} from "@/components/ui/button"; // Substituir
-            AlertDialogAction
             <AlertDialogAction asChild>
               <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
                 {isDeleting ? "Removendo..." : "Remover"}
