@@ -1,6 +1,6 @@
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { PublicEducationData } from "@/hooks/usePublicProfile";
 
 interface EducationSectionProps {
@@ -40,67 +40,64 @@ function formatPeriod(inicio: string | null, fim: string | null): string {
 
 export function EducationSection({ educations }: EducationSectionProps) {
   return (
-    <Card id="educacao" className="scroll-mt-32">
-      <CardHeader>
-        <h2 className="text-xl font-display font-semibold text-foreground">Educação</h2>
-      </CardHeader>
-      <CardContent>
-        {educations.length === 0 ? (
-          <p className="text-muted-foreground italic">Nenhuma formação adicionada ainda.</p>
-        ) : (
-          <div className="divide-y divide-border">
-            {educations.map((education, index) => (
-              <div key={education.id} className={index === 0 ? "pb-6" : "py-6"}>
-                <div className="space-y-3">
-                  {/* Type badge */}
-                  <Badge className={`border-0 ${typeColors[education.tipo]}`}>
-                    {typeLabels[education.tipo] || education.tipo}
-                  </Badge>
+    <section id="educacao" className="scroll-mt-20 space-y-6">
+      <h2 className="text-xl font-display font-semibold text-foreground">Educação</h2>
 
-                  {/* Title */}
-                  <div>
-                    <h3 className="font-semibold text-foreground">{education.titulo}</h3>
-                    {education.area && <p className="text-sm text-muted-foreground">{education.area}</p>}
-                  </div>
+      {educations.length === 0 ? (
+        <p className="text-muted-foreground italic">Nenhuma formação adicionada ainda.</p>
+      ) : (
+        <div className="space-y-4">
+          {educations.map((education) => (
+            <Card key={education.id} className="border-border/50 hover:border-border transition-colors">
+              <CardContent className="p-4 space-y-3">
+                {/* Type badge */}
+                <Badge className={`border-0 ${typeColors[education.tipo]}`}>
+                  {typeLabels[education.tipo] || education.tipo}
+                </Badge>
 
-                  {/* Institution */}
-                  <p className="text-muted-foreground">{education.instituicao}</p>
+                {/* Title */}
+                <div>
+                  <h3 className="font-semibold text-foreground">{education.titulo}</h3>
+                  {education.area && <p className="text-sm text-muted-foreground">{education.area}</p>}
+                </div>
 
-                  {/* Period and status */}
-                  <div className="flex flex-wrap items-center gap-3 text-sm">
-                    {(education.inicio || education.fim) && (
-                      <span className="text-muted-foreground">{formatPeriod(education.inicio, education.fim)}</span>
-                    )}
-                    {education.concluido && (
-                      <Badge variant="outline" className="text-xs py-0">
-                        Concluído
-                      </Badge>
-                    )}
-                  </div>
+                {/* Institution */}
+                <p className="text-muted-foreground">{education.instituicao}</p>
 
-                  {/* Credential link */}
-                  {education.credencial_url && (
-                    <a
-                      href={education.credencial_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Ver credencial
-                    </a>
+                {/* Period and status */}
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  {(education.inicio || education.fim) && (
+                    <span className="text-muted-foreground">{formatPeriod(education.inicio, education.fim)}</span>
                   )}
-
-                  {/* Description */}
-                  {education.descricao && (
-                    <p className="text-sm text-muted-foreground pt-2 border-t border-border">{education.descricao}</p>
+                  {education.concluido && (
+                    <Badge variant="outline" className="text-xs py-0">
+                      Concluído
+                    </Badge>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+                {/* Credential link */}
+                {education.credencial_url && (
+                  <a
+                    href={education.credencial_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Ver credencial
+                  </a>
+                )}
+
+                {/* Description */}
+                {education.descricao && (
+                  <p className="text-sm text-muted-foreground pt-2 border-t border-border">{education.descricao}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
