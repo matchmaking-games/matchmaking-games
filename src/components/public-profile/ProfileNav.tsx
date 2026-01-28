@@ -28,7 +28,8 @@ export function ProfileNav() {
           });
         },
         {
-          rootMargin: "-20% 0px -70% 0px",
+          // Adjusted for fixed header (64px) + nav height
+          rootMargin: "-80px 0px -80% 0px",
           threshold: 0,
         }
       );
@@ -45,7 +46,8 @@ export function ProfileNav() {
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const offset = 80; // Height of sticky nav
+      // 64px header + 64px nav = 128px offset
+      const offset = 128;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - offset;
 
@@ -57,7 +59,7 @@ export function ProfileNav() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+    <nav className="hidden md:block sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex gap-1 md:gap-2 overflow-x-auto scrollbar-hide py-2">
           {sections.map((section) => (

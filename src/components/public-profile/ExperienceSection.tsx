@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MapPin, Home, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { format, differenceInMonths, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { PublicExperienceData, PublicCargoData } from "@/hooks/usePublicProfile";
@@ -200,18 +201,23 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
 }
 export function ExperienceSection({ experiences }: ExperienceSectionProps) {
   return (
-    <section id="experiencia" className="scroll-mt-20 space-y-6">
-      <h2 className="text-xl font-display font-semibold text-foreground">Experiência Profissional</h2>
-
-      {experiences.length === 0 ? (
-        <p className="text-muted-foreground italic">Nenhuma experiência adicionada ainda.</p>
-      ) : (
-        <div className="space-y-8">
-          {experiences.map((experience) => (
-            <ExperienceItem key={experience.id} experience={experience} />
-          ))}
-        </div>
-      )}
-    </section>
+    <Card id="experiencia" className="scroll-mt-32">
+      <CardHeader>
+        <h2 className="text-xl font-display font-semibold text-foreground">Experiência Profissional</h2>
+      </CardHeader>
+      <CardContent>
+        {experiences.length === 0 ? (
+          <p className="text-muted-foreground italic">Nenhuma experiência adicionada ainda.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {experiences.map((experience, index) => (
+              <div key={experience.id} className={index === 0 ? "pb-6" : "py-6"}>
+                <ExperienceItem experience={experience} />
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

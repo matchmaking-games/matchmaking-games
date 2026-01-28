@@ -1,4 +1,5 @@
 import { Globe, Linkedin, Github, Briefcase, Mail, Phone } from "lucide-react";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import type { PublicUserData } from "@/hooks/usePublicProfile";
 
 interface AboutSectionProps {
@@ -19,12 +20,13 @@ export function AboutSection({ user }: AboutSectionProps) {
   ].filter((link) => link.url);
 
   return (
-    <section id="sobre" className="scroll-mt-20 space-y-6">
-      <h2 className="text-xl font-display font-semibold text-foreground">
-        Sobre
-      </h2>
-
-      <div className="space-y-6">
+    <Card id="sobre" className="scroll-mt-32">
+      <CardHeader>
+        <h2 className="text-xl font-display font-semibold text-foreground">
+          Sobre
+        </h2>
+      </CardHeader>
+      <CardContent className="space-y-6">
         {/* Bio */}
         {user.bio_curta && (
           <p className="text-foreground leading-relaxed">{user.bio_curta}</p>
@@ -90,7 +92,7 @@ export function AboutSection({ user }: AboutSectionProps) {
             Nenhuma informação disponível ainda.
           </p>
         )}
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
