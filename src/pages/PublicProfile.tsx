@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { usePublicProfile } from "@/hooks/usePublicProfile";
+import { Header } from "@/components/layout/Header";
 import { ProfileNotFound } from "@/components/public-profile/ProfileNotFound";
 import { ProfileHero } from "@/components/public-profile/ProfileHero";
 import { ProfileNav } from "@/components/public-profile/ProfileNav";
@@ -35,7 +36,7 @@ function updateLinkTag(rel: string, href: string) {
 
 function LoadingState() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-16">
       {/* Banner skeleton */}
       <Skeleton className="h-40 md:h-[200px] lg:h-[240px] w-full" />
       
@@ -103,31 +104,49 @@ export default function PublicProfile() {
   }, [data, slug]);
 
   if (isLoading) {
-    return <LoadingState />;
+    return (
+      <>
+        <Header />
+        <LoadingState />
+      </>
+    );
   }
 
   if (error || !data?.user) {
-    return <ProfileNotFound />;
+    return (
+      <>
+        <Header />
+        <div className="pt-16">
+          <ProfileNotFound />
+        </div>
+      </>
+    );
   }
 
   const { user, projects, skills, experiences, educations } = data;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero com banner + avatar + info básica */}
-      <ProfileHero user={user} />
+      {/* Header global fixo */}
+      <Header />
 
-      {/* Navegação sticky */}
-      <ProfileNav />
+      {/* Conteudo com pt-16 para compensar header fixo */}
+      <div className="pt-16">
+        {/* Hero com banner + avatar + info básica */}
+        <ProfileHero user={user} />
 
-      {/* Seções */}
-      <main className="max-w-4xl mx-auto px-4 py-12 space-y-16">
-        <AboutSection user={user} />
-        <ProjectsSection projects={projects} />
-        <SkillsSection skills={skills} />
-        <ExperienceSection experiences={experiences} />
-        <EducationSection educations={educations} />
-      </main>
+        {/* Navegação sticky - apenas desktop */}
+        <ProfileNav />
+
+        {/* Seções */}
+        <main className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+          <AboutSection user={user} />
+          <ProjectsSection projects={projects} />
+          <SkillsSection skills={skills} />
+          <ExperienceSection experiences={experiences} />
+          <EducationSection educations={educations} />
+        </main>
+      </div>
     </div>
   );
 }

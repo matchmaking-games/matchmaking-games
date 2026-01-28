@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import type { PublicSkillData } from "@/hooks/usePublicProfile";
 
 interface SkillsSectionProps {
@@ -59,48 +60,51 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
   const sortedCategories = categoryOrder.filter((cat) => groupedSkills[cat]);
 
   return (
-    <section id="skills" className="scroll-mt-20 space-y-6">
-      <h2 className="text-xl font-display font-semibold text-foreground">
-        Habilidades
-      </h2>
-
-      {skills.length === 0 ? (
-        <p className="text-muted-foreground italic">
-          Nenhuma habilidade adicionada ainda.
-        </p>
-      ) : (
-        <div className="space-y-8">
-          {sortedCategories.map((category) => (
-            <div key={category} className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                {categoryLabels[category] || category}
-              </h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {groupedSkills[category].map((skill) => (
-                  <div
-                    key={skill.id}
-                    className="p-3 rounded-lg bg-card border border-border/50 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-foreground text-sm truncate">
-                        {skill.habilidade?.nome}
-                      </span>
-                      <SkillDots level={skill.nivel} />
+    <Card id="skills" className="scroll-mt-32">
+      <CardHeader>
+        <h2 className="text-xl font-display font-semibold text-foreground">
+          Habilidades
+        </h2>
+      </CardHeader>
+      <CardContent>
+        {skills.length === 0 ? (
+          <p className="text-muted-foreground italic">
+            Nenhuma habilidade adicionada ainda.
+          </p>
+        ) : (
+          <div className="space-y-8">
+            {sortedCategories.map((category) => (
+              <div key={category} className="space-y-4">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  {categoryLabels[category] || category}
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {groupedSkills[category].map((skill) => (
+                    <div
+                      key={skill.id}
+                      className="p-3 rounded-lg bg-muted/30 border border-border/50 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground text-sm truncate">
+                          {skill.habilidade?.nome}
+                        </span>
+                        <SkillDots level={skill.nivel} />
+                      </div>
+                      
+                      {skill.anos_experiencia && skill.anos_experiencia > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {skill.anos_experiencia} {skill.anos_experiencia === 1 ? "ano" : "anos"}
+                        </p>
+                      )}
                     </div>
-                    
-                    {skill.anos_experiencia && skill.anos_experiencia > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        {skill.anos_experiencia} {skill.anos_experiencia === 1 ? "ano" : "anos"}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
