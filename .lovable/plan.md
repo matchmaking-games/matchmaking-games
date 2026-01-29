@@ -1,21 +1,24 @@
 
 
-## Plano: Pagina de Listagem de Vagas (/jobs)
+## Plano Atualizado: Filtros e Busca na Pagina de Vagas (/jobs)
 
 ### Visao Geral
 
-Criar uma pagina publica para listar todas as vagas ativas da plataforma. A pagina tera uma sidebar com filtros visuais (nao funcionais nesta fase) e uma area principal com cards de vagas. Vagas pagas (tipo_publicacao = 'destaque') aparecem no topo com destaque visual.
+Adicionar funcionalidade completa de filtros e busca por texto na pagina de listagem de vagas. Os filtros serao sincronizados com a URL (query params) permitindo compartilhar links filtrados. A busca por texto tera debounce de 500ms.
 
 ---
 
-### Correcoes Incorporadas ao Plano Original
+### Estado Atual do Codigo
 
-| Correcao | Status |
-|----------|--------|
-| tipo_funcao incluido na query | Incorporado |
-| Mostrar TODAS habilidades (nao so obrigatorias) | Incorporado |
-| Sidebar sticky apenas no desktop (lg:sticky lg:top-24) | Incorporado |
-| Sidebar expandida por padrao no mobile | Incorporado |
+| Arquivo | Status |
+|---------|--------|
+| `src/hooks/useAvailableSkills.ts` | Ja existe e funciona |
+| `src/components/jobs/JobCardSkeleton.tsx` | Ja existe com JobsSkeletonGrid |
+| `src/hooks/useJobs.ts` | Existe, precisa aceitar filtros |
+| `src/components/jobs/JobsSidebar.tsx` | Existe, filtros estao disabled |
+| `src/pages/Jobs.tsx` | Existe, precisa de campo de busca |
+| `src/hooks/useDebounce.ts` | Nao existe, precisa criar |
+| `src/hooks/useJobFilters.ts` | Nao existe, precisa criar |
 
 ---
 
@@ -23,119 +26,167 @@ Criar uma pagina publica para listar todas as vagas ativas da plataforma. A pagi
 
 | Acao | Arquivo | Descricao |
 |------|---------|-----------|
-| Modificar | `src/lib/formatters.ts` | Adicionar formatadores para vagas |
-| Criar | `src/hooks/useJobs.ts` | Hook para buscar vagas com relacionamentos |
-| Criar | `src/components/jobs/JobCardSkeleton.tsx` | Skeleton para loading state |
-| Criar | `src/components/jobs/JobCard.tsx` | Card individual de vaga |
-| Criar | `src/components/jobs/JobsSidebar.tsx` | Sidebar com filtros visuais |
-| Criar | `src/pages/Jobs.tsx` | Pagina principal de listagem |
-| Modificar | `src/App.tsx` | Adicionar rota /jobs |
-| Modificar | `src/components/layout/Header.tsx` | Atualizar link de /vagas para /jobs |
+| Criar | `src/hooks/useDebounce.ts` | Hook reutilizavel para debounce |
+| Criar | `src/hooks/useJobFilters.ts` | Hook para gerenciar filtros via URL |
+| Modificar | `src/hooks/useJobs.ts` | Adicionar parametros de filtro na query |
+| Modificar | `src/components/jobs/JobsSidebar.tsx` | Ativar filtros + multi-select de habilidades |
+| Modificar | `src/pages/Jobs.tsx` | Campo de busca + contador de resultados |
 
 ---
 
 ### Secao Tecnica
 
-#### 1. Formatadores (src/lib/formatters.ts)
+#### 1. Hook useDebounce.ts (Novo)
 
-Adicionar ao arquivo existente:
+Hook reutilizavel para aplicar debounce em valores:
 
 ```typescript
-/**
- * Converts job level enum to readable text
- * iniciante → "Iniciante", junior → "Junior", etc.
- */
-export function formatNivelVaga(nivel: string): string {
-  const map: Record<string, string> = {
-    iniciante: "Iniciante",
-    junior: "Junior",
-    pleno: "Pleno",
-    senior: "Senior",
-    lead: "Lead",
-  };
-  return map[nivel] || nivel;
-}
+import { useState, useEffect } from "react";
 
-/**
- * Converts contract type enum to readable text
- * clt → "CLT", pj → "PJ", freelance → "Freelance", estagio → "Estagio"
- */
-export function formatTipoContrato(tipo: string): string {
-  const map: Record<string, string> = {
-    clt: "CLT",
-    pj: "PJ",
-    freelance: "Freelance",
-    estagio: "Estagio",
-  };
-  return map[tipo] || tipo;
-}
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
-/**
- * Converts work model enum to readable text
- * presencial → "Presencial", hibrido → "Hibrido", remoto → "Remoto"
- */
-export function formatTipoTrabalho(tipo: string): string {
-  const map: Record<string, string> = {
-    presencial: "Presencial",
-    hibrido: "Hibrido",
-    remoto: "Remoto",
-  };
-  return map[tipo] || tipo;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 ```
 
 ---
 
-#### 2. Hook useJobs.ts
+#### 2. Hook useJobFilters.ts (Novo)
+
+Gerencia estado dos filtros sincronizado com URL query params:
+
+```typescript
+import { useSearchParams } from "react-router-dom";
+import { useMemo, useCallback } from "react";
+
+export interface JobFilters {
+  nivel: string | null;
+  tipoContrato: string | null;
+  modeloTrabalho: string | null;
+  localizacao: string | null;
+  habilidades: string[];
+  searchText: string | null;
+}
+
+export function useJobFilters() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const filters: JobFilters = useMemo(() => ({
+    nivel: searchParams.get("nivel"),
+    tipoContrato: searchParams.get("contrato"),
+    modeloTrabalho: searchParams.get("modelo"),
+    localizacao: searchParams.get("local"),
+    habilidades: searchParams.get("skills")?.split(",").filter(Boolean) || [],
+    searchText: searchParams.get("q"),
+  }), [searchParams]);
+
+  const setFilter = useCallback((key: string, value: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === null || value === "") {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setHabilidades = useCallback((ids: string[]) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (ids.length === 0) {
+        next.delete("skills");
+      } else {
+        next.set("skills", ids.join(","));
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.nivel) count++;
+    if (filters.tipoContrato) count++;
+    if (filters.modeloTrabalho) count++;
+    if (filters.localizacao) count++;
+    if (filters.habilidades.length > 0) count++;
+    if (filters.searchText) count++;
+    return count;
+  }, [filters]);
+
+  return {
+    filters,
+    setFilter,
+    setHabilidades,
+    clearAllFilters,
+    activeFilterCount,
+    hasActiveFilters: activeFilterCount > 0,
+  };
+}
+```
+
+---
+
+#### 3. Modificar useJobs.ts
+
+Atualizar para aceitar parametros de filtro. **Inclui correcoes dos Problemas 3 e 4:**
 
 ```typescript
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
-type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
-type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
-type TipoTrabalho = Database["public"]["Enums"]["tipo_trabalho"];
-type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
-type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
+// ... tipos existentes mantidos ...
 
-export interface VagaHabilidadeData {
-  id: string;
-  obrigatoria: boolean | null;
-  habilidade: {
-    id: string;
-    nome: string;
-    categoria: CategoriaHabilidade;
-  } | null;
+export interface JobFiltersParams {
+  nivel?: string | null;
+  tipoContrato?: string | null;
+  modeloTrabalho?: string | null;
+  localizacao?: string | null;
+  habilidades?: string[];
+  searchText?: string | null;
 }
 
-export interface VagaEstudioData {
-  nome: string;
-  slug: string;
-  logo_url: string | null;
-  localizacao: string | null;
-}
-
-export interface VagaListItem {
-  id: string;
-  titulo: string;
-  slug: string;
-  nivel: NivelVaga;
-  remoto: TipoTrabalho;
-  tipo_contrato: TipoContrato;
-  tipo_publicacao: TipoPublicacaoVaga | null;
-  tipo_funcao: string[];  // IMPORTANTE: incluido para exibir tipo de funcao
-  localizacao: string | null;
-  criada_em: string | null;
-  estudio: VagaEstudioData | null;
-  vaga_habilidades: VagaHabilidadeData[];
-}
-
-async function fetchJobs(): Promise<VagaListItem[]> {
+async function fetchJobs(filters: JobFiltersParams): Promise<VagaListItem[]> {
   const now = new Date().toISOString();
 
-  // IMPORTANTE: tipo_funcao esta incluido para exibir o tipo de funcao da vaga
-  const { data, error } = await supabase
+  // PROBLEMA 3 CORRIGIDO: Usar optional chaining para evitar edge case de array vazio
+  // filters.habilidades?.length retorna undefined se null/undefined, 0 se [], N se tem IDs
+  let vagaIdsWithSkills: string[] | null = null;
+  
+  if (filters.habilidades?.length) {
+    const { data: vagaHabilidades, error: skillsError } = await supabase
+      .from("vaga_habilidades")
+      .select("vaga_id")
+      .in("habilidade_id", filters.habilidades);
+    
+    if (skillsError) {
+      console.error("Error fetching vaga_habilidades:", skillsError);
+      throw new Error("Erro ao filtrar por habilidades.");
+    }
+    
+    vagaIdsWithSkills = [...new Set(vagaHabilidades?.map(vh => vh.vaga_id) || [])];
+    
+    if (vagaIdsWithSkills.length === 0) {
+      return [];
+    }
+  }
+
+  let query = supabase
     .from("vagas")
     .select(`
       id,
@@ -156,9 +207,46 @@ async function fetchJobs(): Promise<VagaListItem[]> {
       )
     `)
     .eq("ativa", true)
-    .gt("expira_em", now)
+    .gt("expira_em", now);
+
+  if (filters.nivel) {
+    query = query.eq("nivel", filters.nivel);
+  }
+  
+  if (filters.tipoContrato) {
+    query = query.eq("tipo_contrato", filters.tipoContrato);
+  }
+  
+  if (filters.modeloTrabalho) {
+    query = query.eq("remoto", filters.modeloTrabalho);
+  }
+  
+  if (filters.localizacao) {
+    query = query.ilike("localizacao", `%${filters.localizacao}%`);
+  }
+  
+  if (vagaIdsWithSkills) {
+    query = query.in("id", vagaIdsWithSkills);
+  }
+  
+  // PROBLEMA 4: Comentario de performance para busca por texto
+  // PERFORMANCE: Busca por texto usando .ilike() faz sequential scan.
+  // Para MVP (<500 vagas) e aceitavel (~50-100ms com debounce de 500ms).
+  // 
+  // Se queries ficarem lentas (>500ms) no futuro:
+  // 1. Adicionar indice GIN full-text search
+  // 2. Ou limitar busca apenas ao campo 'titulo'
+  // 3. Ou considerar Algolia quando passar de 5000 vagas
+  if (filters.searchText) {
+    const searchTerm = `%${filters.searchText}%`;
+    query = query.or(`titulo.ilike.${searchTerm},descricao.ilike.${searchTerm}`);
+  }
+
+  query = query
     .order("tipo_publicacao", { ascending: false })
     .order("criada_em", { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching jobs:", error);
@@ -168,11 +256,11 @@ async function fetchJobs(): Promise<VagaListItem[]> {
   return (data || []) as VagaListItem[];
 }
 
-export function useJobs() {
+export function useJobs(filters: JobFiltersParams = {}) {
   return useQuery({
-    queryKey: ["jobs"],
-    queryFn: fetchJobs,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryKey: ["jobs", filters],
+    queryFn: () => fetchJobs(filters),
+    staleTime: 1000 * 60 * 5,
     retry: 2,
   });
 }
@@ -180,210 +268,101 @@ export function useJobs() {
 
 ---
 
-#### 3. Componente JobCardSkeleton.tsx
+#### 4. Modificar JobsSidebar.tsx
+
+Transformar filtros visuais em funcionais. Usar hook `useAvailableSkills` que ja existe:
 
 ```typescript
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-
-export function JobCardSkeleton() {
-  return (
-    <Card className="p-4">
-      <div className="flex gap-4">
-        <Skeleton className="w-12 h-12 rounded-lg flex-shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <Skeleton className="h-5 w-16" />
-          </div>
-          <Skeleton className="h-5 w-48" />
-          <div className="flex gap-2">
-            <Skeleton className="h-5 w-12" />
-            <Skeleton className="h-5 w-14" />
-            <Skeleton className="h-5 w-16" />
-          </div>
-          <div className="flex gap-1.5">
-            <Skeleton className="h-5 w-14" />
-            <Skeleton className="h-5 w-10" />
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-5 w-12" />
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-export function JobsSkeletonGrid() {
-  return (
-    <div className="grid gap-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <JobCardSkeleton key={i} />
-      ))}
-    </div>
-  );
-}
-```
-
----
-
-#### 4. Componente JobCard.tsx
-
-```typescript
-import { Sparkles, MapPin } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
-import { formatNivelVaga, formatTipoContrato, formatTipoTrabalho } from "@/lib/formatters";
-import { VagaListItem } from "@/hooks/useJobs";
-
-interface JobCardProps {
-  job: VagaListItem;
-}
-
-export function JobCard({ job }: JobCardProps) {
-  const isDestaque = job.tipo_publicacao === "destaque";
-
-  // Mostrar TODAS as habilidades (obrigatorias + desejaveis)
-  // NAO filtrar apenas obrigatorias
-  const allSkills = job.vaga_habilidades
-    .filter((vh) => vh.habilidade !== null)
-    .map((vh) => vh.habilidade!);
-
-  const visibleSkills = allSkills.slice(0, 5);
-  const extraCount = allSkills.length - 5;
-
-  const studioName = job.estudio?.nome || "Estudio";
-  const studioLocation = job.estudio?.localizacao || job.localizacao;
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-  };
-
-  return (
-    <a
-      href={`/jobs/${job.slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block"
-    >
-      <Card
-        className={cn(
-          "p-4 cursor-pointer transition-all duration-200",
-          isDestaque
-            ? "bg-muted/50 border-border hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,228,122,0.15)]"
-            : "bg-card hover:border-border/80 hover:bg-muted/30"
-        )}
-      >
-        <div className="flex gap-4">
-          {/* Studio Logo 48x48 */}
-          <Avatar className="w-12 h-12 rounded-lg flex-shrink-0">
-            <AvatarImage src={job.estudio?.logo_url || undefined} alt={studioName} />
-            <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-sm">
-              {getInitials(studioName)}
-            </AvatarFallback>
-          </Avatar>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Header: Studio name + Destaque badge */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <span className="font-medium text-foreground truncate">
-                  {studioName}
-                </span>
-                {studioLocation && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{studioLocation}</span>
-                  </p>
-                )}
-              </div>
-              {isDestaque && (
-                <Badge className="bg-primary/10 text-primary border-0 flex-shrink-0">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Destaque
-                </Badge>
-              )}
-            </div>
-
-            {/* Job Title */}
-            <h3 className="font-semibold text-lg text-foreground leading-tight">
-              {job.titulo}
-            </h3>
-
-            {/* Badges: Contract, Level, Work Model */}
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="text-xs">
-                {formatTipoContrato(job.tipo_contrato)}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {formatNivelVaga(job.nivel)}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {formatTipoTrabalho(job.remoto)}
-              </Badge>
-            </div>
-
-            {/* Skills - mostra ate 5 + badge "+X" para restantes */}
-            {allSkills.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {visibleSkills.map((skill, index) => (
-                  <Badge
-                    key={skill.id || index}
-                    variant="secondary"
-                    className="text-xs bg-muted/80"
-                  >
-                    {skill.nome}
-                  </Badge>
-                ))}
-                {extraCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="text-xs bg-muted text-muted-foreground"
-                  >
-                    +{extraCount}
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-    </a>
-  );
-}
-```
-
----
-
-#### 5. Componente JobsSidebar.tsx
-
-```typescript
+import { X, ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useAvailableSkills, Habilidade } from "@/hooks/useAvailableSkills";
+import { JobFilters } from "@/hooks/useJobFilters";
 
-export function JobsSidebar() {
+interface JobsSidebarProps {
+  filters: JobFilters;
+  onFilterChange: (key: string, value: string | null) => void;
+  onHabilidadesChange: (ids: string[]) => void;
+  onClearAll: () => void;
+  activeFilterCount: number;
+}
+
+function groupSkillsByCategory(skills: Habilidade[]) {
+  return {
+    engine: skills.filter(s => s.categoria === "engine"),
+    linguagem: skills.filter(s => s.categoria === "linguagem"),
+    ferramenta: skills.filter(s => s.categoria === "ferramenta"),
+    soft_skill: skills.filter(s => s.categoria === "soft_skill"),
+  };
+}
+
+export function JobsSidebar({
+  filters,
+  onFilterChange,
+  onHabilidadesChange,
+  onClearAll,
+  activeFilterCount,
+}: JobsSidebarProps) {
+  const { availableSkills, loading: loadingSkills } = useAvailableSkills();
+  const groupedSkills = groupSkillsByCategory(availableSkills);
+
+  const handleSkillToggle = (skillId: string, checked: boolean) => {
+    const current = filters.habilidades || [];
+    const next = checked
+      ? [...current, skillId]
+      : current.filter(id => id !== skillId);
+    onHabilidadesChange(next);
+  };
+
+  const removeSkill = (skillId: string) => {
+    const next = (filters.habilidades || []).filter(id => id !== skillId);
+    onHabilidadesChange(next);
+  };
+
+  const selectedSkillNames = (filters.habilidades || [])
+    .map(id => availableSkills.find(s => s.id === id))
+    .filter(Boolean) as Habilidade[];
+
   return (
-    // CORRECAO: sticky apenas no desktop (lg:sticky lg:top-24)
-    // No mobile, sidebar fica estatica e expandida por padrao
     <Card className="p-4 space-y-6 lg:sticky lg:top-24">
-      <h2 className="font-semibold text-lg">Filtros</h2>
+      {/* Header com contador */}
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-lg">Filtros</h2>
+        {activeFilterCount > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {activeFilterCount} {activeFilterCount === 1 ? "ativo" : "ativos"}
+          </Badge>
+        )}
+      </div>
 
-      {/* Nivel */}
+      {/* Nivel - AGORA FUNCIONAL */}
       <div className="space-y-2">
         <Label className="text-sm">Nivel</Label>
-        <Select disabled>
+        <Select
+          value={filters.nivel || ""}
+          onValueChange={(v) => onFilterChange("nivel", v || null)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Todos os niveis" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">Todos os niveis</SelectItem>
             <SelectItem value="iniciante">Iniciante</SelectItem>
             <SelectItem value="junior">Junior</SelectItem>
             <SelectItem value="pleno">Pleno</SelectItem>
@@ -393,14 +372,18 @@ export function JobsSidebar() {
         </Select>
       </div>
 
-      {/* Tipo de Contrato */}
+      {/* Tipo de Contrato - AGORA FUNCIONAL */}
       <div className="space-y-2">
         <Label className="text-sm">Tipo de Contrato</Label>
-        <Select disabled>
+        <Select
+          value={filters.tipoContrato || ""}
+          onValueChange={(v) => onFilterChange("contrato", v || null)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Todos os tipos" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">Todos os tipos</SelectItem>
             <SelectItem value="clt">CLT</SelectItem>
             <SelectItem value="pj">PJ</SelectItem>
             <SelectItem value="freelance">Freelance</SelectItem>
@@ -409,14 +392,18 @@ export function JobsSidebar() {
         </Select>
       </div>
 
-      {/* Modelo de Trabalho */}
+      {/* Modelo de Trabalho - AGORA FUNCIONAL */}
       <div className="space-y-2">
         <Label className="text-sm">Modelo de Trabalho</Label>
-        <Select disabled>
+        <Select
+          value={filters.modeloTrabalho || ""}
+          onValueChange={(v) => onFilterChange("modelo", v || null)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Todos os modelos" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">Todos os modelos</SelectItem>
             <SelectItem value="presencial">Presencial</SelectItem>
             <SelectItem value="hibrido">Hibrido</SelectItem>
             <SelectItem value="remoto">Remoto</SelectItem>
@@ -424,81 +411,180 @@ export function JobsSidebar() {
         </Select>
       </div>
 
-      {/* Localizacao */}
+      {/* Localizacao - AGORA FUNCIONAL */}
       <div className="space-y-2">
         <Label className="text-sm">Localizacao</Label>
-        <Input placeholder="Ex: Sao Paulo" disabled />
+        <Input
+          placeholder="Ex: Sao Paulo"
+          value={filters.localizacao || ""}
+          onChange={(e) => onFilterChange("local", e.target.value || null)}
+        />
       </div>
 
-      {/* Habilidades por categoria */}
-      <div className="space-y-4">
+      {/* Habilidades com Collapsible por categoria */}
+      <div className="space-y-3">
         <Label className="text-sm">Habilidades</Label>
-        <div className="space-y-3">
-          {/* Engines */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Engines</span>
-            <Select disabled>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-            </Select>
+        
+        {/* Badges das habilidades selecionadas */}
+        {selectedSkillNames.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pb-2">
+            {selectedSkillNames.map((skill) => (
+              <Badge key={skill.id} variant="secondary" className="text-xs gap-1 pr-1">
+                {skill.nome}
+                <button
+                  type="button"
+                  onClick={() => removeSkill(skill.id)}
+                  className="ml-1 hover:bg-muted rounded-full p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            ))}
           </div>
-          {/* Linguagens */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Linguagens</span>
-            <Select disabled>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-            </Select>
+        )}
+
+        {loadingSkills ? (
+          <p className="text-xs text-muted-foreground">Carregando...</p>
+        ) : (
+          <div className="space-y-2">
+            <SkillCategoryCollapsible
+              label="Engines"
+              skills={groupedSkills.engine}
+              selectedIds={filters.habilidades || []}
+              onToggle={handleSkillToggle}
+            />
+            <SkillCategoryCollapsible
+              label="Linguagens"
+              skills={groupedSkills.linguagem}
+              selectedIds={filters.habilidades || []}
+              onToggle={handleSkillToggle}
+            />
+            <SkillCategoryCollapsible
+              label="Ferramentas"
+              skills={groupedSkills.ferramenta}
+              selectedIds={filters.habilidades || []}
+              onToggle={handleSkillToggle}
+            />
+            <SkillCategoryCollapsible
+              label="Soft Skills"
+              skills={groupedSkills.soft_skill}
+              selectedIds={filters.habilidades || []}
+              onToggle={handleSkillToggle}
+            />
           </div>
-          {/* Ferramentas */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Ferramentas</span>
-            <Select disabled>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-            </Select>
-          </div>
-          {/* Soft Skills */}
-          <div className="space-y-1.5">
-            <span className="text-xs text-muted-foreground">Soft Skills</span>
-            <Select disabled>
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Selecionar..." />
-              </SelectTrigger>
-            </Select>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Nota visual */}
-      <p className="text-xs text-muted-foreground italic pt-2 border-t border-border">
-        Filtros em breve disponiveis
-      </p>
+      {/* Botao Limpar Filtros */}
+      {activeFilterCount > 0 && (
+        <Button variant="outline" className="w-full" onClick={onClearAll}>
+          <X className="w-4 h-4 mr-2" />
+          Limpar filtros
+        </Button>
+      )}
     </Card>
+  );
+}
+
+function SkillCategoryCollapsible({
+  label,
+  skills,
+  selectedIds,
+  onToggle,
+}: {
+  label: string;
+  skills: Habilidade[];
+  selectedIds: string[];
+  onToggle: (id: string, checked: boolean) => void;
+}) {
+  const selectedCount = skills.filter(s => selectedIds.includes(s.id)).length;
+
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm text-left hover:bg-muted/50 rounded px-2 -mx-2">
+        <span className="text-muted-foreground">{label}</span>
+        <div className="flex items-center gap-2">
+          {selectedCount > 0 && (
+            <Badge variant="secondary" className="text-xs h-5 px-1.5">
+              {selectedCount}
+            </Badge>
+          )}
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 pt-2 pb-1">
+        {skills.map((skill) => (
+          <label
+            key={skill.id}
+            className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/30 rounded px-2 py-1 -mx-2"
+          >
+            <Checkbox
+              checked={selectedIds.includes(skill.id)}
+              onCheckedChange={(checked) => onToggle(skill.id, !!checked)}
+            />
+            <span>{skill.nome}</span>
+          </label>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 ```
 
 ---
 
-#### 6. Pagina Jobs.tsx
+#### 5. Modificar Jobs.tsx
+
+Adicionar campo de busca, integrar filtros e mostrar contador de resultados:
 
 ```typescript
-import { Briefcase } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Briefcase, Search, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { Input } from "@/components/ui/input";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobsSidebar } from "@/components/jobs/JobsSidebar";
 import { JobsSkeletonGrid } from "@/components/jobs/JobCardSkeleton";
 import { useJobs } from "@/hooks/useJobs";
+import { useJobFilters } from "@/hooks/useJobFilters";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 export default function Jobs() {
-  const { data: jobs, isLoading, error } = useJobs();
   const { toast } = useToast();
+  const {
+    filters,
+    setFilter,
+    setHabilidades,
+    clearAllFilters,
+    activeFilterCount,
+    hasActiveFilters,
+  } = useJobFilters();
+
+  // Estado local para input de busca (antes do debounce)
+  const [searchInput, setSearchInput] = useState(filters.searchText || "");
+  
+  // Debounce do texto de busca (500ms)
+  const debouncedSearch = useDebounce(searchInput, 500);
+
+  // Sincronizar debounced search com URL
+  useEffect(() => {
+    if (debouncedSearch !== filters.searchText) {
+      setFilter("q", debouncedSearch || null);
+    }
+  }, [debouncedSearch, filters.searchText, setFilter]);
+
+  // Preparar filtros para a query
+  const queryFilters = {
+    nivel: filters.nivel,
+    tipoContrato: filters.tipoContrato,
+    modeloTrabalho: filters.modeloTrabalho,
+    localizacao: filters.localizacao,
+    habilidades: filters.habilidades,
+    searchText: debouncedSearch,
+  };
+
+  const { data: jobs, isLoading, error } = useJobs(queryFilters);
 
   useEffect(() => {
     if (error) {
@@ -509,6 +595,18 @@ export default function Jobs() {
       });
     }
   }, [error, toast]);
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setFilter("q", null);
+  };
+
+  const handleClearAll = () => {
+    setSearchInput("");
+    clearAllFilters();
+  };
+
+  const resultCount = jobs?.length || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -530,17 +628,56 @@ export default function Jobs() {
         {/* Content with Sidebar */}
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar - Filters (expandida por padrao no mobile) */}
+            {/* Sidebar - Filters */}
             <aside className="w-full lg:w-64 flex-shrink-0">
-              <JobsSidebar />
+              <JobsSidebar
+                filters={filters}
+                onFilterChange={setFilter}
+                onHabilidadesChange={setHabilidades}
+                onClearAll={handleClearAll}
+                activeFilterCount={activeFilterCount}
+              />
             </aside>
 
-            {/* Grid of Jobs */}
-            <main className="flex-1">
+            {/* Main Content */}
+            <main className="flex-1 space-y-4">
+              {/* Campo de Busca */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar vagas por titulo ou descricao..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Contador de Resultados */}
+              {!isLoading && (
+                <p className="text-sm text-muted-foreground">
+                  {resultCount === 0
+                    ? "Nenhuma vaga encontrada"
+                    : resultCount === 1
+                    ? "1 vaga encontrada"
+                    : `${resultCount} vagas encontradas`}
+                </p>
+              )}
+
+              {/* Grid de Vagas */}
               {isLoading ? (
                 <JobsSkeletonGrid />
               ) : !jobs || jobs.length === 0 ? (
-                <EmptyState />
+                <EmptyState hasFilters={hasActiveFilters} onClear={handleClearAll} />
               ) : (
                 <div className="grid gap-4">
                   {jobs.map((job) => (
@@ -556,18 +693,35 @@ export default function Jobs() {
   );
 }
 
-function EmptyState() {
+interface EmptyStateProps {
+  hasFilters: boolean;
+  onClear: () => void;
+}
+
+function EmptyState({ hasFilters, onClear }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
         <Briefcase className="w-8 h-8 text-muted-foreground" />
       </div>
       <h3 className="text-lg font-medium text-foreground mb-2">
-        Nenhuma vaga disponivel no momento
+        {hasFilters
+          ? "Nenhuma vaga encontrada com esses filtros"
+          : "Nenhuma vaga disponivel no momento"}
       </h3>
-      <p className="text-muted-foreground max-w-md">
-        Volte em breve! Novas oportunidades sao publicadas regularmente.
+      <p className="text-muted-foreground max-w-md mb-4">
+        {hasFilters
+          ? "Tente ajustar sua busca ou remover alguns filtros."
+          : "Volte em breve! Novas oportunidades sao publicadas regularmente."}
       </p>
+      {hasFilters && (
+        <button
+          onClick={onClear}
+          className="text-primary hover:underline text-sm font-medium"
+        >
+          Limpar todos os filtros
+        </button>
+      )}
     </div>
   );
 }
@@ -575,85 +729,26 @@ function EmptyState() {
 
 ---
 
-#### 7. Atualizacao em App.tsx
-
-Adicionar rota /jobs antes do catch-all:
-
-```typescript
-import Jobs from "./pages/Jobs";
-
-// Na lista de Routes, antes do "*"
-<Route path="/jobs" element={<Jobs />} />
-```
-
----
-
-#### 8. Atualizacao em Header.tsx
-
-Alterar links de `/vagas` para `/jobs`:
-
-```typescript
-// Desktop nav (linha ~143)
-<Link
-  to="/jobs"
-  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
->
-  Vagas
-</Link>
-
-// Mobile nav (linha ~61)
-<Link
-  to="/jobs"
-  onClick={() => setMobileMenuOpen(false)}
-  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
->
-  Vagas
-</Link>
-```
-
----
-
-### Responsividade
-
-| Breakpoint | Layout |
-|------------|--------|
-| Mobile (<1024px) | Sidebar empilhada acima do grid, expandida por padrao |
-| Desktop (>=1024px) | Sidebar fixa a esquerda (w-64, lg:sticky lg:top-24), grid a direita |
-
----
-
-### Estados da Pagina
-
-| Estado | Comportamento |
-|--------|---------------|
-| Loading | Grid de 6 skeleton cards |
-| Vazio | Mensagem "Nenhuma vaga disponivel no momento. Volte em breve!" |
-| Erro | Toast com mensagem amigavel + estado vazio |
-| Sucesso | Grid de cards ordenados por destaque + data |
-
----
-
-### Estilo dos Cards
-
-| Tipo | Background | Border Hover | Shadow Hover |
-|------|------------|--------------|--------------|
-| Destaque | `bg-muted/50` | `border-primary/40` | Glow verde suave |
-| Gratuita | `bg-card` | `border-border/80` | Nenhuma |
-
----
-
 ### Ordem de Implementacao
 
-| Ordem | Arquivo | Complexidade |
-|-------|---------|--------------|
-| 1 | `src/lib/formatters.ts` | Baixa |
-| 2 | `src/hooks/useJobs.ts` | Media |
-| 3 | `src/components/jobs/JobCardSkeleton.tsx` | Baixa |
-| 4 | `src/components/jobs/JobCard.tsx` | Media |
-| 5 | `src/components/jobs/JobsSidebar.tsx` | Baixa |
-| 6 | `src/pages/Jobs.tsx` | Media |
-| 7 | `src/App.tsx` | Baixa |
-| 8 | `src/components/layout/Header.tsx` | Baixa |
+| Ordem | Arquivo | Acao |
+|-------|---------|------|
+| 1 | `src/hooks/useDebounce.ts` | Criar |
+| 2 | `src/hooks/useJobFilters.ts` | Criar |
+| 3 | `src/hooks/useJobs.ts` | Modificar |
+| 4 | `src/components/jobs/JobsSidebar.tsx` | Modificar |
+| 5 | `src/pages/Jobs.tsx` | Modificar |
+
+---
+
+### Correcoes Incorporadas
+
+| Problema | Solucao |
+|----------|---------|
+| Problema 1: useAvailableSkills | Ja existe no projeto - nenhuma acao necessaria |
+| Problema 2: JobsSkeletonGrid | Ja existe no projeto - nenhuma acao necessaria |
+| Problema 3: Edge case array vazio | Usar `filters.habilidades?.length` para verificacao segura |
+| Problema 4: Performance busca texto | Comentario explicativo adicionado no codigo |
 
 ---
 
@@ -661,26 +756,17 @@ Alterar links de `/vagas` para `/jobs`:
 
 | Item | Implementacao |
 |------|---------------|
-| Query unica com JOIN | Supabase select com relacionamentos |
-| tipo_funcao incluido na query | Campo adicionado ao select |
-| Filtro vagas ativas | `.eq("ativa", true)` |
-| Filtro nao expiradas | `.gt("expira_em", new Date().toISOString())` |
-| Ordenacao destaque primeiro | `.order("tipo_publicacao", { ascending: false })` |
-| Ordenacao por data | `.order("criada_em", { ascending: false })` |
-| Logo 48x48 | Avatar com `w-12 h-12` |
-| 3 badges (contrato, nivel, remoto) | Flex row com 3 Badge components |
-| Limite 5 habilidades | `.slice(0, 5)` + badge "+X" |
-| Todas habilidades visiveis | NAO filtrar apenas obrigatorias, mostrar todas |
-| Card inteiro clicavel | Wrapper `<a>` com `href` |
-| Nova aba | `target="_blank"` |
-| Destaque visual | Background diferente + glow verde no hover |
-| Filtros apenas visuais | Selects com `disabled` |
-| Sidebar sticky apenas desktop | `lg:sticky lg:top-24` |
-| Sidebar expandida no mobile | Sem collapse |
-| Loading skeletons | Grid de 6 JobCardSkeleton |
-| Estado vazio | Mensagem centralizada |
-| Sem salario | NAO mostrar salario em nenhum lugar |
-| Sem "publicada ha X dias" | NAO mostrar data relativa |
-| Sem paginacao | Lista completa |
-| Sem busca por texto | NAO implementar nesta fase |
+| Filtros sincronizados com URL | useSearchParams |
+| Debounce de 500ms na busca | useDebounce hook |
+| Query unica para filtros simples | Supabase query builder |
+| Filtro de habilidades com .in() | Query em vaga_habilidades + .in("id", ids) |
+| Busca case-insensitive | .ilike() |
+| Contador de resultados | jobs.length |
+| Contador de filtros ativos | activeFilterCount |
+| Botao limpar filtros | clearAllFilters() |
+| Multi-select de habilidades | Collapsible + Checkbox |
+| Badges removiveis | Badge com botao X |
+| Estado vazio com filtros | Mensagem diferenciada |
+| Loading state | JobsSkeletonGrid (ja existe) |
+| Hook de habilidades | useAvailableSkills (ja existe) |
 
