@@ -80,14 +80,14 @@ export function JobsSidebar({
       <div className="space-y-2">
         <Label className="text-sm">Nível</Label>
         <Select
-          value={filters.nivel || ""}
-          onValueChange={(v) => onFilterChange("nivel", v || null)}
+          value={filters.nivel || "__all__"}
+          onValueChange={(v) => onFilterChange("nivel", v === "__all__" ? null : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos os níveis" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os níveis</SelectItem>
+            <SelectItem value="__all__">Todos os níveis</SelectItem>
             <SelectItem value="iniciante">Iniciante</SelectItem>
             <SelectItem value="junior">Júnior</SelectItem>
             <SelectItem value="pleno">Pleno</SelectItem>
@@ -101,14 +101,14 @@ export function JobsSidebar({
       <div className="space-y-2">
         <Label className="text-sm">Tipo de Contrato</Label>
         <Select
-          value={filters.tipoContrato || ""}
-          onValueChange={(v) => onFilterChange("contrato", v || null)}
+          value={filters.tipoContrato || "__all__"}
+          onValueChange={(v) => onFilterChange("contrato", v === "__all__" ? null : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos os tipos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os tipos</SelectItem>
+            <SelectItem value="__all__">Todos os tipos</SelectItem>
             <SelectItem value="clt">CLT</SelectItem>
             <SelectItem value="pj">PJ</SelectItem>
             <SelectItem value="freelance">Freelance</SelectItem>
@@ -121,14 +121,14 @@ export function JobsSidebar({
       <div className="space-y-2">
         <Label className="text-sm">Modelo de Trabalho</Label>
         <Select
-          value={filters.modeloTrabalho || ""}
-          onValueChange={(v) => onFilterChange("modelo", v || null)}
+          value={filters.modeloTrabalho || "__all__"}
+          onValueChange={(v) => onFilterChange("modelo", v === "__all__" ? null : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Todos os modelos" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os modelos</SelectItem>
+            <SelectItem value="__all__">Todos os modelos</SelectItem>
             <SelectItem value="presencial">Presencial</SelectItem>
             <SelectItem value="hibrido">Híbrido</SelectItem>
             <SelectItem value="remoto">Remoto</SelectItem>
