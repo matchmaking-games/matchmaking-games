@@ -1,32 +1,21 @@
 
 
-## Plano Corrigido: Funcionalidade de Progressao de Carreira (Adicionar Cargo)
+## Plano: Pagina de Listagem de Vagas (/jobs)
 
 ### Visao Geral
 
-Implementar a funcionalidade de adicionar multiplos cargos a uma mesma empresa, permitindo representar progressao de carreira. O plano incorpora TODAS as correcoes criticas mencionadas.
+Criar uma pagina publica para listar todas as vagas ativas da plataforma. A pagina tera uma sidebar com filtros visuais (nao funcionais nesta fase) e uma area principal com cards de vagas. Vagas pagas (tipo_publicacao = 'destaque') aparecem no topo com destaque visual.
 
 ---
 
-### Correcoes Criticas Incorporadas
+### Correcoes Incorporadas ao Plano Original
 
 | Correcao | Status |
 |----------|--------|
-| NAO limpar campos de `experiencia` (manter dados duplicados) | Incorporado |
-| Implementar `validateDatesOverlap` completo | Incorporado |
-| Atualizar `usePublicProfile.ts` com cargos | Incorporado |
-| Atualizar `ExperienceSection.tsx` (perfil publico) | Incorporado |
-| Ordenacao client-side apos fetch | Incorporado |
-
----
-
-### Pre-requisitos
-
-| Item | Status | Acao |
-|------|--------|------|
-| Tabela `cargos_experiencia` no banco | Existe | Nenhuma |
-| Tipos TypeScript para `cargos_experiencia` | NAO EXISTE | Migracao vazia para regenerar |
-| RLS policies para `cargos_experiencia` | Existe | Nenhuma |
+| tipo_funcao incluido na query | Incorporado |
+| Mostrar TODAS habilidades (nao so obrigatorias) | Incorporado |
+| Sidebar sticky apenas no desktop (lg:sticky lg:top-24) | Incorporado |
+| Sidebar expandida por padrao no mobile | Incorporado |
 
 ---
 
@@ -34,674 +23,460 @@ Implementar a funcionalidade de adicionar multiplos cargos a uma mesma empresa, 
 
 | Acao | Arquivo | Descricao |
 |------|---------|-----------|
-| Criar | Migracao SQL | Migracao vazia para regenerar tipos |
-| Modificar | `src/hooks/useExperiences.ts` | Query com cargos + addCargo + validacao |
-| Modificar | `src/hooks/usePublicProfile.ts` | Query com cargos |
-| Modificar | `src/components/experience/ExperienceModal.tsx` | Modo add-position |
-| Modificar | `src/components/experience/ExperienceCard.tsx` | DropdownMenu + timeline interna |
-| Modificar | `src/components/experience/ExperienceList.tsx` | Prop onAddCargo + remover timeline global |
-| Modificar | `src/pages/Experience.tsx` | Estado do modo + handler addCargo |
-| Modificar | `src/components/public-profile/ExperienceSection.tsx` | Timeline condicional |
+| Modificar | `src/lib/formatters.ts` | Adicionar formatadores para vagas |
+| Criar | `src/hooks/useJobs.ts` | Hook para buscar vagas com relacionamentos |
+| Criar | `src/components/jobs/JobCardSkeleton.tsx` | Skeleton para loading state |
+| Criar | `src/components/jobs/JobCard.tsx` | Card individual de vaga |
+| Criar | `src/components/jobs/JobsSidebar.tsx` | Sidebar com filtros visuais |
+| Criar | `src/pages/Jobs.tsx` | Pagina principal de listagem |
+| Modificar | `src/App.tsx` | Adicionar rota /jobs |
+| Modificar | `src/components/layout/Header.tsx` | Atualizar link de /vagas para /jobs |
 
 ---
 
 ### Secao Tecnica
 
-#### 1. Migracao SQL (Regenerar Tipos)
+#### 1. Formatadores (src/lib/formatters.ts)
 
-```sql
--- Migracao vazia para forcar regeneracao dos tipos TypeScript
--- A tabela cargos_experiencia ja existe no banco
-SELECT 1;
+Adicionar ao arquivo existente:
+
+```typescript
+/**
+ * Converts job level enum to readable text
+ * iniciante → "Iniciante", junior → "Junior", etc.
+ */
+export function formatNivelVaga(nivel: string): string {
+  const map: Record<string, string> = {
+    iniciante: "Iniciante",
+    junior: "Junior",
+    pleno: "Pleno",
+    senior: "Senior",
+    lead: "Lead",
+  };
+  return map[nivel] || nivel;
+}
+
+/**
+ * Converts contract type enum to readable text
+ * clt → "CLT", pj → "PJ", freelance → "Freelance", estagio → "Estagio"
+ */
+export function formatTipoContrato(tipo: string): string {
+  const map: Record<string, string> = {
+    clt: "CLT",
+    pj: "PJ",
+    freelance: "Freelance",
+    estagio: "Estagio",
+  };
+  return map[tipo] || tipo;
+}
+
+/**
+ * Converts work model enum to readable text
+ * presencial → "Presencial", hibrido → "Hibrido", remoto → "Remoto"
+ */
+export function formatTipoTrabalho(tipo: string): string {
+  const map: Record<string, string> = {
+    presencial: "Presencial",
+    hibrido: "Hibrido",
+    remoto: "Remoto",
+  };
+  return map[tipo] || tipo;
+}
 ```
 
 ---
 
-#### 2. useExperiences.ts - Alteracoes Completas
-
-**2.1 Novos Tipos**
+#### 2. Hook useJobs.ts
 
 ```typescript
-// Tipo para cargo individual (de cargos_experiencia)
-export interface CargoExperiencia {
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
+type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
+type TipoTrabalho = Database["public"]["Enums"]["tipo_trabalho"];
+type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
+type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
+
+export interface VagaHabilidadeData {
   id: string;
-  experiencia_id: string;
-  titulo_cargo: string;
-  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
-  inicio: string;
-  fim: string | null;
-  atualmente_trabalhando: boolean | null;
-  descricao: string | null;
-  habilidades_usadas: string[] | null;
-  ordem: number | null;
+  obrigatoria: boolean | null;
+  habilidade: {
+    id: string;
+    nome: string;
+    categoria: CategoriaHabilidade;
+  } | null;
 }
 
-// Experience expandida com cargos
-export interface ExperienceWithCargos extends Experience {
-  cargos: CargoExperiencia[];
-}
-
-// Insert para cargo
-export interface CargoInsert {
-  titulo_cargo: string;
-  tipo_emprego: Database["public"]["Enums"]["tipo_emprego"];
-  inicio: string;
-  fim: string | null;
-  atualmente_trabalhando: boolean | null;
-  descricao: string | null;
-  habilidades_usadas: string[] | null;
-}
-```
-
-**2.2 Query Expandida com JOIN**
-
-```typescript
-const fetchExperiences = useCallback(async () => {
-  if (!userId) return;
-
-  const { data, error } = await supabase
-    .from("experiencia")
-    .select(`
-      *,
-      cargos:cargos_experiencia(
-        id,
-        experiencia_id,
-        titulo_cargo,
-        tipo_emprego,
-        inicio,
-        fim,
-        atualmente_trabalhando,
-        descricao,
-        habilidades_usadas,
-        ordem
-      )
-    `)
-    .eq("user_id", userId)
-    .order("ordem");
-
-  if (error) throw error;
-
-  // Ordenacao client-side: cargos por data (mais recente primeiro)
-  const experiencesWithSortedCargos = (data || []).map(exp => ({
-    ...exp,
-    cargos: (exp.cargos || []).sort((a, b) => 
-      new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-    )
-  }));
-
-  setExperiences(experiencesWithSortedCargos);
-}, [userId]);
-```
-
-**2.3 Funcoes de Validacao de Overlap (COMPLETAS)**
-
-```typescript
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-// Auxiliar: verificar se dois periodos se sobrepoem
-function checkPeriodsOverlap(
-  start1: Date,
-  end1: Date | null,
-  start2: Date,
-  end2: Date | null
-): boolean {
-  // Tratar "atualmente trabalhando" como fim em 2099
-  const effectiveEnd1 = end1 || new Date(2099, 11, 31);
-  const effectiveEnd2 = end2 || new Date(2099, 11, 31);
-  
-  // Periodos sobrepoem se: inicio1 <= fim2 E inicio2 <= fim1
-  return start1 <= effectiveEnd2 && start2 <= effectiveEnd1;
-}
-
-// Auxiliar: formatar mes/ano para mensagens
-function formatMonth(date: Date): string {
-  return format(date, "MMM yyyy", { locale: ptBR });
-}
-
-// Funcao principal de validacao
-function validateDatesOverlap(
-  newCargo: { inicio: string; fim: string | null; atualmente: boolean | null },
-  existingCargos: Array<{ inicio: string; fim: string | null; atualmente: boolean | null }>
-): string | null {
-  const newStart = new Date(newCargo.inicio);
-  const newEnd = newCargo.atualmente ? null : (newCargo.fim ? new Date(newCargo.fim) : null);
-
-  for (const existing of existingCargos) {
-    const existingStart = new Date(existing.inicio);
-    const existingEnd = existing.atualmente ? null : (existing.fim ? new Date(existing.fim) : null);
-
-    // Caso especial: dois cargos "atualmente trabalhando"
-    if (newCargo.atualmente && existing.atualmente) {
-      return "Voce ja possui um cargo ativo (Atualmente trabalhando) nesta empresa. " +
-             "Defina uma data de termino para o cargo atual antes de adicionar um novo cargo ativo.";
-    }
-
-    // Verificar sobreposicao de periodos
-    const hasOverlap = checkPeriodsOverlap(newStart, newEnd, existingStart, existingEnd);
-    
-    if (hasOverlap) {
-      const existingPeriod = existing.atualmente 
-        ? `desde ${formatMonth(existingStart)}`
-        : `de ${formatMonth(existingStart)} ate ${formatMonth(existingEnd!)}`;
-      
-      return `Este cargo conflita com um periodo existente (${existingPeriod}). ` +
-             `As datas nao podem se sobrepor. O novo cargo comeca em ${formatMonth(newStart)}.`;
-    }
-  }
-
-  return null; // Sem conflito
-}
-```
-
-**2.4 Funcao addCargo (CORRIGIDA - SEM PASSO C)**
-
-```typescript
-const addCargo = useCallback(async (
-  experienceId: string,
-  cargoData: CargoInsert
-): Promise<void> => {
-  if (!userId) throw new Error("Usuario nao autenticado");
-
-  // 1. Buscar experiencia atual com cargos existentes
-  const { data: experience, error: fetchError } = await supabase
-    .from("experiencia")
-    .select(`
-      *,
-      cargos:cargos_experiencia(
-        id, titulo_cargo, tipo_emprego, inicio, fim, atualmente_trabalhando
-      )
-    `)
-    .eq("id", experienceId)
-    .single();
-
-  if (fetchError || !experience) {
-    throw new Error("Experiencia nao encontrada");
-  }
-
-  const existingCargos = experience.cargos || [];
-  const isFirstAdditionalCargo = existingCargos.length === 0;
-
-  // 2. Preparar lista de cargos para validacao
-  const cargosParaValidar = isFirstAdditionalCargo
-    ? [{ 
-        inicio: experience.inicio, 
-        fim: experience.fim, 
-        atualmente: experience.atualmente_trabalhando 
-      }]
-    : existingCargos.map(c => ({ 
-        inicio: c.inicio, 
-        fim: c.fim, 
-        atualmente: c.atualmente_trabalhando 
-      }));
-
-  // 3. Validar overlap de datas
-  const overlapError = validateDatesOverlap(
-    { 
-      inicio: cargoData.inicio, 
-      fim: cargoData.fim, 
-      atualmente: cargoData.atualmente_trabalhando 
-    },
-    cargosParaValidar
-  );
-
-  if (overlapError) {
-    throw new Error(overlapError);
-  }
-
-  // 4. Se for o PRIMEIRO cargo adicional, migrar cargo original
-  if (isFirstAdditionalCargo) {
-    // PASSO A: Criar registro do cargo ORIGINAL em cargos_experiencia
-    const { error: errorOriginal } = await supabase
-      .from("cargos_experiencia")
-      .insert({
-        experiencia_id: experienceId,
-        titulo_cargo: experience.titulo_cargo,
-        tipo_emprego: experience.tipo_emprego,
-        inicio: experience.inicio,
-        fim: experience.fim,
-        atualmente_trabalhando: experience.atualmente_trabalhando,
-        descricao: experience.descricao,
-        habilidades_usadas: experience.habilidades_usadas,
-        ordem: 0
-      });
-
-    if (errorOriginal) {
-      console.error("Erro ao migrar cargo original:", errorOriginal);
-      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
-    }
-
-    // PASSO B: Criar registro do cargo NOVO em cargos_experiencia
-    const { error: errorNovo } = await supabase
-      .from("cargos_experiencia")
-      .insert({
-        experiencia_id: experienceId,
-        titulo_cargo: cargoData.titulo_cargo,
-        tipo_emprego: cargoData.tipo_emprego,
-        inicio: cargoData.inicio,
-        fim: cargoData.fim,
-        atualmente_trabalhando: cargoData.atualmente_trabalhando,
-        descricao: cargoData.descricao,
-        habilidades_usadas: cargoData.habilidades_usadas,
-        ordem: 1
-      });
-
-    if (errorNovo) {
-      console.error("Erro ao criar novo cargo:", errorNovo);
-      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
-    }
-
-    // NOTA IMPORTANTE: NAO limpar os campos de cargo em experiencia.
-    // Manter dados duplicados para garantir compatibilidade com codigo existente.
-    // A renderizacao usa: se cargos.length > 0, mostra timeline; senao, mostra experience.titulo_cargo
-  } else {
-    // 5. Se for o SEGUNDO+ cargo, apenas criar em cargos_experiencia
-    const { error } = await supabase
-      .from("cargos_experiencia")
-      .insert({
-        experiencia_id: experienceId,
-        titulo_cargo: cargoData.titulo_cargo,
-        tipo_emprego: cargoData.tipo_emprego,
-        inicio: cargoData.inicio,
-        fim: cargoData.fim,
-        atualmente_trabalhando: cargoData.atualmente_trabalhando,
-        descricao: cargoData.descricao,
-        habilidades_usadas: cargoData.habilidades_usadas,
-        ordem: existingCargos.length // Proxima posicao na ordem
-      });
-
-    if (error) {
-      console.error("Erro ao criar cargo:", error);
-      throw new Error("Nao foi possivel adicionar o cargo. Tente novamente.");
-    }
-  }
-}, [userId]);
-```
-
-**2.5 Retorno Atualizado do Hook**
-
-```typescript
-return {
-  experiences,
-  loading,
-  error,
-  refetch: fetchExperiences,
-  addExperience,
-  updateExperience,
-  deleteExperience,
-  addCargo, // NOVA FUNCAO
-};
-```
-
----
-
-#### 3. usePublicProfile.ts - Query Expandida
-
-**3.1 Tipo Atualizado**
-
-```typescript
-export interface PublicCargoData {
-  id: string;
-  titulo_cargo: string;
-  tipo_emprego: TipoEmprego;
-  inicio: string;
-  fim: string | null;
-  atualmente_trabalhando: boolean | null;
-  descricao: string | null;
-  ordem: number | null;
-}
-
-export interface PublicExperienceData {
-  id: string;
-  titulo_cargo: string;
-  empresa: string;
-  tipo_emprego: TipoEmprego;
-  inicio: string;
-  fim: string | null;
-  atualmente_trabalhando: boolean | null;
-  descricao: string | null;
+export interface VagaEstudioData {
+  nome: string;
+  slug: string;
+  logo_url: string | null;
   localizacao: string | null;
-  cidade: string | null;
-  estado: string | null;
-  remoto: boolean | null;
-  estudio_id: string | null;
-  cargos: PublicCargoData[]; // NOVO CAMPO
 }
-```
 
-**3.2 Query de Experiencias Expandida**
+export interface VagaListItem {
+  id: string;
+  titulo: string;
+  slug: string;
+  nivel: NivelVaga;
+  remoto: TipoTrabalho;
+  tipo_contrato: TipoContrato;
+  tipo_publicacao: TipoPublicacaoVaga | null;
+  tipo_funcao: string[];  // IMPORTANTE: incluido para exibir tipo de funcao
+  localizacao: string | null;
+  criada_em: string | null;
+  estudio: VagaEstudioData | null;
+  vaga_habilidades: VagaHabilidadeData[];
+}
 
-```typescript
-// Na Promise.all, substituir a query de experiencias:
-supabase
-  .from("experiencia")
-  .select(`
-    id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
-    atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id,
-    cargos:cargos_experiencia(
-      id, titulo_cargo, tipo_emprego, inicio, fim,
-      atualmente_trabalhando, descricao, ordem
-    )
-  `)
-  .eq("user_id", user.id)
-  .order("ordem")
-```
+async function fetchJobs(): Promise<VagaListItem[]> {
+  const now = new Date().toISOString();
 
-**3.3 Pos-processamento para Ordenar Cargos**
+  // IMPORTANTE: tipo_funcao esta incluido para exibir o tipo de funcao da vaga
+  const { data, error } = await supabase
+    .from("vagas")
+    .select(`
+      id,
+      titulo,
+      slug,
+      nivel,
+      remoto,
+      tipo_contrato,
+      tipo_publicacao,
+      tipo_funcao,
+      localizacao,
+      criada_em,
+      estudio:estudios(nome, slug, logo_url, localizacao),
+      vaga_habilidades(
+        id,
+        obrigatoria,
+        habilidade:habilidades(id, nome, categoria)
+      )
+    `)
+    .eq("ativa", true)
+    .gt("expira_em", now)
+    .order("tipo_publicacao", { ascending: false })
+    .order("criada_em", { ascending: false });
 
-```typescript
-// Apos o Promise.all, ordenar cargos client-side:
-const experiencesWithSortedCargos = (experiencesRes.data || []).map(exp => ({
-  ...exp,
-  cargos: (exp.cargos || []).sort((a, b) => 
-    new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-  )
-}));
+  if (error) {
+    console.error("Error fetching jobs:", error);
+    throw new Error("Nao foi possivel carregar as vagas.");
+  }
 
-return {
-  user: user as PublicUserData,
-  projects: (projectsRes.data || []) as PublicProjectData[],
-  skills: (skillsRes.data || []) as PublicSkillData[],
-  experiences: experiencesWithSortedCargos as PublicExperienceData[],
-  educations: (educationsRes.data || []) as PublicEducationData[],
-};
+  return (data || []) as VagaListItem[];
+}
+
+export function useJobs() {
+  return useQuery({
+    queryKey: ["jobs"],
+    queryFn: fetchJobs,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
+  });
+}
 ```
 
 ---
 
-#### 4. ExperienceModal.tsx - Modo Add-Position
-
-**4.1 Props Atualizadas**
+#### 3. Componente JobCardSkeleton.tsx
 
 ```typescript
-interface ExperienceModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editingExperience: Experience | null;
-  onSuccess: () => void;
-  // NOVAS PROPS
-  mode?: "create" | "edit" | "add-position";
-  parentExperience?: ExperienceWithCargos | null;
-}
-```
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
-**4.2 Titulo Dinamico**
-
-```typescript
-const getModalTitle = () => {
-  if (mode === "add-position" && parentExperience) {
-    return `Adicionar Cargo - ${parentExperience.empresa}`;
-  }
-  if (editingExperience) {
-    return "Editar Experiencia";
-  }
-  return "Adicionar Experiencia";
-};
-```
-
-**4.3 Pre-preenchimento no useEffect**
-
-```typescript
-useEffect(() => {
-  if (open) {
-    if (mode === "add-position" && parentExperience) {
-      // Modo adicionar cargo: pre-preencher empresa e localizacao
-      form.reset({
-        titulo_cargo: "",  // VAZIO - usuario preenche
-        empresa: parentExperience.empresa,  // PRE-PREENCHIDO
-        tipo_emprego: "clt",  // Default - usuario escolhe
-        estado: parentExperience.estado || "",  // PRE-PREENCHIDO mas EDITAVEL
-        cidade: parentExperience.cidade || "",  // PRE-PREENCHIDO mas EDITAVEL
-        cidade_ibge_id: parentExperience.cidade_ibge_id || 0,
-        remoto: parentExperience.remoto || false,  // PRE-PREENCHIDO mas EDITAVEL
-        inicio: "",  // VAZIO - usuario preenche
-        atualmente_trabalhando: false,
-        fim: "",
-        descricao: "",
-      });
-      
-      // Carregar municipios se estado preenchido e nao remoto
-      if (parentExperience.estado && !parentExperience.remoto) {
-        fetchMunicipios(parentExperience.estado);
-      }
-    } else if (editingExperience) {
-      // Modo edicao - codigo existente
-      // ...
-    } else {
-      // Modo criacao - codigo existente
-      // ...
-    }
-  }
-}, [open, mode, parentExperience, editingExperience, ...]);
-```
-
-**4.4 Campo Empresa Desabilitado**
-
-```tsx
-<FormField
-  control={form.control}
-  name="empresa"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>
-        Estudio <span className="text-destructive">*</span>
-      </FormLabel>
-      <FormControl>
-        <Input 
-          placeholder="Ex: Ubisoft" 
-          {...field} 
-          disabled={mode === "add-position"}
-          className={mode === "add-position" ? "bg-muted cursor-not-allowed" : ""}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-```
-
-**4.5 Submit Handler com Modo Add-Position**
-
-```typescript
-const onSubmit = async (data: ExperienceFormData) => {
-  try {
-    setIsSubmitting(true);
-
-    const localizacao = data.remoto ? "Remoto" : `${data.cidade}, ${data.estado}`;
-    const inicioDate = `${data.inicio}-01`;
-    const fimDate = data.fim ? `${data.fim}-01` : null;
-
-    if (mode === "add-position" && parentExperience) {
-      // Modo adicionar cargo
-      await addCargo(parentExperience.id, {
-        titulo_cargo: data.titulo_cargo,
-        tipo_emprego: data.tipo_emprego,
-        inicio: inicioDate,
-        fim: fimDate,
-        atualmente_trabalhando: data.atualmente_trabalhando,
-        descricao: data.descricao || null,
-        habilidades_usadas: null,
-      });
-      
-      toast({
-        title: "Cargo adicionado",
-        description: `Novo cargo "${data.titulo_cargo}" adicionado com sucesso.`,
-      });
-    } else if (isEditing) {
-      // Modo edicao - codigo existente
-      await updateExperience(editingExperience.id, experienceData);
-      toast({ title: "Experiencia atualizada", ... });
-    } else {
-      // Modo criacao - codigo existente
-      await addExperience(experienceData);
-      toast({ title: "Experiencia adicionada", ... });
-    }
-
-    onSuccess();
-    onOpenChange(false);
-  } catch (error) {
-    // Mostrar erro amigavel (mensagens claras da validacao)
-    toast({
-      title: "Erro ao salvar",
-      description: error instanceof Error ? error.message : "Nao foi possivel salvar.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-```
-
----
-
-#### 5. ExperienceCard.tsx - DropdownMenu + Timeline Interna
-
-**5.1 Props Atualizadas**
-
-```typescript
-interface ExperienceCardProps {
-  experience: ExperienceWithCargos;
-  onEdit: (experience: ExperienceWithCargos) => void;
-  onDelete: (experience: ExperienceWithCargos) => void;
-  onAddCargo: (experience: ExperienceWithCargos) => void; // NOVO
-}
-```
-
-**5.2 Imports Adicionais**
-
-```typescript
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { EllipsisVertical, Pencil, Plus, Trash2 } from "lucide-react";
-```
-
-**5.3 Renderizacao Condicional**
-
-```tsx
-export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: ExperienceCardProps) {
-  const hasCargos = experience.cargos && experience.cargos.length > 0;
-
-  // DropdownMenu comum a ambos os layouts
-  const ActionsDropdown = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <EllipsisVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(experience)}>
-          <Pencil className="h-4 w-4 mr-2" />
-          Editar
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onAddCargo(experience)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar cargo
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem 
-          onClick={() => onDelete(experience)}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Excluir
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+export function JobCardSkeleton() {
+  return (
+    <Card className="p-4">
+      <div className="flex gap-4">
+        <Skeleton className="w-12 h-12 rounded-lg flex-shrink-0" />
+        <div className="flex-1 space-y-3">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <Skeleton className="h-5 w-48" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-12" />
+            <Skeleton className="h-5 w-14" />
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <div className="flex gap-1.5">
+            <Skeleton className="h-5 w-14" />
+            <Skeleton className="h-5 w-10" />
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-5 w-12" />
+          </div>
+        </div>
+      </div>
+    </Card>
   );
+}
 
-  // Layout COM multiplos cargos (timeline interna)
-  if (hasCargos) {
-    return (
-      <Card className="group transition-all hover:border-primary/30">
-        <CardContent className="pt-6">
-          {/* Header: Empresa */}
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">{experience.empresa}</h3>
-                {experience.localizacao && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {experience.localizacao}
-                    {experience.remoto && " • Remoto"}
+export function JobsSkeletonGrid() {
+  return (
+    <div className="grid gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <JobCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
+#### 4. Componente JobCard.tsx
+
+```typescript
+import { Sparkles, MapPin } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { formatNivelVaga, formatTipoContrato, formatTipoTrabalho } from "@/lib/formatters";
+import { VagaListItem } from "@/hooks/useJobs";
+
+interface JobCardProps {
+  job: VagaListItem;
+}
+
+export function JobCard({ job }: JobCardProps) {
+  const isDestaque = job.tipo_publicacao === "destaque";
+
+  // Mostrar TODAS as habilidades (obrigatorias + desejaveis)
+  // NAO filtrar apenas obrigatorias
+  const allSkills = job.vaga_habilidades
+    .filter((vh) => vh.habilidade !== null)
+    .map((vh) => vh.habilidade!);
+
+  const visibleSkills = allSkills.slice(0, 5);
+  const extraCount = allSkills.length - 5;
+
+  const studioName = job.estudio?.nome || "Estudio";
+  const studioLocation = job.estudio?.localizacao || job.localizacao;
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+  };
+
+  return (
+    <a
+      href={`/jobs/${job.slug}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block"
+    >
+      <Card
+        className={cn(
+          "p-4 cursor-pointer transition-all duration-200",
+          isDestaque
+            ? "bg-muted/50 border-border hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,228,122,0.15)]"
+            : "bg-card hover:border-border/80 hover:bg-muted/30"
+        )}
+      >
+        <div className="flex gap-4">
+          {/* Studio Logo 48x48 */}
+          <Avatar className="w-12 h-12 rounded-lg flex-shrink-0">
+            <AvatarImage src={job.estudio?.logo_url || undefined} alt={studioName} />
+            <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-sm">
+              {getInitials(studioName)}
+            </AvatarFallback>
+          </Avatar>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Header: Studio name + Destaque badge */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <span className="font-medium text-foreground truncate">
+                  {studioName}
+                </span>
+                {studioLocation && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    <span className="truncate">{studioLocation}</span>
                   </p>
                 )}
               </div>
-            </div>
-            <ActionsDropdown />
-          </div>
-          
-          {/* Timeline interna de cargos */}
-          <div className="relative ml-5 pl-6 border-l-2 border-border">
-            {experience.cargos.map((cargo) => (
-              <div key={cargo.id} className="relative pb-6 last:pb-0">
-                {/* Dot da timeline */}
-                <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
-                
-                {/* Info do cargo */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-medium">{cargo.titulo_cargo}</h4>
-                    <Badge variant="outline" className={tipoEmpregoStyles[cargo.tipo_emprego]}>
-                      {formatTipoEmprego(cargo.tipo_emprego)}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDateRange(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)}
-                  </p>
-                  {cargo.descricao && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {cargo.descricao}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Layout SEM cargos extras (cargo unico - layout atual)
-  return (
-    <Card className="group transition-all hover:border-primary/30">
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex gap-4 flex-1 min-w-0">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0 space-y-2">
-              <h3 className="font-semibold text-lg text-foreground truncate">
-                {experience.titulo_cargo}
-              </h3>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-muted-foreground">{experience.empresa}</span>
-                <Badge variant="outline" className={tipoEmpregoStyles[experience.tipo_emprego]}>
-                  {formatTipoEmprego(experience.tipo_emprego)}
+              {isDestaque && (
+                <Badge className="bg-primary/10 text-primary border-0 flex-shrink-0">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Destaque
                 </Badge>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>{formatDateRange(experience.inicio, experience.fim, experience.atualmente_trabalhando)}</span>
-              </div>
-              {/* ... resto do layout existente ... */}
+              )}
             </div>
+
+            {/* Job Title */}
+            <h3 className="font-semibold text-lg text-foreground leading-tight">
+              {job.titulo}
+            </h3>
+
+            {/* Badges: Contract, Level, Work Model */}
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="text-xs">
+                {formatTipoContrato(job.tipo_contrato)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {formatNivelVaga(job.nivel)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {formatTipoTrabalho(job.remoto)}
+              </Badge>
+            </div>
+
+            {/* Skills - mostra ate 5 + badge "+X" para restantes */}
+            {allSkills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {visibleSkills.map((skill, index) => (
+                  <Badge
+                    key={skill.id || index}
+                    variant="secondary"
+                    className="text-xs bg-muted/80"
+                  >
+                    {skill.nome}
+                  </Badge>
+                ))}
+                {extraCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-muted text-muted-foreground"
+                  >
+                    +{extraCount}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
-          <ActionsDropdown />
         </div>
-      </CardContent>
+      </Card>
+    </a>
+  );
+}
+```
+
+---
+
+#### 5. Componente JobsSidebar.tsx
+
+```typescript
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export function JobsSidebar() {
+  return (
+    // CORRECAO: sticky apenas no desktop (lg:sticky lg:top-24)
+    // No mobile, sidebar fica estatica e expandida por padrao
+    <Card className="p-4 space-y-6 lg:sticky lg:top-24">
+      <h2 className="font-semibold text-lg">Filtros</h2>
+
+      {/* Nivel */}
+      <div className="space-y-2">
+        <Label className="text-sm">Nivel</Label>
+        <Select disabled>
+          <SelectTrigger>
+            <SelectValue placeholder="Todos os niveis" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="iniciante">Iniciante</SelectItem>
+            <SelectItem value="junior">Junior</SelectItem>
+            <SelectItem value="pleno">Pleno</SelectItem>
+            <SelectItem value="senior">Senior</SelectItem>
+            <SelectItem value="lead">Lead</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tipo de Contrato */}
+      <div className="space-y-2">
+        <Label className="text-sm">Tipo de Contrato</Label>
+        <Select disabled>
+          <SelectTrigger>
+            <SelectValue placeholder="Todos os tipos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="clt">CLT</SelectItem>
+            <SelectItem value="pj">PJ</SelectItem>
+            <SelectItem value="freelance">Freelance</SelectItem>
+            <SelectItem value="estagio">Estagio</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Modelo de Trabalho */}
+      <div className="space-y-2">
+        <Label className="text-sm">Modelo de Trabalho</Label>
+        <Select disabled>
+          <SelectTrigger>
+            <SelectValue placeholder="Todos os modelos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="presencial">Presencial</SelectItem>
+            <SelectItem value="hibrido">Hibrido</SelectItem>
+            <SelectItem value="remoto">Remoto</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Localizacao */}
+      <div className="space-y-2">
+        <Label className="text-sm">Localizacao</Label>
+        <Input placeholder="Ex: Sao Paulo" disabled />
+      </div>
+
+      {/* Habilidades por categoria */}
+      <div className="space-y-4">
+        <Label className="text-sm">Habilidades</Label>
+        <div className="space-y-3">
+          {/* Engines */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Engines</span>
+            <Select disabled>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+            </Select>
+          </div>
+          {/* Linguagens */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Linguagens</span>
+            <Select disabled>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+            </Select>
+          </div>
+          {/* Ferramentas */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Ferramentas</span>
+            <Select disabled>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+            </Select>
+          </div>
+          {/* Soft Skills */}
+          <div className="space-y-1.5">
+            <span className="text-xs text-muted-foreground">Soft Skills</span>
+            <Select disabled>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Selecionar..." />
+              </SelectTrigger>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Nota visual */}
+      <p className="text-xs text-muted-foreground italic pt-2 border-t border-border">
+        Filtros em breve disponiveis
+      </p>
     </Card>
   );
 }
@@ -709,203 +484,161 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
 
 ---
 
-#### 6. ExperienceList.tsx - Remover Timeline Global
-
-**6.1 Props Atualizadas**
+#### 6. Pagina Jobs.tsx
 
 ```typescript
-interface ExperienceListProps {
-  experiences: ExperienceWithCargos[];
-  loading: boolean;
-  onEdit: (experience: ExperienceWithCargos) => void;
-  onDelete: (experience: ExperienceWithCargos) => void;
-  onAddCargo: (experience: ExperienceWithCargos) => void; // NOVO
-}
-```
+import { Briefcase } from "lucide-react";
+import { Header } from "@/components/layout/Header";
+import { JobCard } from "@/components/jobs/JobCard";
+import { JobsSidebar } from "@/components/jobs/JobsSidebar";
+import { JobsSkeletonGrid } from "@/components/jobs/JobCardSkeleton";
+import { useJobs } from "@/hooks/useJobs";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
-**6.2 Remover Timeline Global**
+export default function Jobs() {
+  const { data: jobs, isLoading, error } = useJobs();
+  const { toast } = useToast();
 
-```tsx
-// List SEM timeline global (timeline agora e interna ao card quando ha multiplos cargos)
-return (
-  <div className="space-y-4">
-    {experiences.map((experience) => (
-      <ExperienceCard
-        key={experience.id}
-        experience={experience}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onAddCargo={onAddCargo}
-      />
-    ))}
-  </div>
-);
-```
-
----
-
-#### 7. Experience.tsx - Estado do Modo
-
-**7.1 Novos Estados**
-
-```typescript
-const [modalMode, setModalMode] = useState<"create" | "edit" | "add-position">("create");
-const [parentExperience, setParentExperience] = useState<ExperienceWithCargos | null>(null);
-```
-
-**7.2 Handlers Atualizados**
-
-```typescript
-const handleAdd = () => {
-  setModalMode("create");
-  setEditingExperience(null);
-  setParentExperience(null);
-  setIsModalOpen(true);
-};
-
-const handleEdit = (experience: ExperienceWithCargos) => {
-  setModalMode("edit");
-  setEditingExperience(experience);
-  setParentExperience(null);
-  setIsModalOpen(true);
-};
-
-const handleAddCargo = (experience: ExperienceWithCargos) => {
-  setModalMode("add-position");
-  setEditingExperience(null);
-  setParentExperience(experience);
-  setIsModalOpen(true);
-};
-```
-
-**7.3 Props do Modal**
-
-```tsx
-<ExperienceModal
-  open={isModalOpen}
-  onOpenChange={setIsModalOpen}
-  editingExperience={editingExperience}
-  onSuccess={handleSuccess}
-  mode={modalMode}
-  parentExperience={parentExperience}
-/>
-```
-
-**7.4 Props da Lista**
-
-```tsx
-<ExperienceList
-  experiences={experiences}
-  loading={loading}
-  onEdit={handleEdit}
-  onDelete={handleDelete}
-  onAddCargo={handleAddCargo}
-/>
-```
-
----
-
-#### 8. ExperienceSection.tsx (Perfil Publico) - Timeline Condicional
-
-**8.1 Componente CargoItem (Novo)**
-
-```tsx
-function CargoItem({ cargo }: { cargo: PublicCargoData }) {
-  const [expanded, setExpanded] = useState(false);
-  const hasLongDescription = cargo.descricao && cargo.descricao.length > 300;
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Erro ao carregar vagas",
+        description: "Nao foi possivel carregar as vagas. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   return (
-    <div className="relative pb-6 last:pb-0">
-      {/* Timeline dot */}
-      <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-primary border-2 border-background" />
-      
-      <div className="space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h4 className="font-medium text-foreground">{cargo.titulo_cargo}</h4>
-          <Badge className={`border-0 ${typeColors[cargo.tipo_emprego]}`}>
-            {typeLabels[cargo.tipo_emprego]}
-          </Badge>
-        </div>
-        
-        <p className="text-sm text-muted-foreground">
-          {formatPeriod(cargo.inicio, cargo.fim, cargo.atualmente_trabalhando)}
-          {" "}
-          <span className="text-muted-foreground/70">
-            {formatDuration(cargo.inicio, cargo.fim)}
-          </span>
-        </p>
+    <div className="min-h-screen bg-background">
+      <Header />
 
-        {cargo.descricao && (
-          <div className="pt-1">
-            <p className={`text-sm text-muted-foreground whitespace-pre-wrap ${
-              !expanded && hasLongDescription ? "line-clamp-3" : ""
-            }`}>
-              {cargo.descricao}
+      <div className="pt-16">
+        {/* Hero Section */}
+        <div className="bg-card border-b border-border py-8">
+          <div className="max-w-7xl mx-auto px-4">
+            <h1 className="text-3xl font-display font-bold text-foreground">
+              Vagas
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Encontre sua proxima oportunidade na industria de games
             </p>
-            {hasLongDescription && (
-              <Button variant="link" size="sm" className="px-0 h-auto text-primary" onClick={() => setExpanded(!expanded)}>
-                {expanded ? "Ler menos" : "Ler mais"}
-              </Button>
-            )}
           </div>
-        )}
+        </div>
+
+        {/* Content with Sidebar */}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar - Filters (expandida por padrao no mobile) */}
+            <aside className="w-full lg:w-64 flex-shrink-0">
+              <JobsSidebar />
+            </aside>
+
+            {/* Grid of Jobs */}
+            <main className="flex-1">
+              {isLoading ? (
+                <JobsSkeletonGrid />
+              ) : !jobs || jobs.length === 0 ? (
+                <EmptyState />
+              ) : (
+                <div className="grid gap-4">
+                  {jobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-```
 
-**8.2 ExperienceItem Atualizado**
-
-```tsx
-function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
-  const hasCargos = experience.cargos && experience.cargos.length > 0;
-
-  // Layout COM multiplos cargos (timeline interna)
-  if (hasCargos) {
-    // Ordenar cargos por data (mais recente primeiro) - ja vem ordenado do hook
-    return (
-      <div className="space-y-4">
-        {/* Header da empresa */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">{experience.empresa}</h3>
-            {experience.localizacao && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                {experience.localizacao}
-                {experience.remoto && (
-                  <Badge variant="outline" className="text-xs py-0 ml-2">
-                    <Home className="w-3 h-3 mr-1" />
-                    Remoto
-                  </Badge>
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Timeline interna de cargos */}
-        <div className="relative ml-5 pl-6 border-l-2 border-border">
-          {experience.cargos.map((cargo) => (
-            <CargoItem key={cargo.id} cargo={cargo} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Layout SEM cargos extras (cargo unico - layout existente)
+function EmptyState() {
   return (
-    <div className="space-y-2">
-      {/* ... manter layout existente com experience.titulo_cargo ... */}
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+        <Briefcase className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-medium text-foreground mb-2">
+        Nenhuma vaga disponivel no momento
+      </h3>
+      <p className="text-muted-foreground max-w-md">
+        Volte em breve! Novas oportunidades sao publicadas regularmente.
+      </p>
     </div>
   );
 }
 ```
+
+---
+
+#### 7. Atualizacao em App.tsx
+
+Adicionar rota /jobs antes do catch-all:
+
+```typescript
+import Jobs from "./pages/Jobs";
+
+// Na lista de Routes, antes do "*"
+<Route path="/jobs" element={<Jobs />} />
+```
+
+---
+
+#### 8. Atualizacao em Header.tsx
+
+Alterar links de `/vagas` para `/jobs`:
+
+```typescript
+// Desktop nav (linha ~143)
+<Link
+  to="/jobs"
+  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+>
+  Vagas
+</Link>
+
+// Mobile nav (linha ~61)
+<Link
+  to="/jobs"
+  onClick={() => setMobileMenuOpen(false)}
+  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+>
+  Vagas
+</Link>
+```
+
+---
+
+### Responsividade
+
+| Breakpoint | Layout |
+|------------|--------|
+| Mobile (<1024px) | Sidebar empilhada acima do grid, expandida por padrao |
+| Desktop (>=1024px) | Sidebar fixa a esquerda (w-64, lg:sticky lg:top-24), grid a direita |
+
+---
+
+### Estados da Pagina
+
+| Estado | Comportamento |
+|--------|---------------|
+| Loading | Grid de 6 skeleton cards |
+| Vazio | Mensagem "Nenhuma vaga disponivel no momento. Volte em breve!" |
+| Erro | Toast com mensagem amigavel + estado vazio |
+| Sucesso | Grid de cards ordenados por destaque + data |
+
+---
+
+### Estilo dos Cards
+
+| Tipo | Background | Border Hover | Shadow Hover |
+|------|------------|--------------|--------------|
+| Destaque | `bg-muted/50` | `border-primary/40` | Glow verde suave |
+| Gratuita | `bg-card` | `border-border/80` | Nenhuma |
 
 ---
 
@@ -913,50 +646,41 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
 
 | Ordem | Arquivo | Complexidade |
 |-------|---------|--------------|
-| 1 | Migracao SQL | Baixa |
-| 2 | `useExperiences.ts` | Alta |
-| 3 | `usePublicProfile.ts` | Media |
-| 4 | `ExperienceCard.tsx` | Media |
-| 5 | `ExperienceList.tsx` | Baixa |
-| 6 | `Experience.tsx` | Baixa |
-| 7 | `ExperienceModal.tsx` | Alta |
-| 8 | `ExperienceSection.tsx` | Media |
+| 1 | `src/lib/formatters.ts` | Baixa |
+| 2 | `src/hooks/useJobs.ts` | Media |
+| 3 | `src/components/jobs/JobCardSkeleton.tsx` | Baixa |
+| 4 | `src/components/jobs/JobCard.tsx` | Media |
+| 5 | `src/components/jobs/JobsSidebar.tsx` | Baixa |
+| 6 | `src/pages/Jobs.tsx` | Media |
+| 7 | `src/App.tsx` | Baixa |
+| 8 | `src/components/layout/Header.tsx` | Baixa |
 
 ---
 
-### Resumo da Logica de Renderizacao
+### Checklist de Validacoes
 
-| Situacao | O que renderiza |
-|----------|-----------------|
-| `experience.cargos.length === 0` | Layout simples com `experience.titulo_cargo` |
-| `experience.cargos.length > 0` | Header com empresa + timeline interna com cargos |
-
----
-
-### Mensagens de Erro Amigaveis
-
-| Cenario | Mensagem |
-|---------|----------|
-| Dois cargos "atualmente trabalhando" | "Voce ja possui um cargo ativo (Atualmente trabalhando) nesta empresa. Defina uma data de termino para o cargo atual antes de adicionar um novo cargo ativo." |
-| Datas sobrepostas | "Este cargo conflita com um periodo existente (de Jan 2022 ate Dez 2023). As datas nao podem se sobrepor. O novo cargo comeca em Jun 2023." |
-| Erro generico | "Nao foi possivel adicionar o cargo. Tente novamente." |
-
----
-
-### Checklist Final
-
-| Item | Status |
-|------|--------|
-| NAO limpar campos de `experiencia` | Corrigido |
-| Manter dados duplicados | Implementado |
-| `validateDatesOverlap` completo | Implementado |
-| `checkPeriodsOverlap` auxiliar | Implementado |
-| `formatMonth` auxiliar | Implementado |
-| `usePublicProfile.ts` com cargos | Implementado |
-| `ExperienceSection.tsx` condicional | Implementado |
-| Ordenacao client-side | Implementado |
-| Mensagens de erro claras | Implementado |
-| DropdownMenu para acoes | Implementado |
-| Timeline global removida | Implementado |
-| Timeline interna condicional | Implementado |
+| Item | Implementacao |
+|------|---------------|
+| Query unica com JOIN | Supabase select com relacionamentos |
+| tipo_funcao incluido na query | Campo adicionado ao select |
+| Filtro vagas ativas | `.eq("ativa", true)` |
+| Filtro nao expiradas | `.gt("expira_em", new Date().toISOString())` |
+| Ordenacao destaque primeiro | `.order("tipo_publicacao", { ascending: false })` |
+| Ordenacao por data | `.order("criada_em", { ascending: false })` |
+| Logo 48x48 | Avatar com `w-12 h-12` |
+| 3 badges (contrato, nivel, remoto) | Flex row com 3 Badge components |
+| Limite 5 habilidades | `.slice(0, 5)` + badge "+X" |
+| Todas habilidades visiveis | NAO filtrar apenas obrigatorias, mostrar todas |
+| Card inteiro clicavel | Wrapper `<a>` com `href` |
+| Nova aba | `target="_blank"` |
+| Destaque visual | Background diferente + glow verde no hover |
+| Filtros apenas visuais | Selects com `disabled` |
+| Sidebar sticky apenas desktop | `lg:sticky lg:top-24` |
+| Sidebar expandida no mobile | Sem collapse |
+| Loading skeletons | Grid de 6 JobCardSkeleton |
+| Estado vazio | Mensagem centralizada |
+| Sem salario | NAO mostrar salario em nenhum lugar |
+| Sem "publicada ha X dias" | NAO mostrar data relativa |
+| Sem paginacao | Lista completa |
+| Sem busca por texto | NAO implementar nesta fase |
 
