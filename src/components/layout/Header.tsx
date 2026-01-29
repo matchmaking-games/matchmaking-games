@@ -11,13 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 export function Header() {
@@ -58,13 +52,13 @@ export function Header() {
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
                 <Link
-                  to="/jobs"
+                  to="/vagas"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
                   Vagas
                 </Link>
-                
+
                 {isAuthenticated && (
                   <>
                     <Link
@@ -130,25 +124,22 @@ export function Header() {
         </div>
 
         {/* Logo - centered on mobile */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="flex items-center gap-2 md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
         >
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
         </Link>
 
-        {/* Desktop: Center navigation */}
-        <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
-          <Link
-            to="/jobs"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Vagas
-          </Link>
-        </nav>
-
-        {/* Desktop: Auth section */}
+        {/* Desktop: Right section (Vagas + Auth) */}
         <div className="hidden md:flex items-center gap-3">
+          {/* Vagas (desktop only) - same style as "Entrar" */}
+          <Link to="/vagas">
+            <Button variant="ghost" size="sm">
+              Vagas
+            </Button>
+          </Link>
+
           {isLoading ? (
             <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
           ) : isAuthenticated ? (
@@ -158,6 +149,7 @@ export function Header() {
                   Painel
                 </Button>
               </Link>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-full">
