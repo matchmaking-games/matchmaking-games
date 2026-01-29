@@ -58,7 +58,7 @@ export function Header() {
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
                 <Link
-                  to="/vagas"
+                  to="/jobs"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
@@ -140,7 +140,7 @@ export function Header() {
         {/* Desktop: Center navigation */}
         <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
           <Link
-            to="/vagas"
+            to="/jobs"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
             Vagas

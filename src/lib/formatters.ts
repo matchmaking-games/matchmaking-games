@@ -164,3 +164,45 @@ export function generateSlug(title: string): string {
     .replace(/\s+/g, "-")            // Spaces become hyphens
     .replace(/-+/g, "-");            // Remove duplicate hyphens
 }
+
+/**
+ * Converts job level enum to readable text
+ * iniciante → "Iniciante", junior → "Júnior", etc.
+ */
+export function formatNivelVaga(nivel: string): string {
+  const map: Record<string, string> = {
+    iniciante: "Iniciante",
+    junior: "Júnior",
+    pleno: "Pleno",
+    senior: "Sênior",
+    lead: "Lead",
+  };
+  return map[nivel] || nivel;
+}
+
+/**
+ * Converts contract type enum to readable text
+ * clt → "CLT", pj → "PJ", freelance → "Freelance", estagio → "Estágio"
+ */
+export function formatTipoContrato(tipo: string): string {
+  const map: Record<string, string> = {
+    clt: "CLT",
+    pj: "PJ",
+    freelance: "Freelance",
+    estagio: "Estágio",
+  };
+  return map[tipo] || tipo;
+}
+
+/**
+ * Converts work model enum to readable text
+ * presencial → "Presencial", hibrido → "Híbrido", remoto → "Remoto"
+ */
+export function formatTipoTrabalho(tipo: string): string {
+  const map: Record<string, string> = {
+    presencial: "Presencial",
+    hibrido: "Híbrido",
+    remoto: "Remoto",
+  };
+  return map[tipo] || tipo;
+}
