@@ -40,6 +40,12 @@ export interface VagaListItem {
   vaga_habilidades: VagaHabilidadeData[];
 }
 
+export interface JobCursor {
+  tipo_publicacao: string | null;
+  criada_em: string;
+  id: string;
+}
+
 export interface JobFiltersParams {
   nivel?: string | null;
   tipoContrato?: string | null;
@@ -47,10 +53,20 @@ export interface JobFiltersParams {
   localizacao?: string | null;
   habilidades?: string[];
   searchText?: string | null;
+  pageSize?: number;
+  cursor?: JobCursor | null;
 }
 
-async function fetchJobs(filters: JobFiltersParams): Promise<VagaListItem[]> {
+export interface JobsQueryResult {
+  jobs: VagaListItem[];
+  hasNextPage: boolean;
+  nextCursor: JobCursor | null;
+}
+
+async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
   const now = new Date().toISOString();
+  const pageSize = filters.pageSize || 20;
+  const cursor = filters.cursor;
 
   // Usar optional chaining para evitar edge case de array vazio
   // filters.habilidades?.length retorna undefined se null/undefined, 0 se [], N se tem IDs
@@ -70,7 +86,7 @@ async function fetchJobs(filters: JobFiltersParams): Promise<VagaListItem[]> {
     vagaIdsWithSkills = [...new Set(vagaHabilidades?.map((vh) => vh.vaga_id) || [])];
 
     if (vagaIdsWithSkills.length === 0) {
-      return [];
+      return { jobs: [], hasNextPage: false, nextCursor: null };
     }
   }
 
@@ -117,21 +133,31 @@ async function fetchJobs(filters: JobFiltersParams): Promise<VagaListItem[]> {
     query = query.in("id", vagaIdsWithSkills);
   }
 
+  // Aplicar cursor para paginação
+  if (cursor) {
+    const tipoCursor = cursor.tipo_publicacao || 'gratuita';
+    const cursorFilter = [
+      `tipo_publicacao.lt.${tipoCursor}`,
+      `and(tipo_publicacao.eq.${tipoCursor},criada_em.lt.${cursor.criada_em})`,
+      `and(tipo_publicacao.eq.${tipoCursor},criada_em.eq.${cursor.criada_em},id.lt.${cursor.id})`
+    ].join(',');
+    
+    query = query.or(cursorFilter);
+  }
+
   // PERFORMANCE: Busca por texto usando .ilike() faz sequential scan.
   // Para MVP (<500 vagas) e aceitavel (~50-100ms com debounce de 500ms).
-  //
-  // Se queries ficarem lentas (>500ms) no futuro:
-  // 1. Adicionar indice GIN full-text search
-  // 2. Ou limitar busca apenas ao campo 'titulo'
-  // 3. Ou considerar Algolia quando passar de 5000 vagas
   if (filters.searchText) {
     const searchTerm = `%${filters.searchText}%`;
     query = query.or(`titulo.ilike.${searchTerm},descricao.ilike.${searchTerm}`);
   }
 
+  // Ordenação e limite (buscar pageSize + 1 para detectar próxima página)
   query = query
     .order("tipo_publicacao", { ascending: false })
-    .order("criada_em", { ascending: false });
+    .order("criada_em", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(pageSize + 1);
 
   const { data, error } = await query;
 
@@ -140,7 +166,27 @@ async function fetchJobs(filters: JobFiltersParams): Promise<VagaListItem[]> {
     throw new Error("Não foi possível carregar as vagas.");
   }
 
-  return (data || []) as VagaListItem[];
+  const allJobs = (data || []) as VagaListItem[];
+  
+  // Detectar se há próxima página
+  const hasNextPage = allJobs.length > pageSize;
+  
+  // Retornar apenas pageSize vagas (descartar a extra)
+  const jobs = hasNextPage ? allJobs.slice(0, pageSize) : allJobs;
+  
+  // Construir cursor da última vaga para próxima página
+  const lastJob = jobs[jobs.length - 1];
+  const nextCursor: JobCursor | null = lastJob ? {
+    tipo_publicacao: lastJob.tipo_publicacao,
+    criada_em: lastJob.criada_em!,
+    id: lastJob.id,
+  } : null;
+
+  return {
+    jobs,
+    hasNextPage,
+    nextCursor,
+  };
 }
 
 export function useJobs(filters: JobFiltersParams = {}) {

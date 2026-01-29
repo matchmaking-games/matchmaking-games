@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Briefcase, Search, X } from "lucide-react";
+import { Briefcase, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { JobCard } from "@/components/jobs/JobCard";
 import { JobsSidebar } from "@/components/jobs/JobsSidebar";
 import { JobsSkeletonGrid } from "@/components/jobs/JobCardSkeleton";
-import { useJobs } from "@/hooks/useJobs";
+import { useJobs, JobCursor } from "@/hooks/useJobs";
 import { useJobFilters } from "@/hooks/useJobFilters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
@@ -27,12 +28,35 @@ export default function Jobs() {
   // Debounce do texto de busca (500ms)
   const debouncedSearch = useDebounce(searchInput, 500);
 
+  // Estados de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [cursors, setCursors] = useState<(JobCursor | null)[]>([null]);
+
+  // Chave que representa todos os filtros (para reset de paginação)
+  const filtersKey = JSON.stringify({
+    nivel: filters.nivel,
+    tipoContrato: filters.tipoContrato,
+    modeloTrabalho: filters.modeloTrabalho,
+    localizacao: filters.localizacao,
+    habilidades: filters.habilidades,
+    searchText: debouncedSearch,
+  });
+
+  // Reset de paginação quando filtros mudam
+  useEffect(() => {
+    setCurrentPage(1);
+    setCursors([null]);
+  }, [filtersKey]);
+
   // Sincronizar debounced search com URL
   useEffect(() => {
     if (debouncedSearch !== filters.searchText) {
       setFilter("q", debouncedSearch || null);
     }
   }, [debouncedSearch, filters.searchText, setFilter]);
+
+  // Cursor atual para a query
+  const currentCursor = cursors[currentPage - 1] || null;
 
   // Preparar filtros para a query
   const queryFilters = {
@@ -42,9 +66,14 @@ export default function Jobs() {
     localizacao: filters.localizacao,
     habilidades: filters.habilidades,
     searchText: debouncedSearch,
+    pageSize: 20,
+    cursor: currentCursor,
   };
 
-  const { data: jobs, isLoading, error } = useJobs(queryFilters);
+  const { data, isLoading, error } = useJobs(queryFilters);
+  const jobs = data?.jobs || [];
+  const hasNextPage = data?.hasNextPage || false;
+  const nextCursor = data?.nextCursor || null;
 
   useEffect(() => {
     if (error) {
@@ -67,7 +96,22 @@ export default function Jobs() {
     clearAllFilters();
   };
 
-  const resultCount = jobs?.length || 0;
+  const goToNextPage = () => {
+    if (hasNextPage && nextCursor) {
+      setCursors(prev => {
+        const next = [...prev];
+        next[currentPage] = nextCursor;
+        return next;
+      });
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -123,31 +167,49 @@ export default function Jobs() {
                 )}
               </div>
 
-              {/* Contador de Resultados */}
-              {!isLoading && (
-                <p className="text-sm text-muted-foreground">
-                  {resultCount === 0
-                    ? "Nenhuma vaga encontrada"
-                    : resultCount === 1
-                    ? "1 vaga encontrada"
-                    : `${resultCount} vagas encontradas`}
-                </p>
-              )}
-
               {/* Grid de Vagas */}
               {isLoading ? (
                 <JobsSkeletonGrid />
-              ) : !jobs || jobs.length === 0 ? (
+              ) : jobs.length === 0 ? (
                 <EmptyState
                   hasFilters={hasActiveFilters}
                   onClear={handleClearAll}
                 />
               ) : (
-                <div className="grid gap-4">
-                  {jobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid gap-4">
+                    {jobs.map((job) => (
+                      <JobCard key={job.id} job={job} />
+                    ))}
+                  </div>
+
+                  {/* Paginação */}
+                  <div className="flex items-center justify-center gap-4 pt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1 || isLoading}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Anterior
+                    </Button>
+
+                    <span className="text-sm text-muted-foreground">
+                      Página {currentPage}
+                    </span>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNextPage}
+                      disabled={!hasNextPage || isLoading}
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </>
               )}
             </main>
           </div>
