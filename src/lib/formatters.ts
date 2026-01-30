@@ -206,3 +206,21 @@ export function formatTipoTrabalho(tipo: string): string {
   };
   return map[tipo] || tipo;
 }
+
+/**
+ * Converts studio size enum to readable text
+ * micro → "1-10 funcionários", pequeno → "11-50 funcionários", etc.
+ * Returns fallback for null values
+ */
+export function formatTamanhoEstudio(tamanho: string | null): string {
+  if (!tamanho) return "Tamanho não informado";
+
+  const map: Record<string, string> = {
+    micro: "1-10 funcionários",
+    pequeno: "11-50 funcionários",
+    medio: "51-200 funcionários",
+    grande: "200+ funcionários",
+  };
+
+  return map[tamanho] || tamanho;
+}

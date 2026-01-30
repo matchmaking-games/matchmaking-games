@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Sparkles, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,12 +30,7 @@ export function JobCard({ job }: JobCardProps) {
   };
 
   return (
-    <a
-      href={`/jobs/${job.slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block"
-    >
+    <Link to={`/jobs/${job.slug}`} className="block">
       <Card
         className={cn(
           "p-4 cursor-pointer transition-all duration-200",
@@ -118,6 +114,6 @@ export function JobCard({ job }: JobCardProps) {
           </div>
         </div>
       </Card>
-    </a>
+    </Link>
   );
 }
