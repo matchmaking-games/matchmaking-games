@@ -1,10 +1,10 @@
 
 
-## Plano Atualizado: Paginacao Cursor-Based na Pagina de Vagas (/jobs)
+## Plano Atualizado: Dropdown Funcional no Footer da Sidebar
 
 ### Visao Geral
 
-Implementar paginacao cursor-based na listagem de vagas para melhorar performance e UX. A paginacao usara um cursor composto por (tipo_publicacao, criada_em, id) para manter a ordenacao correta.
+Transformar o footer da sidebar em um botao clicavel que abre um dropdown menu com opcoes de navegacao e acoes. O conteudo do dropdown muda dependendo se o usuario tem ou nao um estudio criado.
 
 ---
 
@@ -12,370 +12,308 @@ Implementar paginacao cursor-based na listagem de vagas para melhorar performanc
 
 | Correcao | Detalhes |
 |----------|----------|
-| Sintaxe do cursor | `.or()` recebe UMA string com `and()` para condicoes compostas |
-| Contador de vagas | Remover completamente quando ha paginacao |
-| Componente de UI | Usar Button diretamente (nao Pagination do shadcn) |
+| Hook useCurrentUser | Criar hook reutilizavel para buscar dados do usuario da tabela users |
+| getInitials existente | Manter a funcao getInitials ja existente no componente (nao usar inline) |
+| Classes disabled | Remover classes redundantes dos items disabled (shadcn ja aplica estilos) |
 
 ---
 
-### Arquivos a Modificar
+### Arquivos a Criar/Modificar
 
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/hooks/useJobs.ts` | Adicionar suporte a `pageSize` e `cursor`, retornar `hasNextPage` e `nextCursor` |
-| `src/pages/Jobs.tsx` | Adicionar estados de paginacao, componente de navegacao, remover contador, resetar quando filtros mudam |
+| Acao | Arquivo | Descricao |
+|------|---------|-----------|
+| Criar | `src/hooks/useCurrentUser.ts` | Hook reutilizavel para buscar dados do usuario logado |
+| Criar | `src/hooks/useHasStudio.ts` | Hook para verificar se usuario tem estudio |
+| Modificar | `src/components/dashboard/DashboardSidebar.tsx` | Adicionar dropdown no footer e item condicional "Meu Estudio" |
 
 ---
 
 ### Secao Tecnica
 
-#### 1. Modificar useJobs.ts
+#### 1. Hook useCurrentUser.ts
 
-**Novos tipos a adicionar:**
+Hook reutilizavel para buscar dados do usuario da tabela users:
 
 ```typescript
-export interface JobCursor {
-  tipo_publicacao: string | null;
-  criada_em: string;
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface CurrentUser {
   id: string;
+  nome_completo: string;
+  avatar_url: string | null;
 }
 
-export interface JobFiltersParams {
-  nivel?: string | null;
-  tipoContrato?: string | null;
-  modeloTrabalho?: string | null;
-  localizacao?: string | null;
-  habilidades?: string[];
-  searchText?: string | null;
-  pageSize?: number;
-  cursor?: JobCursor | null;
-}
-
-export interface JobsQueryResult {
-  jobs: VagaListItem[];
-  hasNextPage: boolean;
-  nextCursor: JobCursor | null;
-}
-```
-
-**Sintaxe CORRETA do filtro de cursor:**
-
-```typescript
-if (cursor) {
-  // Construir filtro OR com condicoes AND aninhadas
-  // Formato: .or('cond1,and(cond2,cond3),and(cond4,cond5,cond6)')
-  
-  const tipoCursor = cursor.tipo_publicacao || 'gratuita'; // fallback para null
-  
-  // Condição 1: tipo_publicacao menor (gratuita vem depois de destaque em DESC)
-  // Condição 2: mesmo tipo_publicacao, mas criada_em mais antiga
-  // Condição 3: mesmo tipo_publicacao e criada_em, mas ID menor (desempate)
-  
-  const cursorFilter = [
-    `tipo_publicacao.lt.${tipoCursor}`,
-    `and(tipo_publicacao.eq.${tipoCursor},criada_em.lt.${cursor.criada_em})`,
-    `and(tipo_publicacao.eq.${tipoCursor},criada_em.eq.${cursor.criada_em},id.lt.${cursor.id})`
-  ].join(',');
-  
-  query = query.or(cursorFilter);
-}
-```
-
-**Logica completa da funcao fetchJobs atualizada:**
-
-```typescript
-async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
-  const now = new Date().toISOString();
-  const pageSize = filters.pageSize || 20;
-  const cursor = filters.cursor;
-
-  // ... codigo existente para filtro de habilidades ...
-
-  let query = supabase
-    .from("vagas")
-    .select(`
-      id,
-      titulo,
-      slug,
-      nivel,
-      remoto,
-      tipo_contrato,
-      tipo_publicacao,
-      tipo_funcao,
-      localizacao,
-      criada_em,
-      estudio:estudios(nome, slug, logo_url, localizacao),
-      vaga_habilidades(
-        id,
-        obrigatoria,
-        habilidade:habilidades(id, nome, categoria)
-      )
-    `)
-    .eq("ativa", true)
-    .gt("expira_em", now);
-
-  // ... filtros existentes (nivel, tipoContrato, etc.) ...
-
-  // Aplicar cursor para paginacao
-  if (cursor) {
-    const tipoCursor = cursor.tipo_publicacao || 'gratuita';
-    const cursorFilter = [
-      `tipo_publicacao.lt.${tipoCursor}`,
-      `and(tipo_publicacao.eq.${tipoCursor},criada_em.lt.${cursor.criada_em})`,
-      `and(tipo_publicacao.eq.${tipoCursor},criada_em.eq.${cursor.criada_em},id.lt.${cursor.id})`
-    ].join(',');
-    
-    query = query.or(cursorFilter);
-  }
-
-  // ... filtro de busca por texto existente ...
-
-  // Ordenacao e limite (buscar pageSize + 1 para detectar proxima pagina)
-  query = query
-    .order("tipo_publicacao", { ascending: false })
-    .order("criada_em", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(pageSize + 1);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Error fetching jobs:", error);
-    throw new Error("Nao foi possivel carregar as vagas.");
-  }
-
-  const allJobs = (data || []) as VagaListItem[];
-  
-  // Detectar se ha proxima pagina
-  const hasNextPage = allJobs.length > pageSize;
-  
-  // Retornar apenas pageSize vagas (descartar a extra)
-  const jobs = hasNextPage ? allJobs.slice(0, pageSize) : allJobs;
-  
-  // Construir cursor da ultima vaga para proxima pagina
-  const lastJob = jobs[jobs.length - 1];
-  const nextCursor: JobCursor | null = lastJob ? {
-    tipo_publicacao: lastJob.tipo_publicacao,
-    criada_em: lastJob.criada_em!,
-    id: lastJob.id,
-  } : null;
-
-  return {
-    jobs,
-    hasNextPage,
-    nextCursor,
-  };
-}
-```
-
-**Mudanca na assinatura do hook:**
-
-```typescript
-export function useJobs(filters: JobFiltersParams = {}) {
+export function useCurrentUser() {
   return useQuery({
-    queryKey: ["jobs", filters],
-    queryFn: () => fetchJobs(filters),
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
+    queryKey: ["current-user"],
+    queryFn: async (): Promise<CurrentUser | null> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return null;
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("nome_completo, avatar_url")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching current user:", error);
+        return null;
+      }
+
+      return {
+        id: session.user.id,
+        nome_completo: data.nome_completo,
+        avatar_url: data.avatar_url,
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 }
 ```
 
-O retorno agora sera `data.jobs`, `data.hasNextPage`, `data.nextCursor` em vez de `data` diretamente.
-
 ---
 
-#### 2. Modificar Jobs.tsx
+#### 2. Hook useHasStudio.ts
 
-**Adicionar imports:**
-
-```typescript
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { JobCursor } from "@/hooks/useJobs";
-```
-
-**Adicionar estados de paginacao:**
+Hook que verifica se o usuario logado criou um estudio:
 
 ```typescript
-// Pagina atual (comeca em 1)
-const [currentPage, setCurrentPage] = useState(1);
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-// Array de cursors - posicao 0 = null (primeira pagina)
-const [cursors, setCursors] = useState<(JobCursor | null)[]>([null]);
-```
+export function useHasStudio() {
+  return useQuery({
+    queryKey: ["has-studio"],
+    queryFn: async (): Promise<boolean> => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return false;
 
-**Atualizar queryFilters para incluir cursor:**
+      const { data, error } = await supabase
+        .from("estudios")
+        .select("id")
+        .eq("criado_por", session.user.id)
+        .maybeSingle();
 
-```typescript
-const currentCursor = cursors[currentPage - 1] || null;
+      if (error) {
+        console.error("Error checking studio:", error);
+        return false;
+      }
 
-const queryFilters = {
-  nivel: filters.nivel,
-  tipoContrato: filters.tipoContrato,
-  modeloTrabalho: filters.modeloTrabalho,
-  localizacao: filters.localizacao,
-  habilidades: filters.habilidades,
-  searchText: debouncedSearch,
-  pageSize: 20,
-  cursor: currentCursor,
-};
-```
-
-**Atualizar uso do hook (nova estrutura de retorno):**
-
-```typescript
-const { data, isLoading, error } = useJobs(queryFilters);
-const jobs = data?.jobs || [];
-const hasNextPage = data?.hasNextPage || false;
-const nextCursor = data?.nextCursor || null;
-```
-
-**Adicionar funcoes de navegacao:**
-
-```typescript
-const goToNextPage = () => {
-  if (hasNextPage && nextCursor) {
-    setCursors(prev => {
-      const next = [...prev];
-      next[currentPage] = nextCursor;
-      return next;
-    });
-    setCurrentPage(prev => prev + 1);
-  }
-};
-
-const goToPreviousPage = () => {
-  if (currentPage > 1) {
-    setCurrentPage(prev => prev - 1);
-  }
-};
-```
-
-**Reset de paginacao quando filtros mudam:**
-
-```typescript
-// Chave que representa todos os filtros
-const filtersKey = JSON.stringify({
-  nivel: filters.nivel,
-  tipoContrato: filters.tipoContrato,
-  modeloTrabalho: filters.modeloTrabalho,
-  localizacao: filters.localizacao,
-  habilidades: filters.habilidades,
-  searchText: debouncedSearch,
-});
-
-// Reset quando filtros mudam
-useEffect(() => {
-  setCurrentPage(1);
-  setCursors([null]);
-}, [filtersKey]);
-```
-
-**REMOVER contador de resultados (linhas 126-135):**
-
-Deletar completamente este bloco:
-```typescript
-// REMOVER ESTE BLOCO
-{!isLoading && (
-  <p className="text-sm text-muted-foreground">
-    {resultCount === 0
-      ? "Nenhuma vaga encontrada"
-      : resultCount === 1
-      ? "1 vaga encontrada"
-      : `${resultCount} vagas encontradas`}
-  </p>
-)}
-```
-
-Tambem remover a variavel `resultCount` que nao sera mais usada.
-
-**Adicionar componente de paginacao (apos o grid de vagas):**
-
-```tsx
-{/* Paginacao */}
-{jobs.length > 0 && (
-  <div className="flex items-center justify-center gap-4 pt-6">
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={goToPreviousPage}
-      disabled={currentPage === 1 || isLoading}
-    >
-      <ChevronLeft className="h-4 w-4 mr-1" />
-      Anterior
-    </Button>
-    
-    <span className="text-sm text-muted-foreground">
-      Pagina {currentPage}
-    </span>
-    
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={goToNextPage}
-      disabled={!hasNextPage || isLoading}
-    >
-      Proxima
-      <ChevronRight className="h-4 w-4 ml-1" />
-    </Button>
-  </div>
-)}
+      return !!data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  });
+}
 ```
 
 ---
 
-### Estrutura Final do Jobs.tsx (Secao Main)
+#### 3. Modificacoes no DashboardSidebar.tsx
+
+**Novos imports:**
+
+```typescript
+import { useNavigate, Link } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Briefcase,
+  User,
+  Building2,
+  ChevronDown,
+  Settings,
+  CreditCard,
+  Mail,
+  LogOut,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useHasStudio } from "@/hooks/useHasStudio";
+```
+
+**Remover useEffect e useState:**
+
+O componente atual usa `useState` e `useEffect` para buscar o usuario. Substituir por:
+
+```typescript
+// REMOVER:
+// const [user, setUser] = useState<UserData | null>(null);
+// useEffect(() => { ... }, []);
+
+// ADICIONAR:
+const { data: user } = useCurrentUser();
+const { data: hasStudio, isLoading: isLoadingStudio } = useHasStudio();
+```
+
+**Items de navegacao dinamicos:**
+
+```typescript
+// Items base da sidebar
+const baseNavItems = [
+  { title: "Visao Geral", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Vagas", url: "/dashboard/jobs", icon: Briefcase },
+  { title: "Meu Perfil", url: "/dashboard/profile", icon: User },
+];
+
+// Items com "Meu Estudio" condicional
+const navItems = hasStudio
+  ? [...baseNavItems, { title: "Meu Estudio", url: "/studio/dashboard", icon: Building2 }]
+  : baseNavItems;
+```
+
+**Funcao de logout:**
+
+```typescript
+const navigate = useNavigate();
+const { toast } = useToast();
+
+const handleSignOut = async () => {
+  await supabase.auth.signOut();
+  toast({
+    title: "Ate logo!",
+    description: "Voce saiu com sucesso.",
+  });
+  navigate("/login");
+};
+```
+
+**Manter funcao getInitials existente:**
+
+```typescript
+// JA EXISTE NO COMPONENTE - MANTER:
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
+```
+
+**Footer com dropdown:**
 
 ```tsx
-<main className="flex-1 space-y-4">
-  {/* Campo de Busca */}
-  <div className="relative">
-    {/* ... campo de busca existente ... */}
-  </div>
+<SidebarFooter className="p-4 border-t border-sidebar-border">
+  {user && (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user.avatar_url || undefined} alt={user.nome_completo} />
+            <AvatarFallback className="bg-muted text-muted-foreground text-[15px]">
+              {getInitials(user.nome_completo)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-[15px] font-medium text-sidebar-foreground truncate flex-1 text-left">
+            {user.nome_completo}
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </DropdownMenuTrigger>
 
-  {/* Grid de Vagas (SEM contador acima) */}
-  {isLoading ? (
-    <JobsSkeletonGrid />
-  ) : jobs.length === 0 ? (
-    <EmptyState hasFilters={hasActiveFilters} onClear={handleClearAll} />
-  ) : (
-    <>
-      <div className="grid gap-4">
-        {jobs.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
-      </div>
-      
-      {/* Paginacao */}
-      <div className="flex items-center justify-center gap-4 pt-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={goToPreviousPage}
-          disabled={currentPage === 1 || isLoading}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Anterior
-        </Button>
-        
-        <span className="text-sm text-muted-foreground">
-          Pagina {currentPage}
-        </span>
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={goToNextPage}
-          disabled={!hasNextPage || isLoading}
-        >
-          Proxima
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
-    </>
+      <DropdownMenuContent align="end" side="top" className="w-56">
+        {/* Criar Estudio - so aparece se NAO tem estudio */}
+        {!isLoadingStudio && !hasStudio && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to="/studio/new" className="cursor-pointer">
+                <Building2 className="mr-2 h-4 w-4" />
+                Criar Estudio
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
+        {/* Configuracoes - placeholder disabled (SEM classes extras) */}
+        <DropdownMenuItem disabled>
+          <Settings className="mr-2 h-4 w-4" />
+          Configuracoes
+        </DropdownMenuItem>
+
+        {/* Faturamento - placeholder disabled (SEM classes extras) */}
+        <DropdownMenuItem disabled>
+          <CreditCard className="mr-2 h-4 w-4" />
+          Faturamento
+        </DropdownMenuItem>
+
+        {/* Suporte - mailto */}
+        <DropdownMenuItem asChild>
+          <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
+            <Mail className="mr-2 h-4 w-4" />
+            Suporte
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        {/* Sair */}
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )}
-</main>
+</SidebarFooter>
+```
+
+---
+
+### Estrutura Visual
+
+**Footer da Sidebar (botao do dropdown):**
+
+```text
++-------------------------------------------+
+| [Avatar] Lucas Pimenta              [v]   |  <- botao clicavel
++-------------------------------------------+
+```
+
+**Dropdown - Usuario SEM estudio:**
+
+```text
++-----------------------------+
+| Building2 Criar Estudio     |
++-----------------------------+
+| Settings Configuracoes      | (disabled)
+| CreditCard Faturamento      | (disabled)
+| Mail Suporte                |
++-----------------------------+
+| LogOut Sair                 |
++-----------------------------+
+```
+
+**Dropdown - Usuario COM estudio:**
+
+```text
++-----------------------------+
+| Settings Configuracoes      | (disabled)
+| CreditCard Faturamento      | (disabled)
+| Mail Suporte                |
++-----------------------------+
+| LogOut Sair                 |
++-----------------------------+
+```
+
+**Sidebar - Usuario COM estudio:**
+
+```text
++-----------------------------+
+| LayoutDashboard Visao Geral |
+| Briefcase Vagas             |
+| User Meu Perfil             |
+| Building2 Meu Estudio       | <- aparece apenas com estudio
++-----------------------------+
 ```
 
 ---
@@ -384,18 +322,9 @@ Tambem remover a variavel `resultCount` que nao sera mais usada.
 
 | Ordem | Arquivo | Complexidade |
 |-------|---------|--------------|
-| 1 | `src/hooks/useJobs.ts` | Alta |
-| 2 | `src/pages/Jobs.tsx` | Media |
-
----
-
-### Tratamento de tipo_publicacao NULL
-
-O campo `tipo_publicacao` pode ser NULL para vagas antigas. Para simplificar:
-
-- Se o cursor tiver `tipo_publicacao: null`, usar `'gratuita'` como fallback na comparacao
-- Vagas com NULL aparecerao naturalmente por ultimo no ORDER BY DESC
-- Esta simplificacao funciona para o MVP
+| 1 | `src/hooks/useCurrentUser.ts` | Baixa |
+| 2 | `src/hooks/useHasStudio.ts` | Baixa |
+| 3 | `src/components/dashboard/DashboardSidebar.tsx` | Media |
 
 ---
 
@@ -403,15 +332,18 @@ O campo `tipo_publicacao` pode ser NULL para vagas antigas. Para simplificar:
 
 | Item | Implementacao |
 |------|---------------|
-| Primeira pagina carrega corretamente | cursor = null |
-| Botao "Proxima" funciona | Salvar nextCursor, incrementar currentPage |
-| Botao "Anterior" funciona | Decrementar currentPage, usar cursor salvo |
-| Anterior desabilitado na pagina 1 | disabled={currentPage === 1} |
-| Proxima desabilitado na ultima | disabled={!hasNextPage} |
-| Reset ao mudar filtros | useEffect observa filtersKey |
-| Loading state ao navegar | isLoading desabilita botoes |
-| Destaque continua no topo | ORDER BY tipo_publicacao DESC |
-| Sem vagas = sem paginacao | Condicional no render |
-| Contador removido | Bloco deletado |
-| Sintaxe .or() correta | String unica com and() |
+| Usuario sem estudio ve "Criar Estudio" | Condicional `!hasStudio` |
+| Usuario sem estudio NAO ve "Meu Estudio" | Array navItems dinamico |
+| Usuario com estudio NAO ve "Criar Estudio" | Condicional `!hasStudio` |
+| Usuario com estudio ve "Meu Estudio" | Array navItems dinamico |
+| Botao "Sair" faz logout | `supabase.auth.signOut()` + navigate |
+| Toast de confirmacao ao sair | `toast({ title: "Ate logo!" })` |
+| Link "Suporte" abre email | `<a href="mailto:...">` |
+| Configuracoes desabilitado | `disabled` prop (sem classes extras) |
+| Faturamento desabilitado | `disabled` prop (sem classes extras) |
+| Dropdown abre acima do footer | `side="top"` |
+| Seta ChevronDown no botao | Icone no trigger |
+| Hover state no botao | `hover:bg-sidebar-accent` |
+| Dados usuario via hook | `useCurrentUser()` com react-query |
+| getInitials mantida | Funcao existente preservada |
 
