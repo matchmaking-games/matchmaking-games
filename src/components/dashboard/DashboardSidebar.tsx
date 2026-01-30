@@ -140,7 +140,7 @@ export function DashboardSidebar() {
 
               <DropdownMenuItem disabled>
                 <CreditCard className="mr-2 h-4 w-4" />
-                Faturamento
+                Faturas
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
