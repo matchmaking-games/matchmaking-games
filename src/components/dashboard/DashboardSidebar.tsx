@@ -1,6 +1,15 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { LayoutDashboard, Briefcase, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Briefcase,
+  User,
+  Building2,
+  ChevronDown,
+  Settings,
+  CreditCard,
+  Mail,
+  LogOut,
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,17 +25,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useHasStudio } from "@/hooks/useHasStudio";
 
-const navItems = [
+const baseNavItems = [
   { title: "Visão Geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Vagas", url: "/dashboard/jobs", icon: Briefcase },
   { title: "Meu Perfil", url: "/dashboard/profile", icon: User },
 ];
-
-interface UserData {
-  nome_completo: string;
-  avatar_url: string | null;
-}
 
 const getInitials = (name: string) => {
   return name
@@ -38,24 +52,23 @@ const getInitials = (name: string) => {
 };
 
 export function DashboardSidebar() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { data: user } = useCurrentUser();
+  const { data: hasStudio, isLoading: isLoadingStudio } = useHasStudio();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const { data } = await supabase
-          .from("users")
-          .select("nome_completo, avatar_url")
-          .eq("id", session.user.id)
-          .maybeSingle();
-        if (data) setUser(data);
-      }
-    };
-    fetchUser();
-  }, []);
+  const navItems = hasStudio
+    ? [...baseNavItems, { title: "Meu Estúdio", url: "/studio/dashboard", icon: Building2 }]
+    : baseNavItems;
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Até logo!",
+      description: "Você saiu com sucesso.",
+    });
+    navigate("/login");
+  };
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -91,17 +104,60 @@ export function DashboardSidebar() {
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         {user && (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={user.avatar_url || undefined} alt={user.nome_completo} />
-              <AvatarFallback className="bg-muted text-muted-foreground text-[15px]">
-                {getInitials(user.nome_completo)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-[15px] font-medium text-sidebar-foreground truncate">
-              {user.nome_completo}
-            </span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user.avatar_url || undefined} alt={user.nome_completo} />
+                  <AvatarFallback className="bg-muted text-muted-foreground text-[15px]">
+                    {getInitials(user.nome_completo)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-[15px] font-medium text-sidebar-foreground truncate flex-1 text-left">
+                  {user.nome_completo}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" side="top" className="w-56">
+              {!isLoadingStudio && !hasStudio && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/studio/new" className="cursor-pointer">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      Criar Estúdio
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              <DropdownMenuItem disabled>
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
+
+              <DropdownMenuItem disabled>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Faturamento
+              </DropdownMenuItem>
+
+              <DropdownMenuItem asChild>
+                <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Suporte
+                </a>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </SidebarFooter>
     </Sidebar>
