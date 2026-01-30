@@ -864,6 +864,7 @@ export type Database = {
         Row: {
           ativa: boolean | null
           atualizada_em: string | null
+          contato_candidatura: string | null
           criada_em: string | null
           criada_por: string
           descricao: string
@@ -888,6 +889,7 @@ export type Database = {
         Insert: {
           ativa?: boolean | null
           atualizada_em?: string | null
+          contato_candidatura?: string | null
           criada_em?: string | null
           criada_por: string
           descricao: string
@@ -912,6 +914,7 @@ export type Database = {
         Update: {
           ativa?: boolean | null
           atualizada_em?: string | null
+          contato_candidatura?: string | null
           criada_em?: string | null
           criada_por?: string
           descricao?: string
