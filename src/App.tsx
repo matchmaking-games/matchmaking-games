@@ -19,6 +19,7 @@ import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
 import NewStudio from "./pages/studio/NewStudio";
+import StudioDashboard from "./pages/studio/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -100,6 +101,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <NewStudio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/dashboard"
+            element={
+              <ProtectedRoute>
+                <StudioDashboard />
               </ProtectedRoute>
             }
           />
