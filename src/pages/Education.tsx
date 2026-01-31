@@ -76,34 +76,21 @@ export default function EducationPage() {
       <div className="max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
-              Meu Perfil
-            </h1>
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">Meu Perfil</h1>
 
             <ProfileNavigation />
 
             <div className="flex items-start justify-between gap-4 mb-6">
-              <p className="text-muted-foreground">
-                Adicione sua formação acadêmica e certificações
-              </p>
+              <p className="text-muted-foreground">Adicione sua formação acadêmica e certificações</p>
               <Button onClick={handleAdd} className="flex-shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
             </div>
 
-            {error && (
-              <div className="text-destructive text-sm mb-4">
-                {error}
-              </div>
-            )}
+            {error && <div className="text-destructive text-sm mb-4">{error}</div>}
 
-            <EducationList
-              educations={educations}
-              loading={loading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <EducationList educations={educations} loading={loading} onEdit={handleEdit} onDelete={handleDelete} />
           </CardContent>
         </Card>
       </div>
@@ -117,29 +104,18 @@ export default function EducationPage() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deletingEducation}
-        onOpenChange={(open) => !open && setDeletingEducation(null)}
-      >
+      <AlertDialog open={!!deletingEducation} onOpenChange={(open) => !open && setDeletingEducation(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover formação?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover{" "}
-              <strong>{deletingEducation?.titulo}</strong> na{" "}
-              <strong>{deletingEducation?.instituicao}</strong>?
-              Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover <strong>{deletingEducation?.titulo}</strong> na{" "}
+              <strong>{deletingEducation?.instituicao}</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} variant="destructive">
               {isDeleting ? "Removendo..." : "Remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
