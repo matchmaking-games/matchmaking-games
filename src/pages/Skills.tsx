@@ -158,7 +158,7 @@ export default function Skills() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} disabled={isDeleting} variant="destructive">
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting} variant="destructive">
               {isDeleting ? "Removendo..." : "Remover"}
             </AlertDialogAction>
           </AlertDialogFooter>
