@@ -49,7 +49,7 @@ export function ProjectDeleteDialog({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            variant="destructive"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? "Excluindo..." : "Excluir"}
           </AlertDialogAction>
