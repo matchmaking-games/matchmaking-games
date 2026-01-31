@@ -1034,6 +1034,10 @@ export type Database = {
         Args: { slug_to_check: string }
         Returns: boolean
       }
+      check_studio_slug_availability: {
+        Args: { slug_to_check: string }
+        Returns: boolean
+      }
       expirar_vagas_antigas: { Args: never; Returns: number }
     }
     Enums: {

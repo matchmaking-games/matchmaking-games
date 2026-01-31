@@ -18,6 +18,7 @@ import Projects from "./pages/Projects";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
+import NewStudio from "./pages/studio/NewStudio";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -94,6 +95,14 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
+          <Route
+            path="/studio/new"
+            element={
+              <ProtectedRoute>
+                <NewStudio />
+              </ProtectedRoute>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
