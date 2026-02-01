@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
@@ -23,6 +24,7 @@ type ValidationErrors = {
 const Signup = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
   const slug = searchParams.get("slug");
   
   const [email, setEmail] = useState("");
@@ -30,6 +32,39 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      if (authLoading) return;
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          navigate(slug ? `/onboarding?slug=${slug}` : '/onboarding', { replace: true });
+        }
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    
+    checkAuthAndRedirect();
+  }, [user, authLoading, navigate, slug]);
+
+  if (authLoading || checkingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const validateForm = (): boolean => {
     const result = signupSchema.safeParse({ email, password });
