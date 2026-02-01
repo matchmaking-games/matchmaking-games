@@ -1,79 +1,53 @@
 import { Link, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Briefcase,
-  Building2,
-  UserPlus,
-  ChevronDown,
-  Settings,
-  CreditCard,
-  Mail,
-  ExternalLink,
-  LogOut,
-  ArrowLeft,
-} from "lucide-react";
+import { LayoutDashboard, Briefcase, Building2, UserPlus, ChevronDown, Settings, CreditCard, Mail, ExternalLink, LogOut, ChevronLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { StudioMembership } from "@/hooks/useStudioMembership";
-
-const navItems = [
-  { title: "Dashboard", url: "/studio/dashboard", icon: LayoutDashboard },
-  { title: "Vagas", url: "/studio/jobs", icon: Briefcase },
-  { title: "Perfil do Estúdio", url: "/studio/profile", icon: Building2 },
-  { title: "Equipe", url: "/studio/team", icon: UserPlus },
-];
-
+const navItems = [{
+  title: "Dashboard",
+  url: "/studio/dashboard",
+  icon: LayoutDashboard
+}, {
+  title: "Vagas",
+  url: "/studio/jobs",
+  icon: Briefcase
+}, {
+  title: "Perfil do Estúdio",
+  url: "/studio/profile",
+  icon: Building2
+}, {
+  title: "Equipe",
+  url: "/studio/team",
+  icon: UserPlus
+}];
 const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((word) => word[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  return name.split(" ").map(word => word[0]).slice(0, 2).join("").toUpperCase();
 };
-
 interface StudioSidebarProps {
   membership: StudioMembership;
 }
-
-export function StudioSidebar({ membership }: StudioSidebarProps) {
+export function StudioSidebar({
+  membership
+}: StudioSidebarProps) {
   const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast({
       title: "Até logo!",
-      description: "Você saiu com sucesso.",
+      description: "Você saiu com sucesso."
     });
     navigate("/login");
   };
-
-  return (
-    <Sidebar className="border-r border-sidebar-border">
+  return <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <Link to="/" className="flex items-center">
           <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
@@ -86,11 +60,8 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
-                  >
-                    <ArrowLeft className="h-[22px] w-[22px]" />
+                  <Link to="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]">
+                    <ChevronLeft className="h-[22px] w-[22px]" />
                     <span>Voltar ao perfil</span>
                   </Link>
                 </SidebarMenuButton>
@@ -101,21 +72,14 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
                 <Separator className="bg-sidebar-border" />
               </div>
 
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {navItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/studio/dashboard"}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
+                    <NavLink to={item.url} end={item.url === "/studio/dashboard"} className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
                       <item.icon className="h-[22px] w-[22px]" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -159,12 +123,7 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
-              <a
-                href={`/studio/${membership.estudio.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer"
-              >
+              <a href={`/studio/${membership.estudio.slug}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Ver página pública
               </a>
@@ -179,6 +138,5 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarFooter>
-    </Sidebar>
-  );
+    </Sidebar>;
 }
