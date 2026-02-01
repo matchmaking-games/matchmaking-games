@@ -22,6 +22,7 @@ import { SpecialtiesInput } from "@/components/studio/SpecialtiesInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
+import { useIBGELocations } from "@/hooks/useIBGELocations";
 import type { Database } from "@/integrations/supabase/types";
 
 type TamanhoEstudio = Database["public"]["Enums"]["tamanho_estudio"];
@@ -82,12 +83,16 @@ export default function StudioProfile() {
   const [slug, setSlug] = useState("");
   const [descricao, setDescricao] = useState("");
   const [sobre, setSobre] = useState("");
-  const [localizacao, setLocalizacao] = useState("");
+  const [estado, setEstado] = useState("");
+  const [cidade, setCidade] = useState("");
   const [tamanho, setTamanho] = useState<TamanhoEstudio | null>(null);
   const [website, setWebsite] = useState("");
   const [especialidades, setEspecialidades] = useState<string[]>([]);
   const [fundadoEm, setFundadoEm] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  // IBGE Locations hook
+  const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } = useIBGELocations();
 
   useEffect(() => {
     async function fetchStudioData() {
@@ -114,7 +119,17 @@ export default function StudioProfile() {
         setSlug(data.slug || "");
         setDescricao(data.descricao || "");
         setSobre(data.sobre || "");
-        setLocalizacao(data.localizacao || "");
+        
+        // Parse existing location (format: "City, UF")
+        if (data.localizacao) {
+          const [nomeCidade, uf] = data.localizacao.split(', ');
+          if (uf && nomeCidade) {
+            setEstado(uf);
+            setCidade(nomeCidade);
+            fetchMunicipios(uf);
+          }
+        }
+        
         setTamanho(data.tamanho);
         setWebsite(data.website || "");
         setEspecialidades(data.especialidades || []);
@@ -131,7 +146,19 @@ export default function StudioProfile() {
     } else if (!loadingMembership && !membership) {
       navigate("/studio/new");
     }
-  }, [membership, loadingMembership, navigate, toast]);
+  }, [membership, loadingMembership, navigate, toast, fetchMunicipios]);
+
+  // Handle state change - fetch municipalities and clear city
+  const handleEstadoChange = (sigla: string) => {
+    setEstado(sigla);
+    setCidade("");
+    fetchMunicipios(sigla);
+  };
+
+  // Handle city change
+  const handleCidadeChange = (nomeCidade: string) => {
+    setCidade(nomeCidade);
+  };
 
   const handleLogoUpload = async (file: File) => {
     if (!membership?.estudio.id) return;
@@ -196,6 +223,9 @@ export default function StudioProfile() {
 
     if (!membership?.estudio.id) return;
 
+    // Build location string from state + city
+    const localizacao = estado && cidade ? `${cidade}, ${estado}` : "";
+    
     const formData = {
       nome,
       descricao,
@@ -352,20 +382,60 @@ export default function StudioProfile() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="localizacao">Localização</Label>
-                  <Input
-                    id="localizacao"
-                    value={localizacao}
-                    onChange={(e) => setLocalizacao(e.target.value)}
-                    placeholder="São Paulo, SP"
-                    className="h-11"
-                  />
-                  {validationErrors.localizacao && (
-                    <p className="text-sm text-destructive">
-                      {validationErrors.localizacao}
-                    </p>
-                  )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <Select 
+                      value={estado} 
+                      onValueChange={handleEstadoChange}
+                      disabled={loadingEstados}
+                    >
+                      <SelectTrigger className="h-11">
+                        {loadingEstados ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Carregando...</span>
+                          </div>
+                        ) : (
+                          <SelectValue placeholder="Selecione o estado" />
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {estados.map((uf) => (
+                          <SelectItem key={uf.sigla} value={uf.sigla}>
+                            {uf.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Select
+                      value={cidade}
+                      onValueChange={handleCidadeChange}
+                      disabled={!estado || loadingMunicipios}
+                    >
+                      <SelectTrigger className="h-11">
+                        {loadingMunicipios ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Carregando...</span>
+                          </div>
+                        ) : (
+                          <SelectValue placeholder="Selecione a cidade" />
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipios.map((mun) => (
+                          <SelectItem key={mun.id} value={mun.nome}>
+                            {mun.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">

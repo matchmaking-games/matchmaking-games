@@ -2,16 +2,24 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { ChevronLeft, Check, X, Loader2, Building2, MapPin } from "lucide-react";
+import { ChevronLeft, Check, X, Loader2, Building2 } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCheckStudioSlug } from "@/hooks/useCheckStudioSlug";
+import { useIBGELocations } from "@/hooks/useIBGELocations";
 
 const createStudioSchema = z.object({
   nome: z.string()
@@ -23,9 +31,10 @@ const createStudioSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Use apenas letras minúsculas, números e hífen")
     .refine(slug => !slug.startsWith('-') && !slug.endsWith('-'),
       "Slug não pode começar ou terminar com hífen"),
-  localizacao: z.string()
-    .min(1, "Localização é obrigatória")
-    .max(100, "Localização muito longa"),
+  estado: z.string()
+    .length(2, "Selecione o estado"),
+  cidade: z.string()
+    .min(1, "Selecione a cidade"),
   tamanho: z.enum(['micro', 'pequeno', 'medio', 'grande'], {
     errorMap: () => ({ message: "Selecione o tamanho do estúdio" })
   }),
@@ -50,10 +59,14 @@ export default function NewStudio() {
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [localizacao, setLocalizacao] = useState("");
+  const [estado, setEstado] = useState("");
+  const [cidade, setCidade] = useState("");
   const [tamanho, setTamanho] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  // IBGE Locations hook
+  const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios } = useIBGELocations();
 
   // Verificar validade do slug para o hook
   const slugValidation = createStudioSchema.shape.slug.safeParse(slug);
@@ -100,13 +113,23 @@ export default function NewStudio() {
     setSlugTouched(true);
   };
 
+  // Handle state change - fetch municipalities and clear city
+  const handleEstadoChange = (sigla: string) => {
+    setEstado(sigla);
+    setCidade("");
+    fetchMunicipios(sigla);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationErrors({});
 
     // Validar com Zod
-    const formData = { nome, slug, localizacao, tamanho };
+    const formData = { nome, slug, estado, cidade, tamanho };
     const result = createStudioSchema.safeParse(formData);
+
+    // Build location string from state + city
+    const localizacao = `${cidade}, ${estado}`;
 
     if (!result.success) {
       const errors: Record<string, string> = {};
@@ -208,7 +231,8 @@ export default function NewStudio() {
     isSubmitting ||
     !nome ||
     !slug ||
-    !localizacao ||
+    !estado ||
+    !cidade ||
     !tamanho ||
     !isSlugFormatValid ||
     isChecking ||
@@ -290,24 +314,67 @@ export default function NewStudio() {
                 )}
               </div>
 
-              {/* Localização */}
-              <div className="space-y-2">
-                <Label htmlFor="localizacao">Localização *</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="localizacao"
-                    value={localizacao}
-                    onChange={(e) => setLocalizacao(e.target.value)}
-                    placeholder="Ex: São Paulo, SP"
-                    className="pl-10 h-11"
-                    maxLength={100}
-                    disabled={isSubmitting}
-                  />
+              {/* State and City Dropdowns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Estado *</Label>
+                  <Select 
+                    value={estado} 
+                    onValueChange={handleEstadoChange}
+                    disabled={loadingEstados || isSubmitting}
+                  >
+                    <SelectTrigger className="h-11">
+                      {loadingEstados ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Carregando...</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Selecione o estado" />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {estados.map((uf) => (
+                        <SelectItem key={uf.sigla} value={uf.sigla}>
+                          {uf.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {validationErrors.estado && (
+                    <p className="text-sm text-destructive">{validationErrors.estado}</p>
+                  )}
                 </div>
-                {validationErrors.localizacao && (
-                  <p className="text-sm text-destructive">{validationErrors.localizacao}</p>
-                )}
+
+                <div className="space-y-2">
+                  <Label>Cidade *</Label>
+                  <Select
+                    value={cidade}
+                    onValueChange={setCidade}
+                    disabled={!estado || loadingMunicipios || isSubmitting}
+                  >
+                    <SelectTrigger className="h-11">
+                      {loadingMunicipios ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Carregando...</span>
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Selecione a cidade" />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {municipios.map((mun) => (
+                        <SelectItem key={mun.id} value={mun.nome}>
+                          {mun.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {validationErrors.cidade && (
+                    <p className="text-sm text-destructive">{validationErrors.cidade}</p>
+                  )}
+                </div>
               </div>
 
               {/* Tamanho do Estúdio */}
