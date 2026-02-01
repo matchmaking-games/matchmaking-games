@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 import { StudioMembership } from "@/hooks/useStudioMembership";
 
 const navItems = [
@@ -94,6 +95,12 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {/* Separator entre "Voltar ao perfil" e o resto do menu */}
+              <div className="px-3 py-2">
+                <Separator className="bg-sidebar-border" />
+              </div>
+
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
@@ -119,10 +126,7 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-3 w-full p-2 rounded-md hover:bg-sidebar-accent transition-colors cursor-pointer">
               <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src={membership.estudio.logo_url || undefined}
-                  alt={membership.estudio.nome}
-                />
+                <AvatarImage src={membership.estudio.logo_url || undefined} alt={membership.estudio.nome} />
                 <AvatarFallback className="bg-muted text-muted-foreground text-[15px]">
                   {getInitials(membership.estudio.nome)}
                 </AvatarFallback>
@@ -146,10 +150,7 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
-              <a
-                href="mailto:lucas.pimenta@matchmaking.games"
-                className="cursor-pointer"
-              >
+              <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
                 <Mail className="mr-2 h-4 w-4" />
                 Suporte
               </a>
