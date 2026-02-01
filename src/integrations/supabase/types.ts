@@ -574,6 +574,59 @@ export type Database = {
           },
         ]
       }
+      projeto_estudios: {
+        Row: {
+          adicionado_em: string | null
+          adicionado_por: string
+          estudio_id: string
+          id: string
+          projeto_id: string
+        }
+        Insert: {
+          adicionado_em?: string | null
+          adicionado_por: string
+          estudio_id: string
+          id?: string
+          projeto_id: string
+        }
+        Update: {
+          adicionado_em?: string | null
+          adicionado_por?: string
+          estudio_id?: string
+          id?: string
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_estudios_adicionado_por_fkey"
+            columns: ["adicionado_por"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_estudios_adicionado_por_fkey"
+            columns: ["adicionado_por"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_estudios_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_estudios_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_habilidades: {
         Row: {
           habilidade_id: string
