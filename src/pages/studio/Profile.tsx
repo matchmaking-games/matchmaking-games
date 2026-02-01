@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Loader2, Camera } from "lucide-react";
+import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,7 +118,8 @@ export default function StudioProfile() {
         setTamanho(data.tamanho);
         setWebsite(data.website || "");
         setEspecialidades(data.especialidades || []);
-        setFundadoEm(data.fundado_em || "");
+        // Convert YYYY-MM-DD to YYYY-MM for MonthYearPicker
+        setFundadoEm(data.fundado_em ? data.fundado_em.substring(0, 7) : "");
         setLogoUrl(data.logo_url);
       }
 
@@ -472,14 +474,14 @@ export default function StudioProfile() {
 
               {/* Foundation Section */}
               <div className="space-y-2">
-                <Label htmlFor="fundado_em">Data de fundação</Label>
-                <Input
-                  id="fundado_em"
-                  type="date"
-                  value={fundadoEm}
-                  onChange={(e) => setFundadoEm(e.target.value)}
-                  className="h-11 w-full md:w-64"
-                />
+                <Label>Data de fundação</Label>
+                <div className="w-full md:w-64">
+                  <MonthYearPicker
+                    value={fundadoEm}
+                    onChange={setFundadoEm}
+                    placeholder="Selecione mês e ano"
+                  />
+                </div>
               </div>
 
               <Separator />
