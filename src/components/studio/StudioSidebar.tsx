@@ -10,6 +10,7 @@ import {
   Mail,
   ExternalLink,
   LogOut,
+  ArrowLeft,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
@@ -37,12 +38,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { StudioMembership } from "@/hooks/useStudioMembership";
 
-const mainNavItems = [
+const navItems = [
   { title: "Dashboard", url: "/studio/dashboard", icon: LayoutDashboard },
   { title: "Vagas", url: "/studio/jobs", icon: Briefcase },
-];
-
-const settingsNavItems = [
   { title: "Perfil do Estúdio", url: "/studio/profile", icon: Building2 },
   { title: "Equipe", url: "/studio/team", icon: UserPlus },
 ];
@@ -85,36 +83,23 @@ export function StudioSidebar({ membership }: StudioSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
+                  >
+                    <ArrowLeft className="h-[22px] w-[22px]" />
+                    <span>Voltar ao perfil</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === "/studio/dashboard"}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
-                      <item.icon className="h-[22px] w-[22px]" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Configurações
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
                       activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                     >
