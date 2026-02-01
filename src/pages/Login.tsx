@@ -1,19 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      if (authLoading) return;
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          navigate('/onboarding', { replace: true });
+        }
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    
+    checkAuthAndRedirect();
+  }, [user, authLoading, navigate]);
+
+  if (authLoading || checkingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const getErrorMessage = (error: string): string => {
     if (error.includes("Invalid login credentials")) {
