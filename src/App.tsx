@@ -20,6 +20,7 @@ import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
 import NewStudio from "./pages/studio/NewStudio";
 import StudioDashboard from "./pages/studio/Dashboard";
+import StudioProfile from "./pages/studio/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -109,6 +110,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <StudioDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/profile"
+            element={
+              <ProtectedRoute>
+                <StudioProfile />
               </ProtectedRoute>
             }
           />
