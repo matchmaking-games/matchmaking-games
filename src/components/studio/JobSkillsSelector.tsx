@@ -64,7 +64,7 @@ export function JobSkillsSelector({
       (skill) =>
         !selectedSkillIds.includes(skill.id) &&
         !excludeSkillIds.includes(skill.id) &&
-        skill.nome.toLowerCase().includes(search.toLowerCase())
+        skill.nome.toLowerCase().includes(search.toLowerCase()),
     );
 
     // Group by category
@@ -96,31 +96,8 @@ export function JobSkillsSelector({
     <div className="space-y-2">
       <label className="text-sm font-medium text-foreground">{label}</label>
 
-      {/* Selected skills badges */}
-      {selectedSkills.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 rounded-md bg-muted/50 border border-border">
-          {selectedSkills.map((skill) => (
-            <span
-              key={skill.id}
-              className={cn(
-                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border",
-                getSkillBadgeClasses(skill.categoria)
-              )}
-            >
-              {skill.nome}
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={() => removeSkill(skill.id)}
-                  className="ml-1 hover:bg-background/20 rounded p-0.5 transition-colors"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Helper text */}
+      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
 
       {/* Skill selector popover */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -180,7 +157,7 @@ export function JobSkillsSelector({
                             className={cn(
                               "px-2 py-1 rounded text-xs border transition-colors",
                               "hover:opacity-80",
-                              getSkillBadgeClasses(skill.categoria)
+                              getSkillBadgeClasses(skill.categoria),
                             )}
                           >
                             {skill.nome}
@@ -200,9 +177,30 @@ export function JobSkillsSelector({
         </PopoverContent>
       </Popover>
 
-      {/* Helper text */}
-      {helperText && (
-        <p className="text-xs text-muted-foreground">{helperText}</p>
+      {/* Selected skills badges */}
+      {selectedSkills.length > 0 && (
+        <div className="flex flex-wrap gap-2 p-3 rounded-md bg-muted/50 border border-border">
+          {selectedSkills.map((skill) => (
+            <span
+              key={skill.id}
+              className={cn(
+                "inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border",
+                getSkillBadgeClasses(skill.categoria),
+              )}
+            >
+              {skill.nome}
+              {!disabled && (
+                <button
+                  type="button"
+                  onClick={() => removeSkill(skill.id)}
+                  className="ml-1 hover:bg-background/20 rounded p-0.5 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );
