@@ -24,28 +24,18 @@ import { cn } from "@/lib/utils";
 // Form schema with Zod
 const vagaFormSchema = z
   .object({
-    titulo: z
-      .string()
-      .min(5, "Mínimo 5 caracteres")
-      .max(100, "Máximo 100 caracteres"),
+    titulo: z.string().min(5, "Mínimo 5 caracteres").max(100, "Máximo 100 caracteres"),
     tipo_funcao: z.array(z.string()).min(1, "Selecione pelo menos um tipo de função"),
     nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
     tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
     remoto: z.enum(["presencial", "hibrido", "remoto"]),
     estado: z.string().optional(),
     cidade: z.string().optional(),
-    contato_candidatura: z
-      .string()
-      .max(500, "Máximo 500 caracteres")
-      .optional()
-      .nullable(),
+    contato_candidatura: z.string().max(500, "Máximo 500 caracteres").optional().nullable(),
     salario_min: z.number().positive().nullable().optional(),
     salario_max: z.number().positive().nullable().optional(),
     mostrar_salario: z.boolean().default(false),
-    descricao: z
-      .string()
-      .min(100, "Mínimo 100 caracteres")
-      .max(10000, "Máximo 10.000 caracteres"),
+    descricao: z.string().min(100, "Mínimo 100 caracteres").max(10000, "Máximo 10.000 caracteres"),
     tipo_publicacao: z.enum(["gratuita", "destaque"]).default("gratuita"),
     habilidades_obrigatorias: z.array(z.string()).default([]),
     habilidades_desejaveis: z.array(z.string()).default([]),
@@ -60,7 +50,7 @@ const vagaFormSchema = z
     {
       message: "Salário máximo deve ser maior ou igual ao mínimo",
       path: ["salario_max"],
-    }
+    },
   );
 
 type VagaFormSchemaType = z.infer<typeof vagaFormSchema>;
@@ -89,25 +79,11 @@ export default function JobForm() {
   const navigate = useNavigate();
   const isEditing = !!id;
 
-  const {
-    isLoading,
-    isSaving,
-    error,
-    isAuthorized,
-    existingJob,
-    existingSkills,
-    createJob,
-    updateJob,
-  } = useJobForm(id);
+  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob } =
+    useJobForm(id);
 
-  const {
-    estados,
-    loadingEstados,
-    municipios,
-    loadingMunicipios,
-    fetchMunicipios,
-    clearMunicipios,
-  } = useIBGELocations();
+  const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
+    useIBGELocations();
 
   const [habilidadesObrigatorias, setHabilidadesObrigatorias] = useState<string[]>([]);
   const [habilidadesDesejaveis, setHabilidadesDesejaveis] = useState<string[]>([]);
@@ -208,7 +184,7 @@ export default function JobForm() {
     } else {
       form.setValue(
         "tipo_funcao",
-        current.filter((v) => v !== value)
+        current.filter((v) => v !== value),
       );
     }
   };
@@ -216,8 +192,7 @@ export default function JobForm() {
   // Handle form submission
   const onSubmit = async (data: VagaFormSchemaType) => {
     // Transform estado/cidade into localizacao
-    const localizacao =
-      data.estado && data.cidade ? `${data.cidade}, ${data.estado}` : null;
+    const localizacao = data.estado && data.cidade ? `${data.cidade}, ${data.estado}` : null;
 
     const formData: VagaFormData = {
       titulo: data.titulo,
@@ -271,16 +246,10 @@ export default function JobForm() {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/studio/jobs")}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate("/studio/jobs")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="font-display text-2xl">
-              {isEditing ? "Editar Vaga" : "Criar Nova Vaga"}
-            </CardTitle>
+            <CardTitle className="font-display text-2xl">{isEditing ? "Editar Vaga" : "Criar Nova Vaga"}</CardTitle>
           </div>
         </CardHeader>
 
@@ -302,10 +271,7 @@ export default function JobForm() {
                         Título da vaga <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex: Senior Unity Developer"
-                          {...field}
-                        />
+                        <Input placeholder="Ex: Senior Unity Developer" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -323,21 +289,13 @@ export default function JobForm() {
                       </FormLabel>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                         {tipoFuncaoOptions.map((option) => (
-                          <div
-                            key={option.value}
-                            className="flex items-center space-x-2"
-                          >
+                          <div key={option.value} className="flex items-center space-x-2">
                             <Checkbox
                               id={`funcao-${option.value}`}
                               checked={tipoFuncaoValue.includes(option.value)}
-                              onCheckedChange={(checked) =>
-                                handleTipoFuncaoToggle(option.value, !!checked)
-                              }
+                              onCheckedChange={(checked) => handleTipoFuncaoToggle(option.value, !!checked)}
                             />
-                            <Label
-                              htmlFor={`funcao-${option.value}`}
-                              className="text-sm font-normal cursor-pointer"
-                            >
+                            <Label htmlFor={`funcao-${option.value}`} className="text-sm font-normal cursor-pointer">
                               {option.label}
                             </Label>
                           </div>
@@ -358,11 +316,7 @@ export default function JobForm() {
                         Nível <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex flex-wrap gap-4"
-                        >
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
                           {[
                             { value: "iniciante", label: "Iniciante" },
                             { value: "junior", label: "Júnior" },
@@ -370,18 +324,9 @@ export default function JobForm() {
                             { value: "senior", label: "Sênior" },
                             { value: "lead", label: "Lead" },
                           ].map((item) => (
-                            <div
-                              key={item.value}
-                              className="flex items-center space-x-2"
-                            >
-                              <RadioGroupItem
-                                value={item.value}
-                                id={`nivel-${item.value}`}
-                              />
-                              <Label
-                                htmlFor={`nivel-${item.value}`}
-                                className="font-normal cursor-pointer"
-                              >
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <RadioGroupItem value={item.value} id={`nivel-${item.value}`} />
+                              <Label htmlFor={`nivel-${item.value}`} className="font-normal cursor-pointer">
                                 {item.label}
                               </Label>
                             </div>
@@ -403,29 +348,16 @@ export default function JobForm() {
                         Tipo de contrato <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex flex-wrap gap-4"
-                        >
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
                           {[
                             { value: "clt", label: "CLT" },
                             { value: "pj", label: "PJ" },
                             { value: "freelance", label: "Freelance" },
                             { value: "estagio", label: "Estágio" },
                           ].map((item) => (
-                            <div
-                              key={item.value}
-                              className="flex items-center space-x-2"
-                            >
-                              <RadioGroupItem
-                                value={item.value}
-                                id={`contrato-${item.value}`}
-                              />
-                              <Label
-                                htmlFor={`contrato-${item.value}`}
-                                className="font-normal cursor-pointer"
-                              >
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <RadioGroupItem value={item.value} id={`contrato-${item.value}`} />
+                              <Label htmlFor={`contrato-${item.value}`} className="font-normal cursor-pointer">
                                 {item.label}
                               </Label>
                             </div>
@@ -447,28 +379,15 @@ export default function JobForm() {
                         Modelo de trabalho <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex flex-wrap gap-4"
-                        >
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
                           {[
                             { value: "presencial", label: "Presencial" },
                             { value: "hibrido", label: "Híbrido" },
                             { value: "remoto", label: "Remoto" },
                           ].map((item) => (
-                            <div
-                              key={item.value}
-                              className="flex items-center space-x-2"
-                            >
-                              <RadioGroupItem
-                                value={item.value}
-                                id={`remoto-${item.value}`}
-                              />
-                              <Label
-                                htmlFor={`remoto-${item.value}`}
-                                className="font-normal cursor-pointer"
-                              >
+                            <div key={item.value} className="flex items-center space-x-2">
+                              <RadioGroupItem value={item.value} id={`remoto-${item.value}`} />
+                              <Label htmlFor={`remoto-${item.value}`} className="font-normal cursor-pointer">
                                 {item.label}
                               </Label>
                             </div>
@@ -488,11 +407,7 @@ export default function JobForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Estado</FormLabel>
-                        <Select
-                          onValueChange={handleEstadoChange}
-                          value={field.value}
-                          disabled={loadingEstados}
-                        >
+                        <Select onValueChange={handleEstadoChange} value={field.value} disabled={loadingEstados}>
                           <FormControl>
                             <SelectTrigger>
                               {loadingEstados ? (
@@ -549,9 +464,7 @@ export default function JobForm() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <p className="text-xs text-muted-foreground">
-                          Deixe em branco se a vaga for 100% remota
-                        </p>
+                        <p className="text-xs text-muted-foreground">Deixe em branco se a vaga for 100% remota</p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -565,6 +478,11 @@ export default function JobForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Como candidatos devem entrar em contato?</FormLabel>
+
+                      <p className="text-xs text-muted-foreground">
+                        Informe um email, link de formulário ou instruções de como se candidatar a esta vaga.
+                      </p>
+
                       <FormControl>
                         <Input
                           placeholder="Ex: vagas@estudio.com ou https://estudio.com/vagas"
@@ -572,9 +490,7 @@ export default function JobForm() {
                           value={field.value || ""}
                         />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">
-                        Informe um email, link de formulário ou instruções de como se candidatar a esta vaga.
-                      </p>
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -599,11 +515,7 @@ export default function JobForm() {
                             placeholder="Ex: 8000"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value ? Number(e.target.value) : null
-                              )
-                            }
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -623,11 +535,7 @@ export default function JobForm() {
                             placeholder="Ex: 15000"
                             {...field}
                             value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value ? Number(e.target.value) : null
-                              )
-                            }
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -642,14 +550,9 @@ export default function JobForm() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormLabel className="font-normal cursor-pointer">
-                        Exibir faixa salarial publicamente
-                      </FormLabel>
+                      <FormLabel className="font-normal cursor-pointer">Exibir faixa salarial publicamente</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -680,7 +583,7 @@ export default function JobForm() {
                           "text-xs text-right",
                           isTooShort && "text-destructive",
                           isValidLength && "text-primary",
-                          !isTooShort && !isValidLength && "text-muted-foreground"
+                          !isTooShort && !isValidLength && "text-muted-foreground",
                         )}
                       >
                         {charCount} / 10.000
@@ -724,37 +627,17 @@ export default function JobForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="space-y-3"
-                        >
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
                           <div className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors">
-                            <RadioGroupItem
-                              value="gratuita"
-                              id="pub-gratuita"
-                              className="mt-1"
-                            />
-                            <Label
-                              htmlFor="pub-gratuita"
-                              className="flex-1 cursor-pointer"
-                            >
+                            <RadioGroupItem value="gratuita" id="pub-gratuita" className="mt-1" />
+                            <Label htmlFor="pub-gratuita" className="flex-1 cursor-pointer">
                               <span className="font-medium">Gratuita</span>
-                              <p className="text-sm text-muted-foreground">
-                                Visibilidade padrão na listagem de vagas
-                              </p>
+                              <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
                             </Label>
                           </div>
                           <div className="flex items-start space-x-3 p-3 rounded-md border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
-                            <RadioGroupItem
-                              value="destaque"
-                              id="pub-destaque"
-                              className="mt-1"
-                            />
-                            <Label
-                              htmlFor="pub-destaque"
-                              className="flex-1 cursor-pointer"
-                            >
+                            <RadioGroupItem value="destaque" id="pub-destaque" className="mt-1" />
+                            <Label htmlFor="pub-destaque" className="flex-1 cursor-pointer">
                               <span className="font-medium flex items-center gap-2">
                                 <Sparkles className="h-4 w-4 text-amber-500" />
                                 Destaque (R$ 199)
@@ -774,11 +657,7 @@ export default function JobForm() {
 
               {/* ACTION BUTTONS */}
               <div className="flex justify-end gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate("/studio/jobs")}
-                >
+                <Button type="button" variant="outline" onClick={() => navigate("/studio/jobs")}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSaving}>
