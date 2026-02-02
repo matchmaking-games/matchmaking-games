@@ -22,6 +22,7 @@ import NewStudio from "./pages/studio/NewStudio";
 import StudioDashboard from "./pages/studio/Dashboard";
 import StudioProfile from "./pages/studio/Profile";
 import StudioJobs from "./pages/studio/Jobs";
+import JobForm from "./pages/studio/JobForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -127,6 +128,22 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <StudioJobs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/jobs/new"
+            element={
+              <ProtectedRoute>
+                <JobForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/jobs/:id/edit"
+            element={
+              <ProtectedRoute>
+                <JobForm />
               </ProtectedRoute>
             }
           />
