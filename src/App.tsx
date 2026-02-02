@@ -21,6 +21,7 @@ import PublicProfile from "./pages/PublicProfile";
 import NewStudio from "./pages/studio/NewStudio";
 import StudioDashboard from "./pages/studio/Dashboard";
 import StudioProfile from "./pages/studio/Profile";
+import StudioJobs from "./pages/studio/Jobs";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -118,6 +119,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <StudioProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/jobs"
+            element={
+              <ProtectedRoute>
+                <StudioJobs />
               </ProtectedRoute>
             }
           />
