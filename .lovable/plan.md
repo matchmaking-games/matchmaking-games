@@ -1,273 +1,310 @@
 
 
-## Plano Atualizado: Pagina de Edicao do Perfil do Estudio
+# Plano Final: Pagina de Lista de Vagas do Estudio
 
-### Resumo
+## Objetivo
+Criar a pagina `/studio/jobs` que lista todas as vagas publicadas pelo estudio, com filtros, acoes de gerenciamento e visual profissional.
 
-Criar a pagina `/studio/profile` com formulario completo para edicao dos dados publicos do estudio, com header DENTRO do Card e componente de especialidades com funcionalidade completa de tags.
+Este plano incorpora as 5 correcoes adicionais solicitadas.
 
 ---
 
-### Arquivos a Criar
+## Arquivos a Criar
 
 | Arquivo | Descricao |
 |---------|-----------|
-| `src/pages/studio/Profile.tsx` | Pagina principal de edicao do perfil do estudio |
-| `src/components/studio/SpecialtiesInput.tsx` | Componente de input de tags para especialidades |
+| `src/hooks/useStudioJobs.ts` | Hook para gerenciar vagas do estudio |
+| `src/pages/studio/Jobs.tsx` | Pagina principal de listagem |
+| `src/components/studio/JobsTable.tsx` | Tabela de vagas (desktop) |
+| `src/components/studio/JobsMobileCard.tsx` | Cards de vagas (mobile) |
+| `src/components/studio/JobsDeleteDialog.tsx` | Modal de confirmacao de exclusao |
 
-### Arquivos a Modificar
+## Arquivos a Modificar
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/App.tsx` | Adicionar rota `/studio/profile` com ProtectedRoute |
+| `src/App.tsx` | Adicionar rota `/studio/jobs` |
 
 ---
 
-### Secao Tecnica
+## Secao Tecnica
 
-#### 1. Estrutura da Pagina - Header DENTRO do Card
+### 1. Hook useStudioJobs.ts
 
-Seguindo o padrao de `NewStudio.tsx`, o header fica antes do Card:
+Seguindo o padrao do `useEducations.ts`, mas com duas correcoes criticas:
+
+**Correcao 1: Dois useEffect separados**
+- Efeito 1: Verificar permissao e obter estudioId
+- Efeito 2: Buscar vagas SOMENTE se autorizado e tiver estudioId
+
+**Correcao 2: try/catch/finally em toda verificacao**
+- Garantir que isLoading nunca fique travado
+
+**Correcao 4: Tratar estudioId null explicitamente**
+- Mensagem de erro clara quando nao associado a estudio
 
 ```typescript
-return (
-  <StudioDashboardLayout>
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Form Card (TUDO dentro do Card) */}
-      <Card>
-        <CardContent className="pt-6">
-          {/* Header DENTRO do Card */}
-          <div className="mb-8">
-            <h1 className="font-display text-3xl font-bold text-foreground">
-              Perfil do Estudio
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Gerencie as informacoes publicas do seu estudio
-            </p>
-          </div>
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-          {/* Todo o formulario aqui dentro */}
-        </CardContent>
-      </Card>
-    </div>
-  </StudioDashboardLayout>
-);
+type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
+type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
+type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
 
+export interface StudioVaga {
+  id: string;
+  titulo: string;
+  slug: string;
+  nivel: NivelVaga;
+  tipo_contrato: TipoContrato;
+  ativa: boolean | null;
+  tipo_publicacao: TipoPublicacaoVaga | null;
+  criada_em: string | null;
+  expira_em: string | null;
+  estudio_id: string;
+}
+
+interface UseStudioJobsReturn {
+  vagas: StudioVaga[];
+  isLoading: boolean;
+  error: string | null;
+  isAuthorized: boolean;
+  estudioId: string | null;
+  refetch: () => Promise<void>;
+  toggleAtiva: (id: string, currentValue: boolean) => Promise<void>;
+  deleteVaga: (id: string) => Promise<void>;
+}
+
+export function useStudioJobs(): UseStudioJobsReturn {
+  const [vagas, setVagas] = useState<StudioVaga[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [estudioId, setEstudioId] = useState<string | null>(null);
+
+  // EFEITO 1: Verificar permissao (Correcao 1)
+  useEffect(() => {
+    const checkMembership = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setIsAuthorized(false);
+          return;
+        }
+
+        const { data: membership, error: membershipError } = await supabase
+          .from("estudio_membros")
+          .select("role, estudio_id")
+          .eq("user_id", session.user.id)
+          .eq("ativo", true)
+          .maybeSingle();
+
+        if (membershipError) {
+          console.error("Error checking membership:", membershipError);
+          setError("Erro ao verificar permissoes.");
+          setIsAuthorized(false);
+          return;
+        }
+
+        if (!membership) {
+          setIsAuthorized(false);
+          setError("Voce nao esta associado a nenhum estudio.");
+          return;
+        }
+
+        if (membership.role !== "super_admin") {
+          setIsAuthorized(false);
+          setError("Apenas administradores podem gerenciar vagas.");
+          return;
+        }
+
+        setIsAuthorized(true);
+        setEstudioId(membership.estudio_id);
+      } catch (err) {
+        console.error("Error checking membership:", err);
+        setError("Erro ao verificar permissoes.");
+        setIsAuthorized(false);
+      } finally {
+        // Correcao 2: Garantir que loading para aqui se nao autorizado
+        // Se autorizado, loading continua ate fetchVagas terminar
+      }
+    };
+
+    checkMembership();
+  }, []);
+
+  // EFEITO 2: Buscar vagas SOMENTE se autorizado (Correcao 1)
+  const fetchVagas = useCallback(async () => {
+    // Correcao 4: Tratar estudioId null explicitamente
+    if (!estudioId) {
+      setError("Voce nao esta associado a nenhum estudio.");
+      setVagas([]);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Query com estudio_id incluido
+      const { data, error: fetchError } = await supabase
+        .from("vagas")
+        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, expira_em, estudio_id")
+        .order("ativa", { ascending: false })
+        .order("criada_em", { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      setVagas(data || []);
+    } catch (err) {
+      console.error("Error fetching vagas:", err);
+      setError(err instanceof Error ? err.message : "Erro ao carregar vagas");
+    } finally {
+      setIsLoading(false); // Correcao 2: Sempre reseta loading
+    }
+  }, [estudioId]);
+
+  useEffect(() => {
+    if (isAuthorized && estudioId) {
+      fetchVagas();
+    } else if (!isAuthorized && estudioId === null) {
+      // Se verificacao de membership terminou mas nao autorizado
+      setIsLoading(false);
+    }
+  }, [isAuthorized, estudioId, fetchVagas]);
+
+  const toggleAtiva = useCallback(async (id: string, currentValue: boolean) => {
+    const { error } = await supabase
+      .from("vagas")
+      .update({ ativa: !currentValue })
+      .eq("id", id);
+
+    if (error) throw error;
+  }, []);
+
+  const deleteVaga = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from("vagas")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  }, []);
+
+  return {
+    vagas,
+    isLoading,
+    error,
+    isAuthorized,
+    estudioId,
+    refetch: fetchVagas,
+    toggleAtiva,
+    deleteVaga,
+  };
+}
 ```
 
 ---
 
-#### 2. Componente SpecialtiesInput - Implementacao Completa
+### 2. Componente JobsTable.tsx
 
+Inclui as correcoes 3 e 5:
+
+**Correcao 3: Badge destaque com cor amarela**
 ```typescript
-// src/components/studio/SpecialtiesInput.tsx
-import { useState, KeyboardEvent } from "react";
-import { X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+{vaga.tipo_publicacao === "destaque" && (
+  <Badge className="ml-2 bg-amber-500/10 text-amber-600 border-amber-500/30">
+    <Sparkles className="h-3 w-3 mr-1" />
+    DESTAQUE
+  </Badge>
+)}
+```
 
-interface SpecialtiesInputProps {
-  value: string[];
-  onChange: (value: string[]) => void;
-  disabled?: boolean;
-}
+**Correcao 5: Warning para vagas inconsistentes**
+```typescript
+function renderExpiraEm(vaga: StudioVaga) {
+  const expiraEm = new Date(vaga.expira_em!);
+  const formattedDate = format(expiraEm, "dd/MM/yyyy", { locale: ptBR });
+  
+  const diasRestantes = differenceInDays(expiraEm, new Date());
+  const isExpired = isPast(expiraEm);
+  const isAtiva = vaga.ativa;
 
-const SUGGESTIONS = [
-  "Mobile", "PC", "Console", "VR", "Casual", 
-  "Indie", "AA", "AAA", "F2P"
-];
+  // Correcao 5: Warning se dados inconsistentes
+  if (diasRestantes < 0 && !isExpired) {
+    console.warn(`Vaga ${vaga.id} deveria estar expirada mas status nao foi atualizado`);
+  }
 
-export function SpecialtiesInput({ 
-  value, 
-  onChange, 
-  disabled 
-}: SpecialtiesInputProps) {
-  const [inputValue, setInputValue] = useState("");
-
-  const addTag = (tag: string) => {
-    const trimmed = tag.trim();
-    // Nao adicionar vazio ou duplicado
-    if (!trimmed || value.includes(trimmed)) return;
-    
-    onChange([...value, trimmed]);
-    setInputValue("");
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    onChange(value.filter(tag => tag !== tagToRemove));
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // Enter ou virgula adiciona a tag
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addTag(inputValue);
-    }
-  };
-
-  // Sugestoes nao adicionadas ainda
-  const availableSuggestions = SUGGESTIONS.filter(
-    s => !value.includes(s)
-  );
+  // Mostrar contador SOMENTE se todas condicoes forem verdadeiras
+  const showCounter = isAtiva && !isExpired && diasRestantes < 7 && diasRestantes >= 0;
 
   return (
-    <div className="space-y-3">
-      {/* Tags adicionadas */}
-      {value.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {value.map((tag) => (
-            <Badge 
-              key={tag} 
-              variant="secondary" 
-              className="text-sm py-1 px-3"
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                disabled={disabled}
-                className="ml-2 hover:text-destructive focus:outline-none disabled:opacity-50"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-
-      {/* Input para adicionar nova tag */}
-      <Input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Adicionar especialidade (ex: Mobile, PC, Console)"
-        disabled={disabled}
-        className="h-11"
-      />
-      
-      <p className="text-xs text-muted-foreground">
-        Pressione Enter ou virgula para adicionar
-      </p>
-
-      {/* Sugestoes clicaveis */}
-      {availableSuggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <span className="text-xs text-muted-foreground mr-1">
-            Sugestoes:
-          </span>
-          {availableSuggestions.map((suggestion) => (
-            <Button
-              key={suggestion}
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => addTag(suggestion)}
-              disabled={disabled}
-              className="h-7 text-xs"
-            >
-              {suggestion}
-            </Button>
-          ))}
-        </div>
+    <div className="flex flex-col">
+      <span>{formattedDate}</span>
+      {showCounter && (
+        <span className="text-xs text-yellow-600 dark:text-yellow-400">
+          {diasRestantes === 0 ? "Expira hoje" : `${diasRestantes} dias restantes`}
+        </span>
       )}
     </div>
   );
 }
 ```
 
----
-
-#### 3. Schema de Validacao Zod
-
+**Badges de Nivel (usando classes Tailwind padrao):**
 ```typescript
-const studioProfileSchema = z.object({
-  nome: z.string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo"),
-  descricao: z.string()
-    .max(500, "Maximo 500 caracteres")
-    .optional()
-    .or(z.literal("")),
-  sobre: z.string()
-    .max(5000, "Maximo 5000 caracteres")
-    .optional()
-    .or(z.literal("")),
-  localizacao: z.string()
-    .max(100, "Maximo 100 caracteres")
-    .optional()
-    .or(z.literal("")),
-  tamanho: z.enum(["micro", "pequeno", "medio", "grande"])
-    .nullable()
-    .optional(),
-  website: z.string()
-    .url("URL invalida")
-    .optional()
-    .or(z.literal("")),
-  especialidades: z.array(z.string()).optional(),
-  fundado_em: z.string()
-    .optional()
-    .or(z.literal("")),
-});
+const nivelConfig: Record<string, { label: string; className: string }> = {
+  iniciante: { label: "Iniciante", className: "bg-muted text-muted-foreground" },
+  junior: { label: "Junior", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+  pleno: { label: "Pleno", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  senior: { label: "Senior", className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
+  lead: { label: "Lead", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
+};
+```
+
+**Badges de Status:**
+```typescript
+const statusConfig: Record<string, { label: string; className: string }> = {
+  ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+};
+```
+
+**Toggle dinamico no menu:**
+```typescript
+<DropdownMenuItem 
+  onClick={() => handleToggleAtiva(vaga)}
+  disabled={isToggling}
+>
+  {vaga.ativa ? "Desativar vaga" : "Ativar vaga"}
+</DropdownMenuItem>
 ```
 
 ---
 
-#### 4. Estrutura Visual Atualizada
+### 3. Estrutura Visual
+
 ```text
 +----------------------------------------------------------+
 | [StudioDashboardLayout com Sidebar]                       |
 +----------------------------------------------------------+
 | [Area de Conteudo]                                        |
 |                                                           |
+|   Minhas Vagas                    [+ Nova Vaga]           |
+|                                                           |
+|   [Todas] [Ativas] [Inativas] [Expiradas] [Destaque]      |
+|                                                           |
 |   +-----------------------------------------------------+ |
-|   | [Card]                                              | |
-|   |                                                     | |
-|   |   Perfil do Estudio           <- H1 DENTRO do Card  | |
-|   |   Gerencie as informacoes...  <- P DENTRO do Card   | |
-|   |                                                     | |
-|   |   [Logo circular 96px] [Alterar foto]               | |
-|   |                                                     | |
-|   |   Nome do estudio *                                 | |
-|   |   [__________________________________]              | |
-|   |                                                     | |
-|   |   URL publica                                       | |
-|   |   [matchmaking.games/studio/slug (disabled)]        | |
-|   |                                                     | |
-|   |   Localizacao                                       | |
-|   |   [__________________________________]              | |
-|   |                                                     | |
-|   |   Tamanho do estudio                                | |
-|   |   [Select: Micro/Pequeno/Medio/Grande]              | |
-|   |                                                     | |
-|   |   ─────────────────────────────────────             | |
-|   |                                                     | |
-|   |   Descricao curta                          150/500  | |
-|   |   [Textarea 3 linhas___________________]            | |
-|   |                                                     | |
-|   |   Sobre                                 1200/5000   | |
-|   |   [Textarea 8-10 linhas________________]            | |
-|   |                                                     | |
-|   |   ─────────────────────────────────────             | |
-|   |                                                     | |
-|   |   Website                                           | |
-|   |   [https://______________________________]          | |
-|   |                                                     | |
-|   |   Especialidades                                    | |
-|   |   [Mobile x] [PC x] [Indie x]   <- Badges com X     | |
-|   |   [_______________________________]  <- Input       | |
-|   |   Pressione Enter ou virgula para adicionar         | |
-|   |   Sugestoes: [Console] [VR] [Casual] <- Clicaveis   | |
-|   |                                                     | |
-|   |   ─────────────────────────────────────             | |
-|   |                                                     | |
-|   |   Data de fundacao                                  | |
-|   |   [Date picker_________________________]            | |
-|   |                                                     | |
-|   |   ─────────────────────────────────────             | |
-|   |                                                     | |
-|   |   [Cancelar]               [Salvar Alteracoes]      | |
-|   |                                                     | |
+|   | Titulo        | Nivel  | Contrato | Status | ... |   |
+|   +-----------------------------------------------------+ |
+|   | Unity Dev DESTAQUE | Senior | CLT | Ativa  | ... |   |
+|   | Game Designer     | Pleno  | PJ  | Inativa | ... |   |
 |   +-----------------------------------------------------+ |
 |                                                           |
 +----------------------------------------------------------+
@@ -275,174 +312,195 @@ const studioProfileSchema = z.object({
 
 ---
 
-#### 5. Secoes do Formulario com Separadores Visuais
+### 4. Pagina Jobs.tsx
 
-O formulario sera organizado em secoes com separadores (`<Separator />` ou `<hr>`):
-
-1. **Informacoes Basicas**
-   - Logo upload
-   - Nome
-   - URL publica (disabled)
-   - Localizacao
-   - Tamanho
-
-2. **Sobre** (apos separador)
-   - Descricao curta (textarea 500 chars)
-   - Sobre (textarea 5000 chars)
-
-3. **Links** (apos separador)
-   - Website
-   - Especialidades (tags)
-
-4. **Fundacao** (apos separador)
-   - Data de fundacao
-
-5. **Acoes** (apos separador)
-   - Botao Cancelar
-   - Botao Salvar Alteracoes
-
----
-
-#### 6. Upload de Logo
-
-Reutilizar o componente existente `StudioLogoUpload` (similar ao que ja existe) ou criar um inline:
-
+**Verificacao de permissao na UI:**
 ```typescript
-// Upload de logo no formulario
-const handleLogoUpload = async (file: File) => {
-  // Validar tipo (JPG, PNG, WebP)
-  const validTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!validTypes.includes(file.type)) {
-    toast({
-      title: "Formato invalido",
-      description: "Use apenas JPG, PNG ou WebP",
-      variant: "destructive",
-    });
-    return;
+if (!isLoading && !isAuthorized) {
+  return (
+    <StudioDashboardLayout>
+      <div className="flex flex-col items-center justify-center py-16">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Acesso negado</h2>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button onClick={() => navigate("/dashboard")}>
+          Voltar ao Dashboard
+        </Button>
+      </div>
+    </StudioDashboardLayout>
+  );
+}
+```
+
+**Filtros (Tabs) com filtragem client-side:**
+```typescript
+const [activeTab, setActiveTab] = useState<"todas" | "ativas" | "inativas" | "expiradas" | "destaque">("todas");
+
+const filteredVagas = useMemo(() => {
+  const now = new Date();
+  
+  switch (activeTab) {
+    case "ativas":
+      return vagas.filter(v => v.ativa && new Date(v.expira_em!) > now);
+    case "inativas":
+      return vagas.filter(v => !v.ativa);
+    case "expiradas":
+      return vagas.filter(v => new Date(v.expira_em!) < now);
+    case "destaque":
+      return vagas.filter(v => v.tipo_publicacao === "destaque");
+    default:
+      return vagas;
   }
+}, [vagas, activeTab]);
+```
 
-  // Validar tamanho (max 3MB)
-  if (file.size > 3 * 1024 * 1024) {
-    toast({
-      title: "Arquivo muito grande",
-      description: "Maximo 3MB permitido",
-      variant: "destructive",
-    });
-    return;
-  }
+**Responsividade com hook existente:**
+```typescript
+import { useIsMobile } from "@/hooks/use-mobile";
 
-  setIsUploadingLogo(true);
+const isMobile = useIsMobile();
 
-  const extension = file.type.split("/")[1];
-  const filePath = `${estudioId}/${Date.now()}.${extension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("studio-logos")
-    .upload(filePath, file, { upsert: true });
-
-  if (uploadError) {
-    toast({
-      title: "Erro no upload",
-      variant: "destructive",
-    });
-    setIsUploadingLogo(false);
-    return;
-  }
-
-  const { data: urlData } = supabase.storage
-    .from("studio-logos")
-    .getPublicUrl(filePath);
-
-  // Adicionar cache-busting
-  const newLogoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-  setLogoUrl(newLogoUrl);
-  setIsUploadingLogo(false);
-};
+{isMobile ? (
+  <JobsMobileCards vagas={filteredVagas} ... />
+) : (
+  <JobsTable vagas={filteredVagas} ... />
+)}
 ```
 
 ---
 
-#### 7. Salvar no Supabase
+### 5. JobsDeleteDialog.tsx
 
+**Com loading state e toast de feedback:**
 ```typescript
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setValidationErrors({});
+interface JobsDeleteDialogProps {
+  vaga: StudioVaga | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => Promise<void>;
+}
 
-  // Validar com Zod
-  const formData = {
-    nome,
-    descricao,
-    sobre,
-    localizacao,
-    tamanho: tamanho || null,
-    website,
-    especialidades,
-    fundado_em: fundadoEm,
+export function JobsDeleteDialog({ vaga, open, onOpenChange, onConfirm }: JobsDeleteDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
+
+  const handleConfirm = async () => {
+    if (!vaga) return;
+
+    try {
+      setIsDeleting(true);
+      await onConfirm();
+
+      toast({
+        title: "Vaga excluida com sucesso",
+        description: `A vaga "${vaga.titulo}" foi removida.`,
+      });
+
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Error deleting vaga:", err);
+      toast({
+        title: "Erro ao excluir vaga",
+        description: "Nao foi possivel excluir a vaga. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
-  const result = studioProfileSchema.safeParse(formData);
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir vaga</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir a vaga "{vaga?.titulo}"?
+            Esta acao nao pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirm}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "Excluindo..." : "Excluir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+```
 
-  if (!result.success) {
-    const errors: Record<string, string> = {};
-    result.error.errors.forEach((err) => {
-      if (err.path[0]) {
-        errors[err.path[0] as string] = err.message;
-      }
-    });
-    setValidationErrors(errors);
-    return;
-  }
+---
 
-  setIsSaving(true);
+### 6. Toggle com feedback
 
-  const { error } = await supabase
-    .from("estudios")
-    .update({
-      nome,
-      descricao: descricao || null,
-      sobre: sobre || null,
-      localizacao: localizacao || null,
-      tamanho: tamanho || null,
-      website: website || null,
-      especialidades: especialidades.length > 0 ? especialidades : null,
-      fundado_em: fundadoEm || null,
-      logo_url: logoUrl,
-      atualizado_em: new Date().toISOString(),
-    })
-    .eq("id", membership.estudio.id);
-
-  setIsSaving(false);
-
-  if (error) {
+```typescript
+const handleToggleAtiva = async (vaga: StudioVaga) => {
+  try {
+    setIsToggling(true);
+    
+    const newValue = !vaga.ativa;
+    await toggleAtiva(vaga.id, vaga.ativa ?? false);
+    
     toast({
-      title: "Erro ao salvar",
-      description: "Tente novamente mais tarde.",
+      title: newValue ? "Vaga ativada" : "Vaga desativada",
+      description: `A vaga "${vaga.titulo}" foi ${newValue ? "ativada" : "desativada"}.`,
+    });
+    
+    await refetch();
+  } catch (err) {
+    console.error("Error toggling vaga:", err);
+    toast({
+      title: "Erro ao atualizar vaga",
+      description: "Nao foi possivel alterar o status. Tente novamente.",
       variant: "destructive",
     });
-    return;
+  } finally {
+    setIsToggling(false);
   }
-
-  toast({
-    title: "Perfil atualizado!",
-    description: "As alteracoes foram salvas com sucesso.",
-  });
 };
 ```
 
 ---
 
-#### 8. Atualizar App.tsx
+### 7. Empty State
 
 ```typescript
-import StudioProfile from "./pages/studio/Profile";
+{filteredVagas.length === 0 && !isLoading && (
+  <div className="flex flex-col items-center justify-center py-16">
+    <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
+    <h3 className="text-xl font-semibold mb-2">
+      Nenhuma vaga publicada ainda
+    </h3>
+    <p className="text-muted-foreground mb-6 text-center">
+      Comece publicando sua primeira vaga para atrair talentos
+    </p>
+    <Button onClick={() => navigate("/studio/jobs/new")}>
+      <Plus className="h-4 w-4 mr-2" />
+      Publicar Vaga
+    </Button>
+  </div>
+)}
+```
 
-// Dentro de <Routes>:
+---
+
+### 8. Atualizacao de Rota em App.tsx
+
+```typescript
+import StudioJobs from "./pages/studio/Jobs";
+
+// Na secao de rotas:
 <Route
-  path="/studio/profile"
+  path="/studio/jobs"
   element={
     <ProtectedRoute>
-      <StudioProfile />
+      <StudioJobs />
     </ProtectedRoute>
   }
 />
@@ -450,33 +508,36 @@ import StudioProfile from "./pages/studio/Profile";
 
 ---
 
-### Estados da Aplicacao
+### 9. Labels de Mapeamento
 
-| Estado | Comportamento |
-|--------|---------------|
-| Carregando dados | Loader2 centralizado enquanto busca dados |
-| Upload de logo | Overlay com Loader2 sobre o avatar |
-| Salvando | Botao desabilitado com "Salvando..." e spinner |
-| Sucesso | Toast "Perfil atualizado com sucesso!" |
-| Erro | Toast com mensagem de erro |
-
----
-
-### Resumo das Correcoes Aplicadas
-
-| Correcao | Status |
-|----------|--------|
-| Header DENTRO do Card | Aplicado - seguindo padrao de NewStudio.tsx |
-| SpecialtiesInput com Enter/virgula | Aplicado - implementacao completa |
-| Badges com botao X para remover | Aplicado |
-| Sugestoes clicaveis | Aplicado - 9 sugestoes predefinidas |
+```typescript
+const tipoContratoLabels: Record<string, string> = {
+  clt: "CLT",
+  pj: "PJ",
+  freelance: "Freelance",
+  estagio: "Estagio",
+};
+```
 
 ---
 
-### O que NAO sera implementado
+## Resumo das Correcoes Aplicadas
 
-- Funcionalidade de alterar slug (slug e permanente)
-- Historico de mudancas
-- Preview da pagina publica
-- Upload de multiplas imagens
+| # | Problema | Solucao |
+|---|----------|---------|
+| 1 | useEffect unico para membership e fetch | Dois useEffect separados |
+| 2 | Loading pode travar | try/catch/finally em toda verificacao |
+| 3 | Badge destaque pouco visivel | Cor amarela/dourada (amber) |
+| 4 | estudioId null sem feedback | Mensagem de erro explicita |
+| 5 | Vagas inconsistentes sem aviso | console.warn quando diasRestantes < 0 |
+
+## Fluxo de Implementacao
+
+1. Criar hook `useStudioJobs.ts` com dois useEffect separados
+2. Criar componente `JobsDeleteDialog.tsx` com loading e toast
+3. Criar componente `JobsTable.tsx` com badge amarelo e warning
+4. Criar componente `JobsMobileCard.tsx` para responsividade
+5. Criar pagina `Jobs.tsx` integrando tudo
+6. Adicionar rota em `App.tsx`
+7. Testar fluxos: permissoes, filtros, toggle, exclusao, empty state
 
