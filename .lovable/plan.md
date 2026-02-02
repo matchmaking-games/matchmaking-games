@@ -1,506 +1,493 @@
 
 
-# Plano Final: Pagina de Lista de Vagas do Estudio
+# Plano Revisado: Formulario de Publicacao e Edicao de Vagas
 
 ## Objetivo
-Criar a pagina `/studio/jobs` que lista todas as vagas publicadas pelo estudio, com filtros, acoes de gerenciamento e visual profissional.
-
-Este plano incorpora as 5 correcoes adicionais solicitadas.
+Criar formulario completo para publicar e editar vagas do estudio, incluindo selecao de habilidades obrigatorias e desejaveis, geracao automatica de slug e validacao com Zod.
 
 ---
 
 ## Arquivos a Criar
 
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/hooks/useStudioJobs.ts` | Hook para gerenciar vagas do estudio |
-| `src/pages/studio/Jobs.tsx` | Pagina principal de listagem |
-| `src/components/studio/JobsTable.tsx` | Tabela de vagas (desktop) |
-| `src/components/studio/JobsMobileCard.tsx` | Cards de vagas (mobile) |
-| `src/components/studio/JobsDeleteDialog.tsx` | Modal de confirmacao de exclusao |
+**Arquivo 1:**
+- Caminho: `src/pages/studio/JobForm.tsx`
+- Descricao: Pagina principal do formulario (create/edit)
+
+**Arquivo 2:**
+- Caminho: `src/components/studio/JobSkillsSelector.tsx`
+- Descricao: Componente de selecao de habilidades para vagas (baseado no ProjectSkillsSelect existente)
+
+**Arquivo 3:**
+- Caminho: `src/hooks/useJobForm.ts`
+- Descricao: Hook para gerenciar logica de create/update
 
 ## Arquivos a Modificar
 
-| Arquivo | Alteracao |
-|---------|-----------|
-| `src/App.tsx` | Adicionar rota `/studio/jobs` |
+**Arquivo:**
+- Caminho: `src/App.tsx`
+- Alteracao: Adicionar rotas `/studio/jobs/new` e `/studio/jobs/:id/edit`
 
 ---
 
 ## Secao Tecnica
 
-### 1. Hook useStudioJobs.ts
+### 1. Estrutura de Dados
 
-Seguindo o padrao do `useEducations.ts`, mas com duas correcoes criticas:
+O campo `tipo_funcao` e um array de strings (sem enum definido no banco). Os valores serao armazenados como texto livre.
 
-**Correcao 1: Dois useEffect separados**
-- Efeito 1: Verificar permissao e obter estudioId
-- Efeito 2: Buscar vagas SOMENTE se autorizado e tiver estudioId
+**Enums existentes no banco:**
+- `nivel_vaga`: "iniciante" | "junior" | "pleno" | "senior" | "lead"
+- `tipo_contrato`: "clt" | "pj" | "freelance" | "estagio"
+- `tipo_trabalho` (campo remoto): "presencial" | "hibrido" | "remoto"
+- `tipo_publicacao_vaga`: "gratuita" | "destaque"
 
-**Correcao 2: try/catch/finally em toda verificacao**
-- Garantir que isLoading nunca fique travado
+**Campo `contato_candidatura`:** Ja existe na tabela vagas (string nullable)
 
-**Correcao 4: Tratar estudioId null explicitamente**
-- Mensagem de erro clara quando nao associado a estudio
+---
+
+### 2. Schema Zod com Transform (Correcao 2)
+
+Seguindo o padrao do ExperienceModal.tsx, o schema transformara estado/cidade em localizacao:
 
 ```typescript
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+const vagaFormSchema = z.object({
+  titulo: z.string()
+    .min(5, "Minimo 5 caracteres")
+    .max(100, "Maximo 100 caracteres"),
+  
+  tipo_funcao: z.array(z.string())
+    .min(1, "Selecione pelo menos um tipo de funcao"),
+  
+  nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
+  
+  tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
+  
+  remoto: z.enum(["presencial", "hibrido", "remoto"]),
+  
+  estado: z.string().optional(),
+  cidade: z.string().optional(),
+  
+  contato_candidatura: z.string()
+    .max(500, "Maximo 500 caracteres")
+    .optional()
+    .nullable(),
+  
+  salario_min: z.number().positive().nullable().optional(),
+  salario_max: z.number().positive().nullable().optional(),
+  mostrar_salario: z.boolean().default(false),
+  
+  descricao: z.string()
+    .min(100, "Minimo 100 caracteres")
+    .max(10000, "Maximo 10.000 caracteres"),
+  
+  tipo_publicacao: z.enum(["gratuita", "destaque"]).default("gratuita"),
+  
+  habilidades_obrigatorias: z.array(z.string()).default([]),
+  habilidades_desejaveis: z.array(z.string()).default([]),
+})
+.refine(
+  (data) => {
+    if (data.salario_min && data.salario_max) {
+      return data.salario_max >= data.salario_min;
+    }
+    return true;
+  },
+  { 
+    message: "Salario maximo deve ser maior ou igual ao minimo",
+    path: ["salario_max"]
+  }
+)
+.transform((data) => {
+  const { estado, cidade, ...rest } = data;
+  
+  return {
+    ...rest,
+    localizacao: estado && cidade ? `${cidade}, ${estado}` : null,
+  };
+});
+```
 
-type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
-type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
-type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
+---
 
-export interface StudioVaga {
-  id: string;
-  titulo: string;
-  slug: string;
-  nivel: NivelVaga;
-  tipo_contrato: TipoContrato;
-  ativa: boolean | null;
-  tipo_publicacao: TipoPublicacaoVaga | null;
-  criada_em: string | null;
-  expira_em: string | null;
-  estudio_id: string;
-}
+### 3. Hook useJobForm.ts
 
-interface UseStudioJobsReturn {
-  vagas: StudioVaga[];
+**Responsabilidades:**
+- Verificar permissao super_admin
+- Buscar vaga existente (modo edicao)
+- Buscar habilidades da vaga
+- Criar nova vaga (com expira_em)
+- Atualizar vaga existente (SEM expira_em - Correcao 6)
+- Gerenciar habilidades (delete + insert)
+- Verificar unicidade de slug (silenciosamente - Correcao 9)
+
+**Estrutura:**
+```typescript
+interface UseJobFormReturn {
   isLoading: boolean;
+  isSaving: boolean;
   error: string | null;
   isAuthorized: boolean;
   estudioId: string | null;
-  refetch: () => Promise<void>;
-  toggleAtiva: (id: string, currentValue: boolean) => Promise<void>;
-  deleteVaga: (id: string) => Promise<void>;
-}
-
-export function useStudioJobs(): UseStudioJobsReturn {
-  const [vagas, setVagas] = useState<StudioVaga[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [estudioId, setEstudioId] = useState<string | null>(null);
-
-  // EFEITO 1: Verificar permissao (Correcao 1)
-  useEffect(() => {
-    const checkMembership = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setIsAuthorized(false);
-          return;
-        }
-
-        const { data: membership, error: membershipError } = await supabase
-          .from("estudio_membros")
-          .select("role, estudio_id")
-          .eq("user_id", session.user.id)
-          .eq("ativo", true)
-          .maybeSingle();
-
-        if (membershipError) {
-          console.error("Error checking membership:", membershipError);
-          setError("Erro ao verificar permissoes.");
-          setIsAuthorized(false);
-          return;
-        }
-
-        if (!membership) {
-          setIsAuthorized(false);
-          setError("Voce nao esta associado a nenhum estudio.");
-          return;
-        }
-
-        if (membership.role !== "super_admin") {
-          setIsAuthorized(false);
-          setError("Apenas administradores podem gerenciar vagas.");
-          return;
-        }
-
-        setIsAuthorized(true);
-        setEstudioId(membership.estudio_id);
-      } catch (err) {
-        console.error("Error checking membership:", err);
-        setError("Erro ao verificar permissoes.");
-        setIsAuthorized(false);
-      } finally {
-        // Correcao 2: Garantir que loading para aqui se nao autorizado
-        // Se autorizado, loading continua ate fetchVagas terminar
-      }
-    };
-
-    checkMembership();
-  }, []);
-
-  // EFEITO 2: Buscar vagas SOMENTE se autorizado (Correcao 1)
-  const fetchVagas = useCallback(async () => {
-    // Correcao 4: Tratar estudioId null explicitamente
-    if (!estudioId) {
-      setError("Voce nao esta associado a nenhum estudio.");
-      setVagas([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Query com estudio_id incluido
-      const { data, error: fetchError } = await supabase
-        .from("vagas")
-        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, expira_em, estudio_id")
-        .order("ativa", { ascending: false })
-        .order("criada_em", { ascending: false });
-
-      if (fetchError) throw fetchError;
-
-      setVagas(data || []);
-    } catch (err) {
-      console.error("Error fetching vagas:", err);
-      setError(err instanceof Error ? err.message : "Erro ao carregar vagas");
-    } finally {
-      setIsLoading(false); // Correcao 2: Sempre reseta loading
-    }
-  }, [estudioId]);
-
-  useEffect(() => {
-    if (isAuthorized && estudioId) {
-      fetchVagas();
-    } else if (!isAuthorized && estudioId === null) {
-      // Se verificacao de membership terminou mas nao autorizado
-      setIsLoading(false);
-    }
-  }, [isAuthorized, estudioId, fetchVagas]);
-
-  const toggleAtiva = useCallback(async (id: string, currentValue: boolean) => {
-    const { error } = await supabase
-      .from("vagas")
-      .update({ ativa: !currentValue })
-      .eq("id", id);
-
-    if (error) throw error;
-  }, []);
-
-  const deleteVaga = useCallback(async (id: string) => {
-    const { error } = await supabase
-      .from("vagas")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw error;
-  }, []);
-
-  return {
-    vagas,
-    isLoading,
-    error,
-    isAuthorized,
-    estudioId,
-    refetch: fetchVagas,
-    toggleAtiva,
-    deleteVaga,
+  existingJob: VagaCompleta | null;
+  existingSkills: {
+    obrigatorias: string[];
+    desejaveis: string[];
   };
-}
-```
-
----
-
-### 2. Componente JobsTable.tsx
-
-Inclui as correcoes 3 e 5:
-
-**Correcao 3: Badge destaque com cor amarela**
-```typescript
-{vaga.tipo_publicacao === "destaque" && (
-  <Badge className="ml-2 bg-amber-500/10 text-amber-600 border-amber-500/30">
-    <Sparkles className="h-3 w-3 mr-1" />
-    DESTAQUE
-  </Badge>
-)}
-```
-
-**Correcao 5: Warning para vagas inconsistentes**
-```typescript
-function renderExpiraEm(vaga: StudioVaga) {
-  const expiraEm = new Date(vaga.expira_em!);
-  const formattedDate = format(expiraEm, "dd/MM/yyyy", { locale: ptBR });
   
-  const diasRestantes = differenceInDays(expiraEm, new Date());
-  const isExpired = isPast(expiraEm);
-  const isAtiva = vaga.ativa;
-
-  // Correcao 5: Warning se dados inconsistentes
-  if (diasRestantes < 0 && !isExpired) {
-    console.warn(`Vaga ${vaga.id} deveria estar expirada mas status nao foi atualizado`);
-  }
-
-  // Mostrar contador SOMENTE se todas condicoes forem verdadeiras
-  const showCounter = isAtiva && !isExpired && diasRestantes < 7 && diasRestantes >= 0;
-
-  return (
-    <div className="flex flex-col">
-      <span>{formattedDate}</span>
-      {showCounter && (
-        <span className="text-xs text-yellow-600 dark:text-yellow-400">
-          {diasRestantes === 0 ? "Expira hoje" : `${diasRestantes} dias restantes`}
-        </span>
-      )}
-    </div>
-  );
+  createJob: (data: VagaFormData) => Promise<void>;
+  updateJob: (id: string, data: VagaFormData) => Promise<void>;
 }
 ```
 
-**Badges de Nivel (usando classes Tailwind padrao):**
+**Query completa para modo edicao (Correcao 4):**
+
 ```typescript
-const nivelConfig: Record<string, { label: string; className: string }> = {
-  iniciante: { label: "Iniciante", className: "bg-muted text-muted-foreground" },
-  junior: { label: "Junior", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-  pleno: { label: "Pleno", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  senior: { label: "Senior", className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
-  lead: { label: "Lead", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
+// Buscar vaga
+const { data: vaga } = await supabase
+  .from("vagas")
+  .select("*")
+  .eq("id", vagaId)
+  .single();
+
+// Buscar habilidades obrigatorias
+const { data: habilidadesObrigatorias } = await supabase
+  .from("vaga_habilidades")
+  .select("habilidade_id")
+  .eq("vaga_id", vagaId)
+  .eq("obrigatoria", true);
+
+// Buscar habilidades desejaveis
+const { data: habilidadesDesejaveis } = await supabase
+  .from("vaga_habilidades")
+  .select("habilidade_id")
+  .eq("vaga_id", vagaId)
+  .eq("obrigatoria", false);
+
+// Desmontar localizacao em estado e cidade
+const [cidade, estado] = vaga.localizacao?.split(", ") || [null, null];
+
+// Preencher form
+form.setValue("estado", estado || "");
+form.setValue("cidade", cidade || "");
+
+// Se tiver estado, buscar municipios
+if (estado) {
+  fetchMunicipios(estado);
+}
+```
+
+**Fluxo de criacao (CREATE):**
+1. Validar dados com Zod
+2. Gerar slug com `generateSlug(titulo)` do formatters.ts
+3. Verificar unicidade e adicionar sufixo se necessario (silenciosamente)
+4. Calcular `expira_em = addDays(new Date(), 30).toISOString()`
+5. INSERT em vagas
+6. INSERT habilidades obrigatorias (obrigatoria = true)
+7. INSERT habilidades desejaveis (obrigatoria = false)
+8. Toast sucesso + redirect
+
+**Fluxo de edicao (UPDATE) - Correcao 6:**
+1. Validar dados
+2. Se titulo mudou, regerar slug e verificar unicidade (silenciosamente)
+3. UPDATE em vagas (NAO incluir expira_em - manter valor original)
+4. DELETE habilidades antigas
+5. INSERT habilidades novas
+6. Toast sucesso + redirect
+
+---
+
+### 4. Geracao Silenciosa de Slug (Correcao 9)
+
+O slug e completamente invisivel para o usuario:
+
+```typescript
+// No hook useJobForm, ao salvar:
+const generateUniqueSlug = async (titulo: string, excludeId?: string) => {
+  const baseSlug = generateSlug(titulo); // Importar de @/lib/formatters
+  let slug = baseSlug;
+  let counter = 2;
+  
+  while (true) {
+    let query = supabase
+      .from("vagas")
+      .select("id")
+      .eq("slug", slug);
+    
+    if (excludeId) {
+      query = query.neq("id", excludeId);
+    }
+    
+    const { data } = await query.maybeSingle();
+    
+    if (!data) break; // Slug disponivel
+    
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  
+  return slug;
 };
 ```
 
-**Badges de Status:**
+**NAO mostrar campo de slug na UI. Gerar nos bastidores ao salvar.**
+
+---
+
+### 5. Componente JobSkillsSelector.tsx
+
+Baseado no ProjectSkillsSelect.tsx existente, com suporte a excludeSkillIds (Correcao 7):
+
 ```typescript
-const statusConfig: Record<string, { label: string; className: string }> = {
-  ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-};
+interface JobSkillsSelectorProps {
+  label: string;
+  helperText?: string;
+  selectedSkillIds: string[];
+  onSkillsChange: (skillIds: string[]) => void;
+  excludeSkillIds?: string[];  // Evitar duplicatas entre obrig/desej
+  disabled?: boolean;
+  maxSkills?: number;
+}
+
+// No componente, filtrar habilidades disponiveis:
+const filteredSkills = useMemo(() => {
+  const notSelected = availableSkills.filter(
+    (skill) =>
+      !selectedSkillIds.includes(skill.id) &&
+      !excludeSkillIds?.includes(skill.id) &&  // <-- Filtrar excluidas
+      skill.nome.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  // Agrupar por categoria...
+}, [availableSkills, selectedSkillIds, excludeSkillIds, search]);
 ```
 
-**Toggle dinamico no menu:**
+**Uso no formulario:**
 ```typescript
-<DropdownMenuItem 
-  onClick={() => handleToggleAtiva(vaga)}
-  disabled={isToggling}
->
-  {vaga.ativa ? "Desativar vaga" : "Ativar vaga"}
-</DropdownMenuItem>
+{/* Habilidades obrigatorias */}
+<JobSkillsSelector
+  label="Habilidades obrigatorias"
+  selectedSkillIds={habilidadesObrigatorias}
+  onSkillsChange={setHabilidadesObrigatorias}
+  excludeSkillIds={habilidadesDesejaveis}
+/>
+
+{/* Habilidades desejaveis */}
+<JobSkillsSelector
+  label="Habilidades desejaveis (diferenciais)"
+  selectedSkillIds={habilidadesDesejaveis}
+  onSkillsChange={setHabilidadesDesejaveis}
+  excludeSkillIds={habilidadesObrigatorias}
+/>
 ```
 
 ---
 
-### 3. Estrutura Visual
+### 6. Lista de Tipos de Funcao (Correcao 3)
 
-```text
-+----------------------------------------------------------+
-| [StudioDashboardLayout com Sidebar]                       |
-+----------------------------------------------------------+
-| [Area de Conteudo]                                        |
-|                                                           |
-|   Minhas Vagas                    [+ Nova Vaga]           |
-|                                                           |
-|   [Todas] [Ativas] [Inativas] [Expiradas] [Destaque]      |
-|                                                           |
-|   +-----------------------------------------------------+ |
-|   | Titulo        | Nivel  | Contrato | Status | ... |   |
-|   +-----------------------------------------------------+ |
-|   | Unity Dev DESTAQUE | Senior | CLT | Ativa  | ... |   |
-|   | Game Designer     | Pleno  | PJ  | Inativa | ... |   |
-|   +-----------------------------------------------------+ |
-|                                                           |
-+----------------------------------------------------------+
+Como `tipo_funcao` e um array de strings (sem enum), usar valores em formato legivel:
+
+```typescript
+const tipoFuncaoOptions = [
+  { value: "Programação", label: "Programação" },
+  { value: "Arte 2D", label: "Arte 2D" },
+  { value: "Arte 3D", label: "Arte 3D" },
+  { value: "Game Design", label: "Game Design" },
+  { value: "Level Design", label: "Level Design" },
+  { value: "Narrative Design", label: "Narrative Design" },
+  { value: "UI/UX", label: "UI/UX" },
+  { value: "Audio", label: "Audio" },
+  { value: "QA", label: "QA" },
+  { value: "Producer", label: "Producer" },
+  { value: "Marketing", label: "Marketing" },
+  { value: "Community Manager", label: "Community Manager" },
+  { value: "Technical Artist", label: "Technical Artist" },
+  { value: "VFX", label: "VFX" },
+  { value: "Animation", label: "Animation" },
+];
 ```
 
 ---
 
-### 4. Pagina Jobs.tsx
+### 7. Contador de Caracteres em Tempo Real (Correcao 8)
 
-**Verificacao de permissao na UI:**
 ```typescript
+const descricao = form.watch("descricao") || "";
+const charCount = descricao.length;
+const isValid = charCount >= 100 && charCount <= 10000;
+const isTooShort = charCount > 0 && charCount < 100;
+
+// No JSX, abaixo do Textarea:
+<p className={cn(
+  "text-xs text-right",
+  isTooShort && "text-destructive",
+  isValid && "text-green-500",
+  !isTooShort && !isValid && "text-muted-foreground"
+)}>
+  {charCount} / 10.000
+</p>
+```
+
+---
+
+### 8. Campo de Contato para Candidatura (Correcao 10)
+
+Adicionar na secao "Informacoes Basicas", apos Localizacao:
+
+```typescript
+<FormField
+  control={form.control}
+  name="contato_candidatura"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Como candidatos devem entrar em contato?</FormLabel>
+      <FormControl>
+        <Input 
+          placeholder="Ex: vagas@estudio.com ou https://estudio.com/vagas"
+          {...field}
+          value={field.value || ""}
+        />
+      </FormControl>
+      <p className="text-xs text-muted-foreground">
+        Informe um email, link de formulário ou instruções de como se candidatar a esta vaga.
+      </p>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+---
+
+### 9. Verificacao de Permissao na UI (Correcao 5)
+
+```typescript
+const { isLoading, isAuthorized } = useJobForm();
+
 if (!isLoading && !isAuthorized) {
+  return <Navigate to="/studio/jobs" replace />;
+}
+```
+
+---
+
+### 10. Estrutura Visual - TUDO DENTRO DO CARD (CRITICO)
+
+```typescript
+export default function JobForm() {
+  const { id } = useParams();
+  const isEditing = !!id;
+  
+  // ... hooks e logica
+  
   return (
     <StudioDashboardLayout>
-      <div className="flex flex-col items-center justify-center py-16">
-        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Acesso negado</h2>
-        <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={() => navigate("/dashboard")}>
-          Voltar ao Dashboard
-        </Button>
-      </div>
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/studio/jobs")}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle className="font-display text-2xl">
+              {isEditing ? "Editar Vaga" : "Criar Nova Vaga"}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              
+              {/* SECAO: INFORMACOES BASICAS */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Informacoes Basicas</h3>
+                <Separator />
+                
+                {/* Titulo */}
+                {/* Tipo de funcao (checkboxes) */}
+                {/* Nivel (radio) */}
+                {/* Tipo de contrato (radio) */}
+                {/* Modelo de trabalho (radio) */}
+                {/* Estado/Cidade (selects IBGE) */}
+                {/* Contato para candidatura (textarea) */}
+              </div>
+              
+              {/* SECAO: REMUNERACAO */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Remuneracao</h3>
+                <Separator />
+                
+                {/* Salario min/max */}
+                {/* Checkbox mostrar salario */}
+              </div>
+              
+              {/* SECAO: DESCRICAO */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Descricao</h3>
+                <Separator />
+                
+                {/* Textarea + contador */}
+              </div>
+              
+              {/* SECAO: HABILIDADES */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Habilidades</h3>
+                <Separator />
+                
+                {/* JobSkillsSelector obrigatorias */}
+                {/* JobSkillsSelector desejaveis */}
+              </div>
+              
+              {/* SECAO: TIPO DE PUBLICACAO */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Tipo de Publicacao</h3>
+                <Separator />
+                
+                {/* Radio gratuita/destaque */}
+              </div>
+              
+              {/* BOTOES DE ACAO */}
+              <div className="flex justify-end gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => navigate("/studio/jobs")}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? "Salvando..." : (isEditing ? "Salvar Alteracoes" : "Publicar Vaga")}
+                </Button>
+              </div>
+              
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </StudioDashboardLayout>
   );
 }
 ```
 
-**Filtros (Tabs) com filtragem client-side:**
-```typescript
-const [activeTab, setActiveTab] = useState<"todas" | "ativas" | "inativas" | "expiradas" | "destaque">("todas");
-
-const filteredVagas = useMemo(() => {
-  const now = new Date();
-  
-  switch (activeTab) {
-    case "ativas":
-      return vagas.filter(v => v.ativa && new Date(v.expira_em!) > now);
-    case "inativas":
-      return vagas.filter(v => !v.ativa);
-    case "expiradas":
-      return vagas.filter(v => new Date(v.expira_em!) < now);
-    case "destaque":
-      return vagas.filter(v => v.tipo_publicacao === "destaque");
-    default:
-      return vagas;
-  }
-}, [vagas, activeTab]);
-```
-
-**Responsividade com hook existente:**
-```typescript
-import { useIsMobile } from "@/hooks/use-mobile";
-
-const isMobile = useIsMobile();
-
-{isMobile ? (
-  <JobsMobileCards vagas={filteredVagas} ... />
-) : (
-  <JobsTable vagas={filteredVagas} ... />
-)}
-```
-
 ---
 
-### 5. JobsDeleteDialog.tsx
-
-**Com loading state e toast de feedback:**
-```typescript
-interface JobsDeleteDialogProps {
-  vaga: StudioVaga | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => Promise<void>;
-}
-
-export function JobsDeleteDialog({ vaga, open, onOpenChange, onConfirm }: JobsDeleteDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
-
-  const handleConfirm = async () => {
-    if (!vaga) return;
-
-    try {
-      setIsDeleting(true);
-      await onConfirm();
-
-      toast({
-        title: "Vaga excluida com sucesso",
-        description: `A vaga "${vaga.titulo}" foi removida.`,
-      });
-
-      onOpenChange(false);
-    } catch (err) {
-      console.error("Error deleting vaga:", err);
-      toast({
-        title: "Erro ao excluir vaga",
-        description: "Nao foi possivel excluir a vaga. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir vaga</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja excluir a vaga "{vaga?.titulo}"?
-            Esta acao nao pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleConfirm}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isDeleting ? "Excluindo..." : "Excluir"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-```
-
----
-
-### 6. Toggle com feedback
+### 11. Rotas em App.tsx
 
 ```typescript
-const handleToggleAtiva = async (vaga: StudioVaga) => {
-  try {
-    setIsToggling(true);
-    
-    const newValue = !vaga.ativa;
-    await toggleAtiva(vaga.id, vaga.ativa ?? false);
-    
-    toast({
-      title: newValue ? "Vaga ativada" : "Vaga desativada",
-      description: `A vaga "${vaga.titulo}" foi ${newValue ? "ativada" : "desativada"}.`,
-    });
-    
-    await refetch();
-  } catch (err) {
-    console.error("Error toggling vaga:", err);
-    toast({
-      title: "Erro ao atualizar vaga",
-      description: "Nao foi possivel alterar o status. Tente novamente.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsToggling(false);
-  }
-};
-```
+import JobForm from "./pages/studio/JobForm";
 
----
-
-### 7. Empty State
-
-```typescript
-{filteredVagas.length === 0 && !isLoading && (
-  <div className="flex flex-col items-center justify-center py-16">
-    <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
-    <h3 className="text-xl font-semibold mb-2">
-      Nenhuma vaga publicada ainda
-    </h3>
-    <p className="text-muted-foreground mb-6 text-center">
-      Comece publicando sua primeira vaga para atrair talentos
-    </p>
-    <Button onClick={() => navigate("/studio/jobs/new")}>
-      <Plus className="h-4 w-4 mr-2" />
-      Publicar Vaga
-    </Button>
-  </div>
-)}
-```
-
----
-
-### 8. Atualizacao de Rota em App.tsx
-
-```typescript
-import StudioJobs from "./pages/studio/Jobs";
-
-// Na secao de rotas:
 <Route
-  path="/studio/jobs"
+  path="/studio/jobs/new"
   element={
     <ProtectedRoute>
-      <StudioJobs />
+      <JobForm />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/studio/jobs/:id/edit"
+  element={
+    <ProtectedRoute>
+      <JobForm />
     </ProtectedRoute>
   }
 />
@@ -508,14 +495,46 @@ import StudioJobs from "./pages/studio/Jobs";
 
 ---
 
-### 9. Labels de Mapeamento
+### 12. Componentes shadcn/ui Utilizados
+
+- Form (react-hook-form)
+- Input
+- Textarea
+- RadioGroup, RadioGroupItem
+- Checkbox
+- Select, SelectTrigger, SelectContent, SelectItem
+- Button
+- Card, CardHeader, CardTitle, CardContent
+- Label
+- Separator
+- Popover, PopoverTrigger, PopoverContent
+- ScrollArea
+- Badge
+
+---
+
+### 13. Integracao com IBGE
+
+Usar hook existente `useIBGELocations` (mesmo padrao do ExperienceModal):
 
 ```typescript
-const tipoContratoLabels: Record<string, string> = {
-  clt: "CLT",
-  pj: "PJ",
-  freelance: "Freelance",
-  estagio: "Estagio",
+const { 
+  estados, 
+  loadingEstados, 
+  municipios, 
+  loadingMunicipios, 
+  fetchMunicipios, 
+  clearMunicipios 
+} = useIBGELocations();
+
+const handleEstadoChange = (uf: string) => {
+  form.setValue("estado", uf);
+  form.setValue("cidade", "");
+  fetchMunicipios(uf);
+};
+
+const handleCidadeChange = (cidade: string) => {
+  form.setValue("cidade", cidade);
 };
 ```
 
@@ -523,21 +542,35 @@ const tipoContratoLabels: Record<string, string> = {
 
 ## Resumo das Correcoes Aplicadas
 
-| # | Problema | Solucao |
-|---|----------|---------|
-| 1 | useEffect unico para membership e fetch | Dois useEffect separados |
-| 2 | Loading pode travar | try/catch/finally em toda verificacao |
-| 3 | Badge destaque pouco visivel | Cor amarela/dourada (amber) |
-| 4 | estudioId null sem feedback | Mensagem de erro explicita |
-| 5 | Vagas inconsistentes sem aviso | console.warn quando diasRestantes < 0 |
+**Correcao 1:** Tabelas markdown removidas, usando topicos
+
+**Correcao 2:** Schema Zod com transform para estado/cidade -> localizacao
+
+**Correcao 3:** tipo_funcao usa valores legiveis ("Programacao", "Arte 2D") pois nao ha enum no banco
+
+**Correcao 4:** Query completa para modo edicao + desmontar localizacao em estado/cidade
+
+**Correcao 5:** Redirect com Navigate se nao autorizado
+
+**Correcao 6:** expira_em calculado apenas no CREATE, nao no UPDATE
+
+**Correcao 7:** excludeSkillIds implementado para evitar duplicatas entre obrigatorias/desejaveis
+
+**Correcao 8:** Contador de caracteres em tempo real com cores (vermelho < 100, verde >= 100)
+
+**Correcao 9:** Slug gerado silenciosamente nos bastidores, sem feedback visual para usuario
+
+**Correcao 10:** Campo contato_candidatura adicionado na secao Informacoes Basicas
+
+**CRITICO:** Todo conteudo dentro do Card (botao voltar, titulo, formulario, botoes de acao)
+
+---
 
 ## Fluxo de Implementacao
 
-1. Criar hook `useStudioJobs.ts` com dois useEffect separados
-2. Criar componente `JobsDeleteDialog.tsx` com loading e toast
-3. Criar componente `JobsTable.tsx` com badge amarelo e warning
-4. Criar componente `JobsMobileCard.tsx` para responsividade
-5. Criar pagina `Jobs.tsx` integrando tudo
-6. Adicionar rota em `App.tsx`
-7. Testar fluxos: permissoes, filtros, toggle, exclusao, empty state
+1. Criar hook `useJobForm.ts` com logica de permissao, fetch e save
+2. Criar componente `JobSkillsSelector.tsx` baseado no ProjectSkillsSelect existente
+3. Criar pagina `JobForm.tsx` com formulario completo
+4. Adicionar rotas em `App.tsx`
+5. Testar fluxos: criacao, edicao, habilidades, validacoes
 
