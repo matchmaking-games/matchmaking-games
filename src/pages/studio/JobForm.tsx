@@ -3,7 +3,7 @@ import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, X, ChevronDown } from "lucide-react";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -16,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
 import { useJobForm, type VagaFormData } from "@/hooks/useJobForm";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
@@ -116,6 +119,8 @@ export default function JobForm() {
 
   const selectedEstado = form.watch("estado");
   const tipoFuncaoValue = form.watch("tipo_funcao") || [];
+  const selectedRemoto = form.watch("remoto");
+  const [tipoFuncaoOpen, setTipoFuncaoOpen] = useState(false);
 
   // Load existing job data into form
   useEffect(() => {
@@ -176,16 +181,31 @@ export default function JobForm() {
     form.setValue("cidade", cidadeNome);
   };
 
-  // Handle tipo_funcao checkbox toggle
-  const handleTipoFuncaoToggle = (value: string, checked: boolean) => {
+  // Handle tipo_funcao selection
+  const handleTipoFuncaoSelect = (value: string) => {
     const current = tipoFuncaoValue;
-    if (checked) {
+    if (!current.includes(value)) {
       form.setValue("tipo_funcao", [...current, value]);
-    } else {
-      form.setValue(
-        "tipo_funcao",
-        current.filter((v) => v !== value),
-      );
+    }
+    setTipoFuncaoOpen(false);
+  };
+
+  // Handle tipo_funcao removal
+  const handleTipoFuncaoRemove = (value: string) => {
+    const current = tipoFuncaoValue;
+    form.setValue(
+      "tipo_funcao",
+      current.filter((v) => v !== value),
+    );
+  };
+
+  // Handle work model change (clear location when remote)
+  const handleRemotoChange = (value: string) => {
+    form.setValue("remoto", value as "presencial" | "hibrido" | "remoto");
+    if (value === "remoto") {
+      form.setValue("estado", "");
+      form.setValue("cidade", "");
+      clearMunicipios();
     }
   };
 
@@ -278,7 +298,7 @@ export default function JobForm() {
                   )}
                 />
 
-                {/* Function Type - Checkboxes */}
+                {/* Function Type - Badge selector */}
                 <FormField
                   control={form.control}
                   name="tipo_funcao"
@@ -287,58 +307,131 @@ export default function JobForm() {
                       <FormLabel>
                         Tipo de função <span className="text-destructive">*</span>
                       </FormLabel>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                        {tipoFuncaoOptions.map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`funcao-${option.value}`}
-                              checked={tipoFuncaoValue.includes(option.value)}
-                              onCheckedChange={(checked) => handleTipoFuncaoToggle(option.value, !!checked)}
-                            />
-                            <Label htmlFor={`funcao-${option.value}`} className="text-sm font-normal cursor-pointer">
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Level */}
-                <FormField
-                  control={form.control}
-                  name="nivel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Nível <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
-                          {[
-                            { value: "iniciante", label: "Iniciante" },
-                            { value: "junior", label: "Júnior" },
-                            { value: "pleno", label: "Pleno" },
-                            { value: "senior", label: "Sênior" },
-                            { value: "lead", label: "Lead" },
-                          ].map((item) => (
-                            <div key={item.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={item.value} id={`nivel-${item.value}`} />
-                              <Label htmlFor={`nivel-${item.value}`} className="font-normal cursor-pointer">
-                                {item.label}
-                              </Label>
-                            </div>
+                      
+                      {/* Selected badges */}
+                      {tipoFuncaoValue.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {tipoFuncaoValue.map((funcao) => (
+                            <Badge
+                              key={funcao}
+                              variant="secondary"
+                              className="bg-secondary/10 text-secondary-foreground"
+                            >
+                              {funcao}
+                              <button
+                                type="button"
+                                className="ml-1 rounded-full outline-none hover:bg-secondary/20"
+                                onClick={() => handleTipoFuncaoRemove(funcao)}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
                           ))}
-                        </RadioGroup>
-                      </FormControl>
+                        </div>
+                      )}
+                      
+                      {/* Dropdown selector */}
+                      <Popover open={tipoFuncaoOpen} onOpenChange={setTipoFuncaoOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={tipoFuncaoOpen}
+                            className="w-full justify-between font-normal"
+                          >
+                            <span className="text-muted-foreground">Adicionar função...</span>
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Buscar função..." />
+                            <CommandList>
+                              <CommandEmpty>Nenhuma função encontrada.</CommandEmpty>
+                              <CommandGroup>
+                                {tipoFuncaoOptions
+                                  .filter((option) => !tipoFuncaoValue.includes(option.value))
+                                  .map((option) => (
+                                    <CommandItem
+                                      key={option.value}
+                                      value={option.value}
+                                      onSelect={() => handleTipoFuncaoSelect(option.value)}
+                                    >
+                                      {option.label}
+                                    </CommandItem>
+                                  ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      
+                      <p className="text-xs text-muted-foreground">
+                        Selecione uma ou mais funções para esta vaga
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Contract Type */}
+                {/* Grid layout for dropdowns - 2 columns on desktop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Level - Select dropdown */}
+                  <FormField
+                    control={form.control}
+                    name="nivel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Nível <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o nível" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="iniciante">Iniciante</SelectItem>
+                            <SelectItem value="junior">Júnior</SelectItem>
+                            <SelectItem value="pleno">Pleno</SelectItem>
+                            <SelectItem value="senior">Sênior</SelectItem>
+                            <SelectItem value="lead">Lead</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Work Model - Select dropdown */}
+                  <FormField
+                    control={form.control}
+                    name="remoto"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Modelo de trabalho <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select onValueChange={handleRemotoChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o modelo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="presencial">Presencial</SelectItem>
+                            <SelectItem value="hibrido">Híbrido</SelectItem>
+                            <SelectItem value="remoto">Remoto</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Contract Type - Full width Select dropdown */}
                 <FormField
                   control={form.control}
                   name="tipo_contrato"
@@ -347,129 +440,96 @@ export default function JobForm() {
                       <FormLabel>
                         Tipo de contrato <span className="text-destructive">*</span>
                       </FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
-                          {[
-                            { value: "clt", label: "CLT" },
-                            { value: "pj", label: "PJ" },
-                            { value: "freelance", label: "Freelance" },
-                            { value: "estagio", label: "Estágio" },
-                          ].map((item) => (
-                            <div key={item.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={item.value} id={`contrato-${item.value}`} />
-                              <Label htmlFor={`contrato-${item.value}`} className="font-normal cursor-pointer">
-                                {item.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de contrato" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="clt">CLT</SelectItem>
+                          <SelectItem value="pj">PJ</SelectItem>
+                          <SelectItem value="freelance">Freelance</SelectItem>
+                          <SelectItem value="estagio">Estágio</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Work Model */}
-                <FormField
-                  control={form.control}
-                  name="remoto"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Modelo de trabalho <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-wrap gap-4">
-                          {[
-                            { value: "presencial", label: "Presencial" },
-                            { value: "hibrido", label: "Híbrido" },
-                            { value: "remoto", label: "Remoto" },
-                          ].map((item) => (
-                            <div key={item.value} className="flex items-center space-x-2">
-                              <RadioGroupItem value={item.value} id={`remoto-${item.value}`} />
-                              <Label htmlFor={`remoto-${item.value}`} className="font-normal cursor-pointer">
-                                {item.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* Location - State/City (hidden when remote) */}
+                {selectedRemoto !== "remoto" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="estado"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estado</FormLabel>
+                          <Select onValueChange={handleEstadoChange} value={field.value} disabled={loadingEstados}>
+                            <FormControl>
+                              <SelectTrigger>
+                                {loadingEstados ? (
+                                  <div className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>Carregando...</span>
+                                  </div>
+                                ) : (
+                                  <SelectValue placeholder="Selecione o estado" />
+                                )}
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {estados.map((estado) => (
+                                <SelectItem key={estado.sigla} value={estado.sigla}>
+                                  {estado.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                {/* Location - State/City */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="estado"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <Select onValueChange={handleEstadoChange} value={field.value} disabled={loadingEstados}>
-                          <FormControl>
-                            <SelectTrigger>
-                              {loadingEstados ? (
-                                <div className="flex items-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>Carregando...</span>
-                                </div>
-                              ) : (
-                                <SelectValue placeholder="Selecione o estado" />
-                              )}
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {estados.map((estado) => (
-                              <SelectItem key={estado.sigla} value={estado.sigla}>
-                                {estado.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cidade"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade</FormLabel>
-                        <Select
-                          onValueChange={handleCidadeChange}
-                          value={field.value}
-                          disabled={!selectedEstado || loadingMunicipios}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              {loadingMunicipios ? (
-                                <div className="flex items-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>Carregando...</span>
-                                </div>
-                              ) : (
-                                <SelectValue placeholder="Selecione a cidade" />
-                              )}
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {municipios.map((municipio) => (
-                              <SelectItem key={municipio.id} value={municipio.nome}>
-                                {municipio.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">Deixe em branco se a vaga for 100% remota</p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name="cidade"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cidade</FormLabel>
+                          <Select
+                            onValueChange={handleCidadeChange}
+                            value={field.value}
+                            disabled={!selectedEstado || loadingMunicipios}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                {loadingMunicipios ? (
+                                  <div className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <span>Carregando...</span>
+                                  </div>
+                                ) : (
+                                  <SelectValue placeholder="Selecione a cidade" />
+                                )}
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {municipios.map((municipio) => (
+                                <SelectItem key={municipio.id} value={municipio.nome}>
+                                  {municipio.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
 
                 {/* Contact for applications */}
                 <FormField
