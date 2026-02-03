@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Briefcase, AlertTriangle, Loader2 } from "lucide-react";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -123,63 +124,67 @@ export default function StudioJobs() {
 
   return (
     <StudioDashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-2xl font-display font-bold">Minhas Vagas</h1>
-          <Button onClick={() => navigate("/studio/jobs/new")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Vaga
-          </Button>
-        </div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-          <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="todas">Todas</TabsTrigger>
-            <TabsTrigger value="ativas">Ativas</TabsTrigger>
-            <TabsTrigger value="inativas">Inativas</TabsTrigger>
-            <TabsTrigger value="expiradas">Expiradas</TabsTrigger>
-            <TabsTrigger value="destaque">Destaque</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Content */}
-        {filteredVagas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              {activeTab === "todas"
-                ? "Nenhuma vaga publicada ainda"
-                : `Nenhuma vaga ${activeTab === "destaque" ? "em destaque" : activeTab}`}
-            </h3>
-            <p className="text-muted-foreground mb-6 text-center max-w-md">
-              {activeTab === "todas"
-                ? "Comece publicando sua primeira vaga para atrair talentos"
-                : "Não há vagas nesta categoria"}
-            </p>
-            {activeTab === "todas" && (
+      <div className="w-full max-w-4xl mx-auto">
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h1 className="text-2xl font-display font-bold">Minhas Vagas</h1>
               <Button onClick={() => navigate("/studio/jobs/new")}>
                 <Plus className="h-4 w-4 mr-2" />
-                Publicar Vaga
+                Nova Vaga
               </Button>
+            </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+              <TabsList className="w-full justify-start overflow-x-auto">
+                <TabsTrigger value="todas">Todas</TabsTrigger>
+                <TabsTrigger value="ativas">Ativas</TabsTrigger>
+                <TabsTrigger value="inativas">Inativas</TabsTrigger>
+                <TabsTrigger value="expiradas">Expiradas</TabsTrigger>
+                <TabsTrigger value="destaque">Destaque</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {/* Content */}
+            {filteredVagas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">
+                  {activeTab === "todas"
+                    ? "Nenhuma vaga publicada ainda"
+                    : `Nenhuma vaga ${activeTab === "destaque" ? "em destaque" : activeTab}`}
+                </h3>
+                <p className="text-muted-foreground mb-6 text-center max-w-md">
+                  {activeTab === "todas"
+                    ? "Comece publicando sua primeira vaga para atrair talentos"
+                    : "Não há vagas nesta categoria"}
+                </p>
+                {activeTab === "todas" && (
+                  <Button onClick={() => navigate("/studio/jobs/new")}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Publicar Vaga
+                  </Button>
+                )}
+              </div>
+            ) : isMobile ? (
+              <JobsMobileCard
+                vagas={filteredVagas}
+                onToggleAtiva={handleToggleAtiva}
+                onDelete={setDeletingVaga}
+                isToggling={isToggling}
+              />
+            ) : (
+              <JobsTable
+                vagas={filteredVagas}
+                onToggleAtiva={handleToggleAtiva}
+                onDelete={setDeletingVaga}
+                isToggling={isToggling}
+              />
             )}
-          </div>
-        ) : isMobile ? (
-          <JobsMobileCard
-            vagas={filteredVagas}
-            onToggleAtiva={handleToggleAtiva}
-            onDelete={setDeletingVaga}
-            isToggling={isToggling}
-          />
-        ) : (
-          <JobsTable
-            vagas={filteredVagas}
-            onToggleAtiva={handleToggleAtiva}
-            onDelete={setDeletingVaga}
-            isToggling={isToggling}
-          />
-        )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Delete Dialog */}
