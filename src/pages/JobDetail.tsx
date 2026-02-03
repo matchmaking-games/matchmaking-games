@@ -159,94 +159,98 @@ export default function JobDetail() {
           {/* Responsive layout: stacked on mobile, 2 columns on desktop */}
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Main content */}
-            <main className="flex-1 space-y-6">
-              {/* Title and badges */}
-              <div className="space-y-4">
-                <h1 className="text-3xl font-display font-bold">
-                  {vaga.titulo}
-                </h1>
+            <main className="flex-1 lg:flex-[2]">
+              <Card>
+                <CardContent className="pt-6 space-y-6">
+                  {/* Title and badges */}
+                  <div className="space-y-4">
+                    <h1 className="text-3xl font-display font-bold">
+                      {vaga.titulo}
+                    </h1>
 
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">
-                    {formatNivelVaga(vaga.nivel)}
-                  </Badge>
-                  <Badge variant="outline">
-                    {formatTipoContrato(vaga.tipo_contrato)}
-                  </Badge>
-                  <Badge variant="outline">
-                    {formatTipoTrabalho(vaga.remoto)}
-                  </Badge>
-                </div>
-
-                {salarioFormatado && (
-                  <p className="text-lg font-semibold text-primary">
-                    {salarioFormatado}
-                  </p>
-                )}
-              </div>
-
-              {/* Description */}
-              <section className="space-y-3">
-                <h2 className="text-lg font-semibold">Descrição</h2>
-                <div className="text-muted-foreground whitespace-pre-wrap">
-                  {vaga.descricao}
-                </div>
-              </section>
-
-              {/* Skills */}
-              {(requiredSkills.length > 0 || optionalSkills.length > 0) && (
-                <section className="space-y-4">
-                  <h2 className="text-lg font-semibold">Habilidades</h2>
-
-                  {requiredSkills.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Obrigatórias
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {requiredSkills.map((skill) => (
-                          <Badge
-                            key={skill.id}
-                            className="bg-primary/10 text-primary border-0"
-                          >
-                            {skill.nome}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">
+                        {formatNivelVaga(vaga.nivel)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {formatTipoContrato(vaga.tipo_contrato)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {formatTipoTrabalho(vaga.remoto)}
+                      </Badge>
                     </div>
+
+                    {salarioFormatado && (
+                      <p className="text-lg font-semibold text-primary">
+                        {salarioFormatado}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <section className="space-y-3">
+                    <h2 className="text-lg font-semibold">Descrição</h2>
+                    <div className="text-muted-foreground whitespace-pre-wrap">
+                      {vaga.descricao}
+                    </div>
+                  </section>
+
+                  {/* Skills */}
+                  {(requiredSkills.length > 0 || optionalSkills.length > 0) && (
+                    <section className="space-y-4">
+                      <h2 className="text-lg font-semibold">Habilidades</h2>
+
+                      {requiredSkills.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium text-muted-foreground">
+                            Obrigatórias
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            {requiredSkills.map((skill) => (
+                              <Badge
+                                key={skill.id}
+                                className="bg-primary/10 text-primary border-0"
+                              >
+                                {skill.nome}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {optionalSkills.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium text-muted-foreground">
+                            Desejáveis
+                          </h3>
+                          <div className="flex flex-wrap gap-2">
+                            {optionalSkills.map((skill) => (
+                              <Badge key={skill.id} variant="secondary">
+                                {skill.nome}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </section>
                   )}
 
-                  {optionalSkills.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Desejáveis
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {optionalSkills.map((skill) => (
-                          <Badge key={skill.id} variant="secondary">
-                            {skill.nome}
-                          </Badge>
-                        ))}
-                      </div>
+                  {/* Footer - only publication date */}
+                  {vaga.criada_em && (
+                    <div className="text-sm text-muted-foreground pt-4 border-t">
+                      Publicada{" "}
+                      {formatDistanceToNow(new Date(vaga.criada_em), {
+                        addSuffix: true,
+                        locale: ptBR,
+                      })}
                     </div>
                   )}
-                </section>
-              )}
-
-              {/* Footer - only publication date */}
-              {vaga.criada_em && (
-                <div className="text-sm text-muted-foreground pt-4 border-t">
-                  Publicada{" "}
-                  {formatDistanceToNow(new Date(vaga.criada_em), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </div>
-              )}
+                </CardContent>
+              </Card>
             </main>
 
             {/* Sidebar (mobile: first, desktop: right) */}
-            <aside className="w-full lg:w-80 space-y-4 order-first lg:order-last">
+            <aside className="lg:flex-1 space-y-4 order-first lg:order-last">
               {/* Studio card */}
               <Card>
                 <CardContent className="pt-6">
