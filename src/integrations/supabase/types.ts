@@ -574,6 +574,60 @@ export type Database = {
           },
         ]
       }
+      pagamentos: {
+        Row: {
+          amount: number
+          atualizado_em: string | null
+          criado_em: string | null
+          currency: string | null
+          estudio_id: string
+          id: string
+          status: string | null
+          stripe_payment_id: string | null
+          stripe_session_id: string
+          vaga_id: string | null
+        }
+        Insert: {
+          amount: number
+          atualizado_em?: string | null
+          criado_em?: string | null
+          currency?: string | null
+          estudio_id: string
+          id?: string
+          status?: string | null
+          stripe_payment_id?: string | null
+          stripe_session_id: string
+          vaga_id?: string | null
+        }
+        Update: {
+          amount?: number
+          atualizado_em?: string | null
+          criado_em?: string | null
+          currency?: string | null
+          estudio_id?: string
+          id?: string
+          status?: string | null
+          stripe_payment_id?: string | null
+          stripe_session_id?: string
+          vaga_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_estudios: {
         Row: {
           adicionado_em: string | null
