@@ -931,6 +931,7 @@ export type Database = {
           salario_max: number | null
           salario_min: number | null
           slug: string
+          status: string | null
           tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
           tipo_funcao: string[]
           tipo_publicacao:
@@ -956,6 +957,7 @@ export type Database = {
           salario_max?: number | null
           salario_min?: number | null
           slug: string
+          status?: string | null
           tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
           tipo_funcao: string[]
           tipo_publicacao?:
@@ -981,6 +983,7 @@ export type Database = {
           salario_max?: number | null
           salario_min?: number | null
           slug?: string
+          status?: string | null
           tipo_contrato?: Database["public"]["Enums"]["tipo_contrato"]
           tipo_funcao?: string[]
           tipo_publicacao?:
