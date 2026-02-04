@@ -28,6 +28,7 @@ export interface VagaCompleta {
   contato_candidatura: string | null;
   ativa: boolean | null;
   estudio_id: string;
+  status: string | null;
 }
 
 export interface VagaFormData {
@@ -60,6 +61,7 @@ interface UseJobFormReturn {
   };
   createJob: (data: VagaFormData) => Promise<void>;
   updateJob: (id: string, data: VagaFormData) => Promise<void>;
+  saveDraft: (data: VagaFormData) => Promise<void>;
 }
 
 export function useJobForm(jobId?: string): UseJobFormReturn {
@@ -247,6 +249,85 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
     }
   };
 
+  // Save as draft
+  const saveDraft = useCallback(async (data: VagaFormData) => {
+    if (!estudioId) {
+      toast({
+        title: "Erro",
+        description: "Estúdio não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
+      // Generate unique slug
+      const slug = await generateUniqueSlug(data.titulo);
+      const expiraEm = addDays(new Date(), 30).toISOString();
+
+      // Insert job as draft
+      const { data: vaga, error: insertError } = await supabase
+        .from("vagas")
+        .insert({
+          titulo: data.titulo,
+          slug,
+          descricao: data.descricao,
+          tipo_funcao: data.tipo_funcao,
+          nivel: data.nivel,
+          tipo_contrato: data.tipo_contrato,
+          remoto: data.remoto,
+          localizacao: data.localizacao,
+          salario_min: data.salario_min,
+          salario_max: data.salario_max,
+          mostrar_salario: data.mostrar_salario,
+          tipo_publicacao: data.tipo_publicacao,
+          contato_candidatura: data.contato_candidatura,
+          status: 'rascunho',
+          ativa: false,
+          expira_em: expiraEm,
+          criada_por: session.user.id,
+          estudio_id: estudioId,
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !vaga) {
+        console.error("Error creating draft:", insertError);
+        throw new Error("Erro ao salvar rascunho.");
+      }
+
+      // Insert skills
+      await insertSkills(
+        vaga.id,
+        data.habilidades_obrigatorias,
+        data.habilidades_desejaveis
+      );
+
+      toast({
+        title: "Rascunho salvo!",
+        description: "Você pode continuar editando depois.",
+      });
+
+      navigate("/studio/jobs");
+    } catch (err) {
+      console.error("Error saving draft:", err);
+      toast({
+        title: "Erro ao salvar rascunho",
+        description: err instanceof Error ? err.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [estudioId, navigate, toast]);
+
   // Create new job
   const createJob = useCallback(async (data: VagaFormData) => {
     if (!estudioId) {
@@ -266,55 +347,114 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
         throw new Error("Sessão expirada. Faça login novamente.");
       }
 
-      // Generate unique slug silently
+      // Generate unique slug
       const slug = await generateUniqueSlug(data.titulo);
-
-      // Calculate expira_em = today + 30 days
       const expiraEm = addDays(new Date(), 30).toISOString();
 
-      // Insert job
-      const { data: vaga, error: insertError } = await supabase
-        .from("vagas")
-        .insert({
-          titulo: data.titulo,
-          slug,
-          descricao: data.descricao,
-          tipo_funcao: data.tipo_funcao,
-          nivel: data.nivel,
-          tipo_contrato: data.tipo_contrato,
-          remoto: data.remoto,
-          localizacao: data.localizacao,
-          salario_min: data.salario_min,
-          salario_max: data.salario_max,
-          mostrar_salario: data.mostrar_salario,
-          tipo_publicacao: data.tipo_publicacao,
-          contato_candidatura: data.contato_candidatura,
-          ativa: true,
-          expira_em: expiraEm,
-          criada_por: session.user.id,
-          estudio_id: estudioId,
-        })
-        .select("id")
-        .single();
+      if (data.tipo_publicacao === 'gratuita') {
+        // Free job: publish directly
+        const { data: vaga, error: insertError } = await supabase
+          .from("vagas")
+          .insert({
+            titulo: data.titulo,
+            slug,
+            descricao: data.descricao,
+            tipo_funcao: data.tipo_funcao,
+            nivel: data.nivel,
+            tipo_contrato: data.tipo_contrato,
+            remoto: data.remoto,
+            localizacao: data.localizacao,
+            salario_min: data.salario_min,
+            salario_max: data.salario_max,
+            mostrar_salario: data.mostrar_salario,
+            tipo_publicacao: 'gratuita',
+            contato_candidatura: data.contato_candidatura,
+            status: 'publicada',
+            ativa: true,
+            expira_em: expiraEm,
+            criada_por: session.user.id,
+            estudio_id: estudioId,
+          })
+          .select("id")
+          .single();
 
-      if (insertError || !vaga) {
-        console.error("Error creating job:", insertError);
-        throw new Error("Erro ao criar vaga.");
+        if (insertError || !vaga) {
+          console.error("Error creating job:", insertError);
+          throw new Error("Erro ao criar vaga.");
+        }
+
+        // Insert skills
+        await insertSkills(
+          vaga.id,
+          data.habilidades_obrigatorias,
+          data.habilidades_desejaveis
+        );
+
+        toast({
+          title: "Vaga publicada!",
+          description: `A vaga "${data.titulo}" foi criada com sucesso.`,
+        });
+
+        navigate("/studio/jobs");
+
+      } else if (data.tipo_publicacao === 'destaque') {
+        // Featured job: save as awaiting payment, then redirect to Stripe
+        const { data: vaga, error: insertError } = await supabase
+          .from("vagas")
+          .insert({
+            titulo: data.titulo,
+            slug,
+            descricao: data.descricao,
+            tipo_funcao: data.tipo_funcao,
+            nivel: data.nivel,
+            tipo_contrato: data.tipo_contrato,
+            remoto: data.remoto,
+            localizacao: data.localizacao,
+            salario_min: data.salario_min,
+            salario_max: data.salario_max,
+            mostrar_salario: data.mostrar_salario,
+            tipo_publicacao: 'destaque',
+            contato_candidatura: data.contato_candidatura,
+            status: 'aguardando_pagamento',
+            ativa: false,
+            expira_em: expiraEm,
+            criada_por: session.user.id,
+            estudio_id: estudioId,
+          })
+          .select("id")
+          .single();
+
+        if (insertError || !vaga) {
+          console.error("Error creating job:", insertError);
+          throw new Error("Erro ao criar vaga.");
+        }
+
+        // Insert skills
+        await insertSkills(
+          vaga.id,
+          data.habilidades_obrigatorias,
+          data.habilidades_desejaveis
+        );
+
+        // Call Edge Function to create Stripe checkout session
+        const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+          'create-checkout-session',
+          { body: { vaga_id: vaga.id } }
+        );
+
+        if (checkoutError || !checkoutData?.url) {
+          console.error("Error creating checkout session:", checkoutError);
+          toast({
+            title: "Erro ao processar pagamento",
+            description: "Tente novamente ou entre em contato com o suporte.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Redirect to Stripe Checkout
+        window.location.href = checkoutData.url;
       }
-
-      // Insert skills
-      await insertSkills(
-        vaga.id,
-        data.habilidades_obrigatorias,
-        data.habilidades_desejaveis
-      );
-
-      toast({
-        title: "Vaga publicada!",
-        description: `A vaga "${data.titulo}" foi criada com sucesso.`,
-      });
-
-      navigate("/studio/jobs");
     } catch (err) {
       console.error("Error creating job:", err);
       toast({
@@ -348,6 +488,7 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
       }
 
       // Update job (NOT including expira_em - keep original value)
+      // Also don't update status or ativa for published jobs
       const { error: updateError } = await supabase
         .from("vagas")
         .update({
@@ -362,7 +503,10 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
           salario_min: data.salario_min,
           salario_max: data.salario_max,
           mostrar_salario: data.mostrar_salario,
-          tipo_publicacao: data.tipo_publicacao,
+          // Don't update tipo_publicacao for published jobs
+          tipo_publicacao: existingJob?.status === 'publicada' 
+            ? existingJob.tipo_publicacao 
+            : data.tipo_publicacao,
           contato_candidatura: data.contato_candidatura,
         })
         .eq("id", id);
@@ -418,5 +562,6 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
     existingSkills,
     createJob,
     updateJob,
+    saveDraft,
   };
 }

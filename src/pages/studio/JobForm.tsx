@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
-import { useJobForm, type VagaFormData } from "@/hooks/useJobForm";
+import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/useJobForm";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
 import { cn } from "@/lib/utils";
 
@@ -82,7 +82,7 @@ export default function JobForm() {
   const navigate = useNavigate();
   const isEditing = !!id;
 
-  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob } =
+  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft } =
     useJobForm(id);
 
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
@@ -209,12 +209,11 @@ export default function JobForm() {
     }
   };
 
-  // Handle form submission
-  const onSubmit = async (data: VagaFormSchemaType) => {
-    // Transform estado/cidade into localizacao
+  // Transform form data to VagaFormData
+  const transformFormData = (data: VagaFormSchemaType): VagaFormData => {
     const localizacao = data.estado && data.cidade ? `${data.cidade}, ${data.estado}` : null;
 
-    const formData: VagaFormData = {
+    return {
       titulo: data.titulo,
       tipo_funcao: data.tipo_funcao,
       nivel: data.nivel,
@@ -230,12 +229,23 @@ export default function JobForm() {
       habilidades_obrigatorias: habilidadesObrigatorias,
       habilidades_desejaveis: habilidadesDesejaveis,
     };
+  };
+
+  // Handle form submission
+  const onSubmit = async (data: VagaFormSchemaType) => {
+    const formData = transformFormData(data);
 
     if (isEditing && id) {
       await updateJob(id, formData);
     } else {
       await createJob(formData);
     }
+  };
+
+  // Handle save as draft
+  const handleSaveDraft = async (data: VagaFormSchemaType) => {
+    const formData = transformFormData(data);
+    await saveDraft(formData);
   };
 
   // Redirect if not authorized
@@ -681,38 +691,54 @@ export default function JobForm() {
                 <h3 className="text-lg font-semibold">Tipo de Publicação</h3>
                 <Separator />
 
-                <FormField
-                  control={form.control}
-                  name="tipo_publicacao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
-                          <div className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors">
-                            <RadioGroupItem value="gratuita" id="pub-gratuita" className="mt-1" />
-                            <Label htmlFor="pub-gratuita" className="flex-1 cursor-pointer">
-                              <span className="font-medium">Gratuita</span>
-                              <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
-                            </Label>
-                          </div>
-                          <div className="flex items-start space-x-3 p-3 rounded-md border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
-                            <RadioGroupItem value="destaque" id="pub-destaque" className="mt-1" />
-                            <Label htmlFor="pub-destaque" className="flex-1 cursor-pointer">
-                              <span className="font-medium flex items-center gap-2">
-                                <Sparkles className="h-4 w-4 text-amber-500" />
-                                Destaque (R$ 199)
-                              </span>
-                              <p className="text-sm text-muted-foreground">
-                                Topo da lista por 30 dias + badge de destaque
-                              </p>
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {existingJob?.status === 'publicada' ? (
+                  // Read-only mode for published jobs
+                  <div className="rounded-lg border p-4 bg-muted/50">
+                    <p className="text-sm font-medium mb-2">Tipo de Publicação</p>
+                    <Badge variant={existingJob.tipo_publicacao === 'destaque' ? 'default' : 'secondary'}>
+                      {existingJob.tipo_publicacao === 'destaque' 
+                        ? 'Destaque (R$ 97)' 
+                        : 'Gratuita'}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Não é possível alterar o tipo após publicação
+                    </p>
+                  </div>
+                ) : (
+                  // Editable radio buttons
+                  <FormField
+                    control={form.control}
+                    name="tipo_publicacao"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
+                            <div className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value="gratuita" id="pub-gratuita" className="mt-1" />
+                              <Label htmlFor="pub-gratuita" className="flex-1 cursor-pointer">
+                                <span className="font-medium">Gratuita</span>
+                                <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
+                              </Label>
+                            </div>
+                            <div className="flex items-start space-x-3 p-3 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
+                              <RadioGroupItem value="destaque" id="pub-destaque" className="mt-1" />
+                              <Label htmlFor="pub-destaque" className="flex-1 cursor-pointer">
+                                <span className="font-medium flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  Destaque (R$ 97)
+                                </span>
+                                <p className="text-sm text-muted-foreground">
+                                  Topo da lista por 30 dias + badge de destaque
+                                </p>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {/* ACTION BUTTONS */}
@@ -720,14 +746,32 @@ export default function JobForm() {
                 <Button type="button" variant="outline" onClick={() => navigate("/studio/jobs")}>
                   Cancelar
                 </Button>
+
+                {/* Save Draft button - only for new jobs or drafts */}
+                {(!isEditing || existingJob?.status === 'rascunho') && (
+                  <Button 
+                    type="button" 
+                    variant="ghost"
+                    disabled={isSaving}
+                    onClick={form.handleSubmit(handleSaveDraft)}
+                  >
+                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                    Salvar Rascunho
+                  </Button>
+                )}
+                
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Salvando...
+                      {form.getValues("tipo_publicacao") === "destaque" && !isEditing
+                        ? "Processando..." 
+                        : "Salvando..."}
                     </>
-                  ) : isEditing ? (
+                  ) : isEditing && existingJob?.status === 'publicada' ? (
                     "Salvar Alterações"
+                  ) : form.getValues("tipo_publicacao") === "destaque" ? (
+                    "Publicar e Pagar R$ 97"
                   ) : (
                     "Publicar Vaga"
                   )}
