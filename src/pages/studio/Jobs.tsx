@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Briefcase, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Briefcase, AlertTriangle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,35 @@ export default function StudioJobs() {
   const [activeTab, setActiveTab] = useState<TabValue>("todas");
   const [isToggling, setIsToggling] = useState(false);
   const [deletingVaga, setDeletingVaga] = useState<StudioVaga | null>(null);
+
+  // Scroll state for tabs navigation
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const hasOverflow = el.scrollWidth > el.clientWidth;
+    setCanScrollLeft(hasOverflow && el.scrollLeft > 2);
+    setCanScrollRight(hasOverflow && el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener("scroll", checkScroll);
+      window.addEventListener("resize", checkScroll);
+    }
+    return () => {
+      if (el) {
+        el.removeEventListener("scroll", checkScroll);
+      }
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, []);
 
   const filteredVagas = useMemo(() => {
     const now = new Date();
@@ -136,15 +165,41 @@ export default function StudioJobs() {
               </Button>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs with horizontal scroll */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-              <TabsList className="w-full justify-start overflow-x-auto">
-                <TabsTrigger value="todas">Todas</TabsTrigger>
-                <TabsTrigger value="ativas">Ativas</TabsTrigger>
-                <TabsTrigger value="inativas">Inativas</TabsTrigger>
-                <TabsTrigger value="expiradas">Expiradas</TabsTrigger>
-                <TabsTrigger value="destaque">Destaque</TabsTrigger>
-              </TabsList>
+              <nav className="relative mb-4 w-full max-w-full overflow-hidden">
+                {/* Left fade indicator */}
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-card to-transparent pointer-events-none z-10 flex items-center justify-start transition-opacity duration-200 ${
+                    canScrollLeft ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground ml-0.5" />
+                </div>
+
+                {/* Scroll container with hidden scrollbar */}
+                <div
+                  ref={scrollRef}
+                  className="w-full overflow-x-auto scrollbar-hide"
+                >
+                  <TabsList className="inline-flex h-10 items-center justify-start gap-1 rounded-md bg-muted p-1 text-muted-foreground min-w-max">
+                    <TabsTrigger value="todas">Todas</TabsTrigger>
+                    <TabsTrigger value="ativas">Ativas</TabsTrigger>
+                    <TabsTrigger value="inativas">Inativas</TabsTrigger>
+                    <TabsTrigger value="expiradas">Expiradas</TabsTrigger>
+                    <TabsTrigger value="destaque">Destaque</TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {/* Right fade indicator */}
+                <div
+                  className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none z-10 flex items-center justify-end transition-opacity duration-200 ${
+                    canScrollRight ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <ChevronRight className="h-4 w-4 text-muted-foreground mr-0.5" />
+                </div>
+              </nav>
             </Tabs>
 
             {/* Content */}
