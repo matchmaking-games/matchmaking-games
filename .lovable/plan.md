@@ -1,324 +1,171 @@
 
+# Plano: Corrigir Integracao Stripe nas Edge Functions
 
-# Plano: Completar Fluxo de Verificacao de Pagamento no Frontend
+## Resumo do Problema
 
-## Resumo
-Implementar a logica de verificacao de pagamento quando o usuario retorna do Stripe Checkout, incluindo polling com retry, modais de feedback e tratamento de cancelamento.
+As Edge Functions de pagamento estao falhando por dois motivos:
 
-**IMPORTANTE**: Sua implementacao atual esta CORRETA. Nao deletar Edge Functions ou tabela pagamentos - apenas adicionar a logica de frontend que esta faltando.
+1. **Erro 401 Invalid JWT**: O `verify_jwt = true` no config.toml esta rejeitando tokens validos porque o sistema de signing-keys do Supabase nao e compativel com essa configuracao
+2. **Erro Deno Runtime**: O Stripe SDK via esm.sh usa polyfills Node.js que causam `Deno.core.runMicrotasks() is not supported`
+
+## Solucao
+
+### 1. Alterar Config.toml
+
+Mudar `verify_jwt = true` para `verify_jwt = false` em ambas as funcoes.
+
+A validacao JWT ja esta sendo feita manualmente via `getClaims()` no codigo, entao isso e seguro.
+
+```toml
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+```
 
 ---
 
-## O Que Ja Esta Funcionando (NAO MODIFICAR)
+### 2. Reescrever create-checkout-session/index.ts
 
-- `supabase/functions/create-checkout-session/index.ts` - Cria sessao Stripe
-- `supabase/functions/verify-payment/index.ts` - Verifica pagamento no Stripe
-- Tabela `pagamentos` com RLS
-- `src/hooks/useJobForm.ts` - Salva vaga e redireciona para Stripe
-- `src/pages/studio/JobForm.tsx` - UI do formulario
-- Secrets: STRIPE_SECRET_KEY, SITE_URL
+Substituir o Stripe SDK por chamadas diretas via `fetch` a API do Stripe.
+
+**Principais mudancas:**
+
+- Remover `import Stripe from "https://esm.sh/stripe@14?target=deno"`
+- Criar funcao `createStripeCheckoutSession()` usando fetch
+- Pinar versao exata do supabase-js: `@supabase/supabase-js@2.49.1`
+- Manter toda a logica de validacao existente
+
+**Estrutura da nova funcao:**
+
+```text
+1. CORS preflight handling
+2. Verificar Authorization header
+3. Criar cliente Supabase com token do usuario
+4. Validar JWT via getClaims()
+5. Parse request body (vaga_id)
+6. Buscar vaga e validar (tipo_publicacao='destaque', status='aguardando_pagamento')
+7. Verificar membership do usuario (super_admin)
+8. Chamar Stripe API via fetch (POST /v1/checkout/sessions)
+9. Inserir registro em pagamentos (via service_role)
+10. Retornar URL do checkout
+```
+
+**Chamada Stripe via fetch:**
+
+```typescript
+const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+  body: new URLSearchParams({
+    'mode': 'payment',
+    'payment_method_types[0]': 'card',
+    'line_items[0][price_data][currency]': 'brl',
+    'line_items[0][price_data][product_data][name]': 'Vaga em Destaque - 30 dias',
+    'line_items[0][price_data][product_data][description]': `Destaque para: ${titulo}`,
+    'line_items[0][price_data][unit_amount]': '9700',
+    'line_items[0][quantity]': '1',
+    'metadata[vaga_id]': vaga_id,
+    'metadata[estudio_id]': estudio_id,
+    'success_url': `${SITE_URL}/studio/jobs?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+    'cancel_url': `${SITE_URL}/studio/jobs/${vaga_id}/edit?payment=cancelled`,
+  }),
+});
+```
+
+---
+
+### 3. Reescrever verify-payment/index.ts
+
+Substituir o Stripe SDK por chamadas diretas via `fetch`.
+
+**Principais mudancas:**
+
+- Remover import do Stripe SDK
+- Criar funcao `retrieveStripeSession()` usando fetch
+- Pinar versao exata do supabase-js
+
+**Chamada Stripe via fetch:**
+
+```typescript
+const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${session_id}`, {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+  },
+});
+```
 
 ---
 
 ## Arquivos a Modificar
 
-### 1. `src/pages/studio/Jobs.tsx`
-
-Adicionar toda a logica de deteccao de retorno do Stripe e verificacao de pagamento.
-
-**Alteracoes:**
-
-#### 1.1 Novos Imports
-```typescript
-import { useSearchParams } from "react-router-dom";
-import { CheckCircle2, AlertCircle, XCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
-```
-
-#### 1.2 Novos Estados
-```typescript
-const [searchParams] = useSearchParams();
-const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
-const [paymentResult, setPaymentResult] = useState<'success' | 'timeout' | 'error' | null>(null);
-const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(null);
-```
-
-#### 1.3 Funcao de Polling com Retry
-```typescript
-const verifyPaymentWithPolling = async (sessionId: string): Promise<boolean> => {
-  const MAX_ATTEMPTS = 10;
-  const INTERVAL_MS = 2000;
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    console.log(`[VERIFY-PAYMENT] Attempt ${attempt}/${MAX_ATTEMPTS}`);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-payment', {
-        body: { session_id: sessionId }
-      });
-
-      if (error) {
-        console.error(`[VERIFY-PAYMENT] Error:`, error);
-        if (attempt === MAX_ATTEMPTS) throw new Error(error.message || 'Erro ao verificar pagamento');
-      }
-
-      // Sucesso ou ja processado
-      if (data?.success === true) {
-        console.log(`[VERIFY-PAYMENT] Success! Status: ${data.status}`);
-        return true;
-      }
-
-      // Pagamento ainda nao confirmado
-      if (data?.status === 'unpaid' && attempt < MAX_ATTEMPTS) {
-        console.log(`[VERIFY-PAYMENT] Payment not confirmed yet, waiting...`);
-        await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
-        continue;
-      }
-
-      if (data?.error) throw new Error(data.error);
-
-    } catch (err) {
-      if (attempt === MAX_ATTEMPTS) throw err;
-    }
-
-    if (attempt < MAX_ATTEMPTS) {
-      await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
-    }
-  }
-
-  return false; // Timeout
-};
-```
-
-#### 1.4 Handler de Retorno Success
-```typescript
-const handlePaymentSuccess = async (sessionId: string) => {
-  setIsVerifyingPayment(true);
-  setPaymentResult(null);
-  setPaymentErrorMessage(null);
-
-  try {
-    const success = await verifyPaymentWithPolling(sessionId);
-    
-    if (success) {
-      setPaymentResult('success');
-      await refetch(); // Recarregar lista de vagas
-    } else {
-      setPaymentResult('timeout');
-    }
-  } catch (err) {
-    console.error('[VERIFY-PAYMENT] Error:', err);
-    setPaymentResult('error');
-    setPaymentErrorMessage(err instanceof Error ? err.message : 'Erro desconhecido');
-  } finally {
-    setIsVerifyingPayment(false);
-  }
-
-  // Limpar query params
-  navigate('/studio/jobs', { replace: true });
-};
-```
-
-#### 1.5 useEffect para Detectar Query Params
-```typescript
-useEffect(() => {
-  const payment = searchParams.get('payment');
-  const sessionId = searchParams.get('session_id');
-
-  if (payment === 'success' && sessionId) {
-    if (sessionId.startsWith('cs_test_') || sessionId.startsWith('cs_live_')) {
-      handlePaymentSuccess(sessionId);
-    } else {
-      console.warn('[VERIFY-PAYMENT] Invalid session_id format:', sessionId);
-      navigate('/studio/jobs', { replace: true });
-    }
-  }
-}, [searchParams]);
-```
-
-#### 1.6 Modais de Feedback (adicionar no JSX, antes do fechamento de StudioDashboardLayout)
-
-**Modal de Loading:**
-```tsx
-<Dialog open={isVerifyingPayment} onOpenChange={() => {}}>
-  <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
-    <div className="flex flex-col items-center justify-center py-8">
-      <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-      <DialogTitle className="text-xl font-semibold mb-2">
-        Confirmando pagamento...
-      </DialogTitle>
-      <DialogDescription className="text-center text-muted-foreground">
-        Estamos verificando seu pagamento com o Stripe.
-        <br />
-        Isso pode levar alguns segundos.
-      </DialogDescription>
-    </div>
-  </DialogContent>
-</Dialog>
-```
-
-**Modal de Sucesso:**
-```tsx
-<Dialog open={paymentResult === 'success'} onOpenChange={() => setPaymentResult(null)}>
-  <DialogContent className="sm:max-w-md">
-    <div className="flex flex-col items-center justify-center py-6">
-      <CheckCircle2 className="h-16 w-16 text-primary mb-4" />
-      <DialogTitle className="text-xl font-semibold mb-2">
-        Pagamento confirmado!
-      </DialogTitle>
-      <DialogDescription className="text-center text-muted-foreground mb-6">
-        Sua vaga foi publicada com destaque por 30 dias.
-      </DialogDescription>
-      <Button onClick={() => setPaymentResult(null)} className="w-full">
-        Ver minhas vagas
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
-```
-
-**Modal de Timeout:**
-```tsx
-<Dialog open={paymentResult === 'timeout'} onOpenChange={() => setPaymentResult(null)}>
-  <DialogContent className="sm:max-w-md">
-    <div className="flex flex-col items-center justify-center py-6">
-      <AlertCircle className="h-16 w-16 text-yellow-500 mb-4" />
-      <DialogTitle className="text-xl font-semibold mb-2">
-        Confirmacao pendente
-      </DialogTitle>
-      <DialogDescription className="text-center text-muted-foreground mb-2">
-        Seu pagamento esta sendo processado. Sua vaga sera ativada em alguns minutos.
-      </DialogDescription>
-      <p className="text-xs text-muted-foreground text-center mb-6">
-        Voce pode fechar esta pagina. Te avisaremos quando a vaga for publicada.
-      </p>
-      <Button onClick={() => setPaymentResult(null)} className="w-full">
-        Entendi
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
-```
-
-**Modal de Erro:**
-```tsx
-<Dialog open={paymentResult === 'error'} onOpenChange={() => setPaymentResult(null)}>
-  <DialogContent className="sm:max-w-md">
-    <div className="flex flex-col items-center justify-center py-6">
-      <XCircle className="h-16 w-16 text-destructive mb-4" />
-      <DialogTitle className="text-xl font-semibold mb-2">
-        Erro ao confirmar pagamento
-      </DialogTitle>
-      <DialogDescription className="text-center text-muted-foreground mb-2">
-        Nao conseguimos confirmar seu pagamento no momento.
-      </DialogDescription>
-      {paymentErrorMessage && (
-        <p className="text-xs text-muted-foreground text-center mb-2">
-          Detalhes: {paymentErrorMessage}
-        </p>
-      )}
-      <p className="text-xs text-muted-foreground text-center mb-6">
-        Se o valor foi debitado, entre em contato com o suporte.
-      </p>
-      <DialogFooter className="flex gap-2 w-full sm:flex-row">
-        <Button variant="outline" onClick={() => setPaymentResult(null)} className="flex-1">
-          Voltar
-        </Button>
-        <Button onClick={() => window.location.reload()} className="flex-1">
-          Tentar novamente
-        </Button>
-      </DialogFooter>
-    </div>
-  </DialogContent>
-</Dialog>
-```
+| Arquivo | Acao |
+|---------|------|
+| `supabase/config.toml` | Mudar verify_jwt para false |
+| `supabase/functions/create-checkout-session/index.ts` | Reescrever com fetch |
+| `supabase/functions/verify-payment/index.ts` | Reescrever com fetch |
 
 ---
 
-### 2. `src/pages/studio/JobForm.tsx`
+## Fluxo Apos Correcao
 
-Adicionar tratamento do query param `?payment=cancelled`.
-
-**Alteracoes:**
-
-#### 2.1 Novos Imports
-```typescript
-import { useSearchParams } from "react-router-dom";
-```
-
-#### 2.2 Hook e useEffect para Cancelamento
-```typescript
-const [searchParams] = useSearchParams();
-
-useEffect(() => {
-  const payment = searchParams.get('payment');
-  
-  if (payment === 'cancelled') {
-    toast({
-      title: "Pagamento cancelado",
-      description: "Voce pode ajustar a vaga e tentar publicar novamente.",
-    });
-    
-    // Limpar query param
-    navigate(window.location.pathname, { replace: true });
-  }
-}, [searchParams, toast, navigate]);
-```
-
----
-
-## Fluxos Resultantes
-
-### Cenario 1: Pagamento Bem-Sucedido
 ```text
-1. Stripe redireciona: /studio/jobs?payment=success&session_id=cs_xxx
-2. useEffect detecta query params
-3. Modal loading aparece IMEDIATAMENTE
-4. verifyPaymentWithPolling() inicia (2s x 10 tentativas)
-5. Edge Function retorna { success: true }
-6. Modal loading fecha, Modal sucesso aparece
-7. refetch() recarrega lista de vagas
-8. navigate() limpa query params
-9. Usuario clica "Ver minhas vagas"
-10. Vaga aparece na lista com destaque
-```
-
-### Cenario 2: Pagamento Cancelado
-```text
-1. Stripe redireciona: /studio/jobs/:id/edit?payment=cancelled
-2. useEffect em JobForm.tsx detecta query param
-3. Toast informativo aparece
-4. Query param removido da URL
-5. Usuario continua editando vaga
-```
-
-### Cenario 3: Timeout (20 segundos)
-```text
-1-4. [mesmo do cenario 1]
-5. 10 tentativas sem sucesso
-6. Modal timeout aparece
-7. Usuario clica "Entendi"
-8. Vaga sera ativada por webhook em background (se implementado)
+Frontend (useJobForm.ts)
+    |
+    v
+supabase.functions.invoke('create-checkout-session', { body: { vaga_id } })
+    |
+    v
+Edge Function (verify_jwt = false)
+    |
+    +-- Valida JWT manualmente via getClaims()
+    +-- Busca vaga, valida status/tipo
+    +-- Verifica membership super_admin
+    +-- Chama Stripe API via fetch (nao SDK)
+    +-- Insere registro em pagamentos
+    +-- Retorna { url: checkout_url }
+    |
+    v
+Frontend redireciona para Stripe Checkout
+    |
+    v
+Usuario paga
+    |
+    v
+Stripe redireciona para /studio/jobs?payment=success&session_id=cs_xxx
+    |
+    v
+Frontend chama verify-payment
+    |
+    v
+Edge Function valida no Stripe via fetch
+    |
+    v
+Atualiza vaga para publicada
 ```
 
 ---
 
-## Seguranca Garantida
+## Seguranca
 
-- Query params NAO sao confiados - apenas disparam verificacao
-- Edge Function `verify-payment` valida DIRETAMENTE no Stripe
-- Vaga so ativada pela Edge Function (service_role)
-- Frontend nao tem permissao para UPDATE direto em vagas
-- Session ID fake resulta em erro
-- Fluxo idempotente (pode verificar multiplas vezes)
+- JWT continua sendo validado (agora manualmente via getClaims)
+- Stripe Secret Key nunca exposta ao frontend
+- RLS protege tabela pagamentos
+- Preco hardcoded no servidor (9700 centavos = R$ 97)
 
 ---
 
-## NAO FAZER
+## Resultado Esperado
 
-- NAO deletar Edge Functions existentes
-- NAO deletar tabela pagamentos
-- NAO modificar useJobForm.ts (ja esta correto)
-- NAO modificar logica do JobForm.tsx (alem do cancel handler)
+Apos implementacao:
+
+- Sem erro 401 Invalid JWT
+- Sem erro Deno.core.runMicrotasks()
+- Fluxo de pagamento completo funcionando
+- Vaga ativada automaticamente apos pagamento confirmado
 
