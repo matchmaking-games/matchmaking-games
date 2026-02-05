@@ -83,19 +83,18 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Obter usuário autenticado via getClaims
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    // Obter usuário autenticado via getUser
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      logStep("ERROR: Invalid token", { error: claimsError?.message });
+    if (userError || !user) {
+      logStep("ERROR: Invalid token", { error: userError?.message });
       return new Response(
         JSON.stringify({ error: "Token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     logStep("User authenticated", { userId });
 
     // Parse request body
