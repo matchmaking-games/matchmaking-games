@@ -36,7 +36,7 @@ export function JobCard({ job }: JobCardProps) {
           "p-4 cursor-pointer transition-all duration-200",
           isDestaque
             ? "bg-muted/50 border-border hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,228,122,0.15)]"
-            : "bg-card hover:border-border/80 hover:bg-muted/30"
+            : "bg-card/50 border-border/50 hover:border-border/70 hover:bg-card/70"
         )}
       >
         <div className="flex gap-4">
@@ -64,9 +64,9 @@ export function JobCard({ job }: JobCardProps) {
                 )}
               </div>
               {isDestaque && (
-                <Badge className="bg-amber-400/15 text-amber-400 border-amber-400/20 border flex-shrink-0">
+                <Badge className="bg-primary/10 text-primary border-0 flex-shrink-0">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Em Destaque
+                  Destaque
                 </Badge>
               )}
             </div>
