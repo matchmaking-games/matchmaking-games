@@ -64,9 +64,9 @@ export function JobCard({ job }: JobCardProps) {
                 )}
               </div>
               {isDestaque && (
-                <Badge className="bg-primary/10 text-primary border-0 flex-shrink-0">
+                <Badge className="bg-amber-400/15 text-amber-400 border-amber-400/20 border flex-shrink-0">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Destaque
+                  Em Destaque
                 </Badge>
               )}
             </div>
