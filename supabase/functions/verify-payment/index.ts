@@ -1,14 +1,15 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import Stripe from "https://esm.sh/stripe@17.5.0?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // Helper para logging estruturado
 const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[VERIFY-PAYMENT] ${step}${detailsStr}`);
 };
 
@@ -25,29 +26,27 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       logStep("ERROR: No authorization header");
-      return new Response(
-        JSON.stringify({ error: "Não autorizado" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Criar cliente Supabase com token do usuário
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     // Obter usuário autenticado via getClaims
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    
+
     if (claimsError || !claimsData?.claims) {
       logStep("ERROR: Invalid token", { error: claimsError?.message });
-      return new Response(
-        JSON.stringify({ error: "Token inválido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Token inválido" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const userId = claimsData.claims.sub;
@@ -55,13 +54,13 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const { session_id } = await req.json();
-    
+
     if (!session_id) {
       logStep("ERROR: Missing session_id");
-      return new Response(
-        JSON.stringify({ error: "session_id é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "session_id é obrigatório" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Verifying payment for session", { session_id });
@@ -70,10 +69,10 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("ERROR: STRIPE_SECRET_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Stripe não configurado" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Stripe não configurado" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const stripe = new Stripe(stripeKey, {
@@ -84,28 +83,28 @@ Deno.serve(async (req) => {
     let session;
     try {
       session = await stripe.checkout.sessions.retrieve(session_id);
-      logStep("Stripe session retrieved", { 
+      logStep("Stripe session retrieved", {
         payment_status: session.payment_status,
-        payment_intent: session.payment_intent 
+        payment_intent: session.payment_intent,
       });
     } catch (stripeError) {
       logStep("ERROR: Failed to retrieve Stripe session", { error: String(stripeError) });
-      return new Response(
-        JSON.stringify({ error: "Sessão de pagamento não encontrada" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Sessão de pagamento não encontrada" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Validar status do pagamento
     if (session.payment_status !== "paid") {
       logStep("Payment not completed", { payment_status: session.payment_status });
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          status: "unpaid", 
-          error: "Pagamento não confirmado" 
+        JSON.stringify({
+          success: false,
+          status: "unpaid",
+          error: "Pagamento não confirmado",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -115,10 +114,10 @@ Deno.serve(async (req) => {
 
     if (!vagaId || !estudioId) {
       logStep("ERROR: Invalid session metadata", { metadata: session.metadata });
-      return new Response(
-        JSON.stringify({ error: "Metadata inválida na sessão" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Metadata inválida na sessão" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Session metadata valid", { vagaId, estudioId });
@@ -134,18 +133,18 @@ Deno.serve(async (req) => {
 
     if (membershipError || !membership) {
       logStep("ERROR: User not a member of studio", { error: membershipError?.message });
-      return new Response(
-        JSON.stringify({ error: "Você não é membro deste estúdio" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Você não é membro deste estúdio" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (membership.role !== "super_admin") {
       logStep("ERROR: User is not super_admin", { role: membership.role });
-      return new Response(
-        JSON.stringify({ error: "Sem permissão para verificar este pagamento" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Sem permissão para verificar este pagamento" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("User authorized as super_admin");
@@ -159,38 +158,35 @@ Deno.serve(async (req) => {
 
     if (vagaError || !vaga) {
       logStep("ERROR: Vaga not found", { error: vagaError?.message });
-      return new Response(
-        JSON.stringify({ error: "Vaga não encontrada" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Vaga não encontrada" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Verificar se já foi processada
     if (vaga.status === "publicada") {
       logStep("Vaga already published, returning success");
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          status: "already_processed", 
-          vaga_id: vagaId 
+        JSON.stringify({
+          success: true,
+          status: "already_processed",
+          vaga_id: vagaId,
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     if (vaga.status !== "aguardando_pagamento") {
       logStep("ERROR: Invalid vaga status", { status: vaga.status });
-      return new Response(
-        JSON.stringify({ error: "Status da vaga inválido para ativação" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Status da vaga inválido para ativação" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Criar cliente admin para operações com service_role
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Verificar se pagamento já foi processado
     const { data: pagamento, error: pagamentoError } = await supabaseAdmin
@@ -207,12 +203,12 @@ Deno.serve(async (req) => {
     if (pagamento?.status === "completed") {
       logStep("Payment already completed, returning success");
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          status: "already_processed", 
-          vaga_id: vagaId 
+        JSON.stringify({
+          success: true,
+          status: "already_processed",
+          vaga_id: vagaId,
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -221,19 +217,19 @@ Deno.serve(async (req) => {
     // Atualizar vaga para publicada
     const { error: updateVagaError } = await supabaseAdmin
       .from("vagas")
-      .update({ 
-        status: "publicada", 
+      .update({
+        status: "publicada",
         ativa: true,
-        atualizada_em: new Date().toISOString()
+        atualizada_em: new Date().toISOString(),
       })
       .eq("id", vagaId);
 
     if (updateVagaError) {
       logStep("ERROR: Failed to update vaga", { error: updateVagaError.message });
-      return new Response(
-        JSON.stringify({ error: "Erro ao ativar vaga" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Erro ao ativar vaga" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Vaga updated to publicada");
@@ -260,20 +256,19 @@ Deno.serve(async (req) => {
     logStep("Payment verification completed successfully", { vaga_id: vagaId });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        status: "paid", 
-        vaga_id: vagaId 
+      JSON.stringify({
+        success: true,
+        status: "paid",
+        vaga_id: vagaId,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("FATAL ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: "Erro interno do servidor" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Erro interno do servidor" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
