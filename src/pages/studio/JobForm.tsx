@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,6 +22,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
 import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/useJobForm";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 // Form schema with Zod
@@ -80,6 +81,8 @@ const tipoFuncaoOptions = [
 export default function JobForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const isEditing = !!id;
 
   const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft } =
@@ -90,6 +93,21 @@ export default function JobForm() {
 
   const [habilidadesObrigatorias, setHabilidadesObrigatorias] = useState<string[]>([]);
   const [habilidadesDesejaveis, setHabilidadesDesejaveis] = useState<string[]>([]);
+
+  // Detect payment cancelled return from Stripe
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    
+    if (payment === 'cancelled') {
+      toast({
+        title: "Pagamento cancelado",
+        description: "Você pode ajustar a vaga e tentar publicar novamente.",
+      });
+      
+      // Clean query param
+      navigate(window.location.pathname, { replace: true });
+    }
+  }, [searchParams, toast, navigate]);
 
   const form = useForm<VagaFormSchemaType>({
     resolver: zodResolver(vagaFormSchema),
