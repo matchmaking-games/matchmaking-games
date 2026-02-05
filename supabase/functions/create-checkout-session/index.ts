@@ -1,5 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +10,52 @@ const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
+
+// Criar sessão Stripe via fetch (sem SDK)
+async function createStripeCheckoutSession(params: {
+  stripeSecretKey: string;
+  titulo: string;
+  vagaId: string;
+  estudioId: string;
+  siteUrl: string;
+}): Promise<{ url: string; id: string }> {
+  const { stripeSecretKey, titulo, vagaId, estudioId, siteUrl } = params;
+  
+  // PREÇO HARDCODED: R$ 97,00 = 9700 centavos
+  const PRECO_DESTAQUE_CENTAVOS = "9700";
+
+  const body = new URLSearchParams({
+    'mode': 'payment',
+    'payment_method_types[0]': 'card',
+    'line_items[0][price_data][currency]': 'brl',
+    'line_items[0][price_data][product_data][name]': 'Vaga em Destaque - 30 dias',
+    'line_items[0][price_data][product_data][description]': `Destaque para: ${titulo}`,
+    'line_items[0][price_data][unit_amount]': PRECO_DESTAQUE_CENTAVOS,
+    'line_items[0][quantity]': '1',
+    'metadata[vaga_id]': vagaId,
+    'metadata[estudio_id]': estudioId,
+    'success_url': `${siteUrl}/studio/jobs?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+    'cancel_url': `${siteUrl}/studio/jobs/${vagaId}/edit?payment=cancelled`,
+  });
+
+  const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${stripeSecretKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    logStep("Stripe API error", errorData);
+    throw new Error(errorData.error?.message || 'Erro ao criar sessão Stripe');
+  }
+
+  const session = await response.json();
+  return { url: session.url, id: session.id };
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -128,7 +173,7 @@ Deno.serve(async (req) => {
 
     logStep("User authorized as super_admin");
 
-    // Inicializar Stripe
+    // Verificar Stripe key
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("ERROR: STRIPE_SECRET_KEY not configured");
@@ -138,38 +183,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
-
     const SITE_URL = Deno.env.get("SITE_URL") || "https://matchmaking-games.lovable.app";
 
-    // Criar sessão Stripe Checkout
-    // PREÇO HARDCODED: R$ 97,00 = 9700 centavos
-    const PRECO_DESTAQUE_CENTAVOS = 9700;
+    logStep("Creating Stripe checkout session via fetch", { amount: 9700 });
 
-    logStep("Creating Stripe checkout session", { amount: PRECO_DESTAQUE_CENTAVOS });
-
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      payment_method_types: ["card"],
-      line_items: [{
-        price_data: {
-          currency: "brl",
-          product_data: {
-            name: "Vaga em Destaque - 30 dias",
-            description: `Destaque para: ${vaga.titulo}`,
-          },
-          unit_amount: PRECO_DESTAQUE_CENTAVOS,
-        },
-        quantity: 1,
-      }],
-      metadata: {
-        vaga_id: vaga.id,
-        estudio_id: vaga.estudio_id,
-      },
-      success_url: `${SITE_URL}/studio/jobs?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${SITE_URL}/studio/jobs/${vaga.id}/edit?payment=cancelled`,
+    // Criar sessão Stripe via fetch
+    const session = await createStripeCheckoutSession({
+      stripeSecretKey: stripeKey,
+      titulo: vaga.titulo,
+      vagaId: vaga.id,
+      estudioId: vaga.estudio_id,
+      siteUrl: SITE_URL,
     });
 
     logStep("Stripe session created", { sessionId: session.id });
@@ -184,7 +208,7 @@ Deno.serve(async (req) => {
       estudio_id: vaga.estudio_id,
       vaga_id: vaga.id,
       stripe_session_id: session.id,
-      amount: PRECO_DESTAQUE_CENTAVOS,
+      amount: 9700,
       currency: "brl",
       status: "pending",
     });

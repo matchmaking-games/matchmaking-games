@@ -1,5 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +10,28 @@ const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[VERIFY-PAYMENT] ${step}${detailsStr}`);
 };
+
+// Buscar sessão Stripe via fetch (sem SDK)
+async function retrieveStripeSession(sessionId: string, stripeSecretKey: string): Promise<{
+  payment_status: string;
+  payment_intent: string | null;
+  metadata: { vaga_id?: string; estudio_id?: string };
+}> {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${stripeSecretKey}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    logStep("Stripe API error", errorData);
+    throw new Error(errorData.error?.message || 'Sessão não encontrada no Stripe');
+  }
+
+  return await response.json();
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -66,7 +87,7 @@ Deno.serve(async (req) => {
 
     logStep("Verifying payment for session", { session_id });
 
-    // Inicializar Stripe
+    // Verificar Stripe key
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       logStep("ERROR: STRIPE_SECRET_KEY not configured");
@@ -76,14 +97,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
-
-    // Consultar sessão diretamente no Stripe
+    // Consultar sessão diretamente no Stripe via fetch
     let session;
     try {
-      session = await stripe.checkout.sessions.retrieve(session_id);
+      session = await retrieveStripeSession(session_id, stripeKey);
       logStep("Stripe session retrieved", { 
         payment_status: session.payment_status,
         payment_intent: session.payment_intent 
