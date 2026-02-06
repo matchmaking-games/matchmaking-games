@@ -98,7 +98,7 @@ function ExperienceItem({ experience }: { experience: PublicExperienceData }) {
   const [expanded, setExpanded] = useState(false);
   const hasCargos = experience.cargos && experience.cargos.length > 0;
   const location =
-    experience.cidade && experience.estado ? `${experience.cidade}, ${experience.estado}` : experience.localizacao;
+    experience.cidade && experience.estado ? `${experience.cidade}, ${experience.estado}` : null;
 
   // Layout COM multiplos cargos (timeline interna)
   if (hasCargos) {

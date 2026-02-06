@@ -88,10 +88,10 @@ export function ProfileHero({ user }: ProfileHeroProps) {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {user.localizacao && (
+              {(user.cidade && user.estado) && (
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{user.localizacao}</span>
+                  <span className="text-sm">{user.cidade}, {user.estado}</span>
                 </div>
               )}
 

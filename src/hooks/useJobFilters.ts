@@ -5,7 +5,8 @@ export interface JobFilters {
   nivel: string | null;
   tipoContrato: string | null;
   modeloTrabalho: string | null;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   habilidades: string[];
   searchText: string | null;
 }
@@ -17,7 +18,8 @@ export function useJobFilters() {
     nivel: searchParams.get("nivel"),
     tipoContrato: searchParams.get("contrato"),
     modeloTrabalho: searchParams.get("modelo"),
-    localizacao: searchParams.get("local"),
+    estado: searchParams.get("estado"),
+    cidade: searchParams.get("cidade"),
     habilidades: searchParams.get("skills")?.split(",").filter(Boolean) || [],
     searchText: searchParams.get("q"),
   }), [searchParams]);
@@ -46,6 +48,32 @@ export function useJobFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setEstado = useCallback((uf: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (uf === null || uf === "") {
+        next.delete("estado");
+        next.delete("cidade"); // Clear cidade when estado is cleared
+      } else {
+        next.set("estado", uf);
+        next.delete("cidade"); // Clear cidade when estado changes
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setCidade = useCallback((nome: string | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nome === null || nome === "") {
+        next.delete("cidade");
+      } else {
+        next.set("cidade", nome);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const clearAllFilters = useCallback(() => {
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
@@ -55,7 +83,8 @@ export function useJobFilters() {
     if (filters.nivel) count++;
     if (filters.tipoContrato) count++;
     if (filters.modeloTrabalho) count++;
-    if (filters.localizacao) count++;
+    if (filters.estado) count++;
+    if (filters.cidade) count++;
     if (filters.habilidades.length > 0) count++;
     if (filters.searchText) count++;
     return count;
@@ -65,6 +94,8 @@ export function useJobFilters() {
     filters,
     setFilter,
     setHabilidades,
+    setEstado,
+    setCidade,
     clearAllFilters,
     activeFilterCount,
     hasActiveFilters: activeFilterCount > 0,

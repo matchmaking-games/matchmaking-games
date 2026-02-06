@@ -9,7 +9,8 @@ export interface JobDetailData {
   nivel: string;
   tipo_contrato: string;
   remoto: string;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   salario_min: number | null;
   salario_max: number | null;
   mostrar_salario: boolean | null;
@@ -20,7 +21,8 @@ export interface JobDetailData {
     nome: string;
     slug: string;
     logo_url: string | null;
-    localizacao: string | null;
+    estado: string | null;
+    cidade: string | null;
     tamanho: string | null;
   } | null;
   habilidades: {
@@ -40,9 +42,9 @@ async function fetchJobDetail(slug: string): Promise<JobDetailData | null> {
     .from("vagas")
     .select(`
       id, titulo, slug, descricao, nivel, tipo_contrato, remoto,
-      localizacao, salario_min, salario_max, mostrar_salario,
+      estado, cidade, salario_min, salario_max, mostrar_salario,
       contato_candidatura, criada_em,
-      estudio:estudios(id, nome, slug, logo_url, localizacao, tamanho),
+      estudio:estudios(id, nome, slug, logo_url, estado, cidade, tamanho),
       habilidades:vaga_habilidades(
         obrigatoria,
         habilidade:habilidades(id, nome, categoria)

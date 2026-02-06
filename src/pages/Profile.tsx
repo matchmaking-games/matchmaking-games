@@ -89,7 +89,7 @@ export default function Profile() {
 
     const { data, error } = await supabase
       .from("users")
-      .select("nome_completo, nome_exibicao, titulo_profissional, bio_curta, localizacao, avatar_url, email, telefone, mostrar_email, mostrar_telefone")
+      .select("nome_completo, nome_exibicao, titulo_profissional, bio_curta, estado, cidade, avatar_url, email, telefone, mostrar_email, mostrar_telefone")
       .eq("id", session.user.id)
       .single();
 
@@ -98,7 +98,9 @@ export default function Profile() {
       setNomeExibicao(data.nome_exibicao || "");
       setTituloProfissional(data.titulo_profissional || "");
       setBioCurta(data.bio_curta || "");
-      setLocalizacao(data.localizacao || "");
+      // Build localizacao from estado/cidade for display
+      const loc = data.cidade && data.estado ? `${data.cidade}, ${data.estado}` : "";
+      setLocalizacao(loc);
       setAvatarUrl(data.avatar_url);
       setEmail(data.email || "");
       setTelefone(formatPhone(data.telefone));
@@ -156,6 +158,11 @@ export default function Profile() {
     // Clean phone number before saving (remove mask characters)
     const cleanedPhone = cleanPhone(telefone);
 
+    // Parse localizacao back to estado/cidade for saving
+    const [cidadeParsed, estadoParsed] = localizacao.includes(", ") 
+      ? localizacao.split(", ") 
+      : [null, null];
+
     const { error } = await supabase
       .from("users")
       .update({
@@ -163,7 +170,8 @@ export default function Profile() {
         nome_exibicao: nomeExibicao || null,
         titulo_profissional: tituloProfissional || null,
         bio_curta: bioCurta || null,
-        localizacao: localizacao || null,
+        estado: estadoParsed || null,
+        cidade: cidadeParsed || null,
         telefone: cleanedPhone || null,
         mostrar_email: mostrarEmail,
         mostrar_telefone: mostrarTelefone,

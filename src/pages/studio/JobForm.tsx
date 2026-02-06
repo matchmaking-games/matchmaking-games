@@ -143,25 +143,14 @@ export default function JobForm() {
   // Load existing job data into form
   useEffect(() => {
     if (existingJob) {
-      // Parse location into estado/cidade
-      let estado = "";
-      let cidade = "";
-      if (existingJob.localizacao) {
-        const parts = existingJob.localizacao.split(", ");
-        if (parts.length === 2) {
-          cidade = parts[0];
-          estado = parts[1];
-        }
-      }
-
       form.reset({
         titulo: existingJob.titulo,
         tipo_funcao: existingJob.tipo_funcao || [],
         nivel: existingJob.nivel,
         tipo_contrato: existingJob.tipo_contrato,
         remoto: existingJob.remoto,
-        estado,
-        cidade,
+        estado: existingJob.estado || "",
+        cidade: existingJob.cidade || "",
         contato_candidatura: existingJob.contato_candidatura || "",
         salario_min: existingJob.salario_min,
         salario_max: existingJob.salario_max,
@@ -173,8 +162,8 @@ export default function JobForm() {
       });
 
       // Load municipalities if state exists
-      if (estado) {
-        fetchMunicipios(estado);
+      if (existingJob.estado) {
+        fetchMunicipios(existingJob.estado);
       }
     }
   }, [existingJob, form, fetchMunicipios]);
@@ -229,15 +218,14 @@ export default function JobForm() {
 
   // Transform form data to VagaFormData
   const transformFormData = (data: VagaFormSchemaType): VagaFormData => {
-    const localizacao = data.estado && data.cidade ? `${data.cidade}, ${data.estado}` : null;
-
     return {
       titulo: data.titulo,
       tipo_funcao: data.tipo_funcao,
       nivel: data.nivel,
       tipo_contrato: data.tipo_contrato,
       remoto: data.remoto,
-      localizacao,
+      estado: data.estado || null,
+      cidade: data.cidade || null,
       contato_candidatura: data.contato_candidatura || null,
       salario_min: data.salario_min || null,
       salario_max: data.salario_max || null,
