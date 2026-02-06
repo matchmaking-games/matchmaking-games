@@ -20,7 +20,8 @@ export interface VagaCompleta {
   nivel: NivelVaga;
   tipo_contrato: TipoContrato;
   remoto: TipoTrabalho;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   salario_min: number | null;
   salario_max: number | null;
   mostrar_salario: boolean | null;
@@ -37,7 +38,8 @@ export interface VagaFormData {
   nivel: NivelVaga;
   tipo_contrato: TipoContrato;
   remoto: TipoTrabalho;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   contato_candidatura: string | null;
   salario_min: number | null;
   salario_max: number | null;
@@ -283,7 +285,8 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
           nivel: data.nivel,
           tipo_contrato: data.tipo_contrato,
           remoto: data.remoto,
-          localizacao: data.localizacao,
+          estado: data.estado,
+          cidade: data.cidade,
           salario_min: data.salario_min,
           salario_max: data.salario_max,
           mostrar_salario: data.mostrar_salario,
@@ -363,7 +366,8 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
             nivel: data.nivel,
             tipo_contrato: data.tipo_contrato,
             remoto: data.remoto,
-            localizacao: data.localizacao,
+            estado: data.estado,
+            cidade: data.cidade,
             salario_min: data.salario_min,
             salario_max: data.salario_max,
             mostrar_salario: data.mostrar_salario,
@@ -409,7 +413,8 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
             nivel: data.nivel,
             tipo_contrato: data.tipo_contrato,
             remoto: data.remoto,
-            localizacao: data.localizacao,
+            estado: data.estado,
+            cidade: data.cidade,
             salario_min: data.salario_min,
             salario_max: data.salario_max,
             mostrar_salario: data.mostrar_salario,
@@ -499,10 +504,10 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
           nivel: data.nivel,
           tipo_contrato: data.tipo_contrato,
           remoto: data.remoto,
-          localizacao: data.localizacao,
+          estado: data.estado,
+          cidade: data.cidade,
           salario_min: data.salario_min,
           salario_max: data.salario_max,
-          mostrar_salario: data.mostrar_salario,
           // Don't update tipo_publicacao for published jobs
           tipo_publicacao: existingJob?.status === 'publicada' 
             ? existingJob.tipo_publicacao 

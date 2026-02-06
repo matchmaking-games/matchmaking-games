@@ -23,7 +23,18 @@ export function JobCard({ job }: JobCardProps) {
   const extraCount = allSkills.length - 5;
 
   const studioName = job.estudio?.nome || "Estúdio";
-  const studioLocation = job.estudio?.localizacao || job.localizacao;
+  
+  // Build location string from estado/cidade
+  const getLocationString = () => {
+    const estudioLocation = job.estudio?.cidade && job.estudio?.estado 
+      ? `${job.estudio.cidade}, ${job.estudio.estado}`
+      : null;
+    const jobLocation = job.cidade && job.estado 
+      ? `${job.cidade}, ${job.estado}`
+      : null;
+    return estudioLocation || jobLocation;
+  };
+  const studioLocation = getLocationString();
 
   const getInitials = (name: string) => {
     return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();

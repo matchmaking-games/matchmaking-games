@@ -16,7 +16,8 @@ export interface PublicUserData {
   titulo_profissional: string | null;
   bio_curta: string | null;
   sobre: string | null;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   avatar_url: string | null;
   banner_url: string | null;
   disponivel_para_trabalho: boolean | null;
@@ -85,9 +86,8 @@ export interface PublicExperienceData {
   fim: string | null;
   atualmente_trabalhando: boolean | null;
   descricao: string | null;
-  localizacao: string | null;
-  cidade: string | null;
   estado: string | null;
+  cidade: string | null;
   remoto: boolean | null;
   estudio_id: string | null;
   cargos: PublicCargoData[];
@@ -121,7 +121,7 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
     .from("users")
     .select(`
       id, nome_exibicao, nome_completo, titulo_profissional,
-      bio_curta, sobre, localizacao, avatar_url, banner_url,
+      bio_curta, sobre, estado, cidade, avatar_url, banner_url,
       disponivel_para_trabalho, website, linkedin_url, github_url,
       portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug
     `)
@@ -164,7 +164,7 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       .from("experiencia")
       .select(`
         id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
-        atualmente_trabalhando, descricao, localizacao, cidade, estado, remoto, estudio_id,
+        atualmente_trabalhando, descricao, estado, cidade, remoto, estudio_id,
         cargos:cargos_experiencia(
           id, titulo_cargo, tipo_emprego, inicio, fim,
           atualmente_trabalhando, descricao, ordem

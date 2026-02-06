@@ -120,14 +120,13 @@ export default function StudioProfile() {
         setDescricao(data.descricao || "");
         setSobre(data.sobre || "");
         
-        // Parse existing location (format: "City, UF")
-        if (data.localizacao) {
-          const [nomeCidade, uf] = data.localizacao.split(', ');
-          if (uf && nomeCidade) {
-            setEstado(uf);
-            setCidade(nomeCidade);
-            fetchMunicipios(uf);
-          }
+        // Use estado and cidade directly from database
+        if (data.estado) {
+          setEstado(data.estado);
+          fetchMunicipios(data.estado);
+        }
+        if (data.cidade) {
+          setCidade(data.cidade);
         }
         
         setTamanho(data.tamanho);
@@ -223,14 +222,14 @@ export default function StudioProfile() {
 
     if (!membership?.estudio.id) return;
 
-    // Build location string from state + city
+    // Build location string from state + city for validation only
     const localizacao = estado && cidade ? `${cidade}, ${estado}` : "";
     
     const formData = {
       nome,
       descricao,
       sobre,
-      localizacao,
+      localizacao, // Keep for validation schema compatibility
       tamanho: tamanho || null,
       website,
       especialidades,
@@ -258,7 +257,8 @@ export default function StudioProfile() {
         nome,
         descricao: descricao || null,
         sobre: sobre || null,
-        localizacao: localizacao || null,
+        estado: estado || null,
+        cidade: cidade || null,
         tamanho: tamanho || null,
         website: website || null,
         especialidades: especialidades.length > 0 ? especialidades : null,

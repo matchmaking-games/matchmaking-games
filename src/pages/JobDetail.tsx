@@ -273,10 +273,10 @@ export default function JobDetail() {
                   </div>
 
                   <div className="space-y-3 text-sm text-muted-foreground">
-                    {vaga.estudio?.localizacao && (
+                    {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span>{vaga.estudio.localizacao}</span>
+                        <span>{vaga.estudio.cidade}, {vaga.estudio.estado}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">

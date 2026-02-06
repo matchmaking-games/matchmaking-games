@@ -303,13 +303,14 @@ export type Database = {
       estudios: {
         Row: {
           atualizado_em: string | null
+          cidade: string | null
           criado_em: string | null
           criado_por: string
           descricao: string | null
           especialidades: string[] | null
+          estado: string | null
           fundado_em: string | null
           id: string
-          localizacao: string | null
           logo_url: string | null
           nome: string
           slug: string
@@ -319,13 +320,14 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string | null
+          cidade?: string | null
           criado_em?: string | null
           criado_por: string
           descricao?: string | null
           especialidades?: string[] | null
+          estado?: string | null
           fundado_em?: string | null
           id?: string
-          localizacao?: string | null
           logo_url?: string | null
           nome: string
           slug: string
@@ -335,13 +337,14 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string | null
+          cidade?: string | null
           criado_em?: string | null
           criado_por?: string
           descricao?: string | null
           especialidades?: string[] | null
+          estado?: string | null
           fundado_em?: string | null
           id?: string
-          localizacao?: string | null
           logo_url?: string | null
           nome?: string
           slug?: string
@@ -380,7 +383,6 @@ export type Database = {
           habilidades_usadas: string[] | null
           id: string
           inicio: string
-          localizacao: string | null
           ordem: number | null
           remoto: boolean | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
@@ -400,7 +402,6 @@ export type Database = {
           habilidades_usadas?: string[] | null
           id?: string
           inicio: string
-          localizacao?: string | null
           ordem?: number | null
           remoto?: boolean | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
@@ -420,7 +421,6 @@ export type Database = {
           habilidades_usadas?: string[] | null
           id?: string
           inicio?: string
-          localizacao?: string | null
           ordem?: number | null
           remoto?: boolean | null
           tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
@@ -856,13 +856,14 @@ export type Database = {
           avatar_url: string | null
           banner_url: string | null
           bio_curta: string | null
+          cidade: string | null
           criado_em: string | null
           disponivel_para_trabalho: boolean | null
           email: string
+          estado: string | null
           github_url: string | null
           id: string
           linkedin_url: string | null
-          localizacao: string | null
           mostrar_email: boolean | null
           mostrar_telefone: boolean | null
           nome_completo: string
@@ -882,13 +883,14 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio_curta?: string | null
+          cidade?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
           email: string
+          estado?: string | null
           github_url?: string | null
           id?: string
           linkedin_url?: string | null
-          localizacao?: string | null
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo: string
@@ -908,13 +910,14 @@ export type Database = {
           avatar_url?: string | null
           banner_url?: string | null
           bio_curta?: string | null
+          cidade?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
           email?: string
+          estado?: string | null
           github_url?: string | null
           id?: string
           linkedin_url?: string | null
-          localizacao?: string | null
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo?: string
@@ -971,14 +974,15 @@ export type Database = {
         Row: {
           ativa: boolean | null
           atualizada_em: string | null
+          cidade: string | null
           contato_candidatura: string | null
           criada_em: string | null
           criada_por: string
           descricao: string
+          estado: string | null
           estudio_id: string
           expira_em: string | null
           id: string
-          localizacao: string | null
           mostrar_salario: boolean | null
           nivel: Database["public"]["Enums"]["nivel_vaga"]
           remoto: Database["public"]["Enums"]["tipo_trabalho"]
@@ -997,14 +1001,15 @@ export type Database = {
         Insert: {
           ativa?: boolean | null
           atualizada_em?: string | null
+          cidade?: string | null
           contato_candidatura?: string | null
           criada_em?: string | null
           criada_por: string
           descricao: string
+          estado?: string | null
           estudio_id: string
           expira_em?: string | null
           id?: string
-          localizacao?: string | null
           mostrar_salario?: boolean | null
           nivel: Database["public"]["Enums"]["nivel_vaga"]
           remoto: Database["public"]["Enums"]["tipo_trabalho"]
@@ -1023,14 +1028,15 @@ export type Database = {
         Update: {
           ativa?: boolean | null
           atualizada_em?: string | null
+          cidade?: string | null
           contato_candidatura?: string | null
           criada_em?: string | null
           criada_por?: string
           descricao?: string
+          estado?: string | null
           estudio_id?: string
           expira_em?: string | null
           id?: string
-          localizacao?: string | null
           mostrar_salario?: boolean | null
           nivel?: Database["public"]["Enums"]["nivel_vaga"]
           remoto?: Database["public"]["Enums"]["tipo_trabalho"]
@@ -1075,19 +1081,19 @@ export type Database = {
       public_profiles: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
           bio_curta: string | null
-          criado_em: string | null
+          cidade: string | null
           disponivel_para_trabalho: boolean | null
           email: string | null
+          estado: string | null
           github_url: string | null
           id: string | null
           linkedin_url: string | null
-          localizacao: string | null
+          nome_completo: string | null
           nome_exibicao: string | null
           portfolio_url: string | null
           slug: string | null
-          sobre: string | null
-          telefone: string | null
           tipo_trabalho_preferido:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
@@ -1096,19 +1102,19 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio_curta?: string | null
-          criado_em?: string | null
+          cidade?: string | null
           disponivel_para_trabalho?: boolean | null
-          email?: never
+          email?: string | null
+          estado?: string | null
           github_url?: string | null
           id?: string | null
           linkedin_url?: string | null
-          localizacao?: string | null
+          nome_completo?: string | null
           nome_exibicao?: string | null
           portfolio_url?: string | null
           slug?: string | null
-          sobre?: string | null
-          telefone?: never
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
@@ -1117,19 +1123,19 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio_curta?: string | null
-          criado_em?: string | null
+          cidade?: string | null
           disponivel_para_trabalho?: boolean | null
-          email?: never
+          email?: string | null
+          estado?: string | null
           github_url?: string | null
           id?: string | null
           linkedin_url?: string | null
-          localizacao?: string | null
+          nome_completo?: string | null
           nome_exibicao?: string | null
           portfolio_url?: string | null
           slug?: string | null
-          sobre?: string | null
-          telefone?: never
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null

@@ -22,7 +22,8 @@ export interface VagaEstudioData {
   nome: string;
   slug: string;
   logo_url: string | null;
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
 }
 
 export interface VagaListItem {
@@ -34,7 +35,8 @@ export interface VagaListItem {
   tipo_contrato: TipoContrato;
   tipo_publicacao: TipoPublicacaoVaga | null;
   tipo_funcao: string[];
-  localizacao: string | null;
+  estado: string | null;
+  cidade: string | null;
   criada_em: string | null;
   estudio: VagaEstudioData | null;
   vaga_habilidades: VagaHabilidadeData[];
@@ -50,7 +52,8 @@ export interface JobFiltersParams {
   nivel?: string | null;
   tipoContrato?: string | null;
   modeloTrabalho?: string | null;
-  localizacao?: string | null;
+  estado?: string | null;
+  cidade?: string | null;
   habilidades?: string[];
   searchText?: string | null;
   pageSize?: number;
@@ -101,9 +104,10 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
       tipo_contrato,
       tipo_publicacao,
       tipo_funcao,
-      localizacao,
+      estado,
+      cidade,
       criada_em,
-      estudio:estudios(nome, slug, logo_url, localizacao),
+      estudio:estudios(nome, slug, logo_url, estado, cidade),
       vaga_habilidades(
         id,
         obrigatoria,
@@ -125,8 +129,11 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
     query = query.eq("remoto", filters.modeloTrabalho as TipoTrabalho);
   }
 
-  if (filters.localizacao) {
-    query = query.ilike("localizacao", `%${filters.localizacao}%`);
+  // Location filter: estado and cidade
+  if (filters.cidade && filters.estado) {
+    query = query.eq("cidade", filters.cidade).eq("estado", filters.estado);
+  } else if (filters.estado) {
+    query = query.eq("estado", filters.estado);
   }
 
   if (vagaIdsWithSkills) {

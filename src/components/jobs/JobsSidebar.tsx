@@ -1,10 +1,9 @@
-import { X, ChevronDown } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -12,18 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
 import { useAvailableSkills, Habilidade } from "@/hooks/useAvailableSkills";
+import { useIBGELocations } from "@/hooks/useIBGELocations";
 import { JobFilters } from "@/hooks/useJobFilters";
 
 interface JobsSidebarProps {
   filters: JobFilters;
   onFilterChange: (key: string, value: string | null) => void;
   onHabilidadesChange: (ids: string[]) => void;
+  onEstadoChange: (uf: string | null) => void;
+  onCidadeChange: (nome: string | null) => void;
   onClearAll: () => void;
   activeFilterCount: number;
 }
@@ -41,28 +39,77 @@ export function JobsSidebar({
   filters,
   onFilterChange,
   onHabilidadesChange,
+  onEstadoChange,
+  onCidadeChange,
   onClearAll,
   activeFilterCount,
 }: JobsSidebarProps) {
   const { availableSkills, loading: loadingSkills } = useAvailableSkills();
   const groupedSkills = groupSkillsByCategory(availableSkills);
 
-  const handleSkillToggle = (skillId: string, checked: boolean) => {
-    const current = filters.habilidades || [];
-    const next = checked
-      ? [...current, skillId]
-      : current.filter((id) => id !== skillId);
-    onHabilidadesChange(next);
+  const {
+    estados,
+    loadingEstados,
+    municipios,
+    loadingMunicipios,
+    fetchMunicipios,
+    clearMunicipios,
+  } = useIBGELocations();
+
+  // Load municipalities when estado is in URL on mount or when estado changes
+  useEffect(() => {
+    if (filters.estado) {
+      fetchMunicipios(filters.estado);
+    } else {
+      clearMunicipios();
+    }
+  }, [filters.estado, fetchMunicipios, clearMunicipios]);
+
+  // Convert skills to combobox options format
+  const skillOptions = useMemo(() => ({
+    engine: groupedSkills.engine.map((s) => ({ value: s.id, label: s.nome })),
+    linguagem: groupedSkills.linguagem.map((s) => ({ value: s.id, label: s.nome })),
+    ferramenta: groupedSkills.ferramenta.map((s) => ({ value: s.id, label: s.nome })),
+    soft_skill: groupedSkills.soft_skill.map((s) => ({ value: s.id, label: s.nome })),
+  }), [groupedSkills]);
+
+  // Get selected skills per category
+  const selectedByCategory = useMemo(() => {
+    const selected = filters.habilidades || [];
+    return {
+      engine: selected.filter((id) => groupedSkills.engine.some((s) => s.id === id)),
+      linguagem: selected.filter((id) => groupedSkills.linguagem.some((s) => s.id === id)),
+      ferramenta: selected.filter((id) => groupedSkills.ferramenta.some((s) => s.id === id)),
+      soft_skill: selected.filter((id) => groupedSkills.soft_skill.some((s) => s.id === id)),
+    };
+  }, [filters.habilidades, groupedSkills]);
+
+  // Handle category-specific skill selection
+  const handleCategorySelection = (category: keyof typeof selectedByCategory, newSelected: string[]) => {
+    const otherCategories = Object.keys(selectedByCategory)
+      .filter((k) => k !== category)
+      .flatMap((k) => selectedByCategory[k as keyof typeof selectedByCategory]);
+    
+    onHabilidadesChange([...otherCategories, ...newSelected]);
   };
 
-  const removeSkill = (skillId: string) => {
-    const next = (filters.habilidades || []).filter((id) => id !== skillId);
-    onHabilidadesChange(next);
+  // Handle estado change
+  const handleEstadoChange = (value: string) => {
+    if (value === "__all__") {
+      onEstadoChange(null);
+    } else {
+      onEstadoChange(value);
+    }
   };
 
-  const selectedSkillNames = (filters.habilidades || [])
-    .map((id) => availableSkills.find((s) => s.id === id))
-    .filter(Boolean) as Habilidade[];
+  // Handle cidade change
+  const handleCidadeChange = (value: string) => {
+    if (value === "__all__") {
+      onCidadeChange(null);
+    } else {
+      onCidadeChange(value);
+    }
+  };
 
   return (
     <Card className="p-4 space-y-6 lg:sticky lg:top-24">
@@ -75,6 +122,14 @@ export function JobsSidebar({
           </Badge>
         )}
       </div>
+
+      {/* Botão Limpar Filtros - MOVIDO PARA O TOPO */}
+      {activeFilterCount > 0 && (
+        <Button variant="outline" className="w-full" onClick={onClearAll}>
+          <X className="w-4 h-4 mr-2" />
+          Limpar filtros
+        </Button>
+      )}
 
       {/* Nivel */}
       <div className="space-y-2">
@@ -136,125 +191,122 @@ export function JobsSidebar({
         </Select>
       </div>
 
-      {/* Localizacao */}
+      {/* Estado */}
       <div className="space-y-2">
-        <Label className="text-sm">Localização</Label>
-        <Input
-          placeholder="Ex: São Paulo"
-          value={filters.localizacao || ""}
-          onChange={(e) => onFilterChange("local", e.target.value || null)}
-        />
+        <Label className="text-sm">Estado</Label>
+        <Select
+          value={filters.estado || "__all__"}
+          onValueChange={handleEstadoChange}
+          disabled={loadingEstados}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={loadingEstados ? "Carregando..." : "Selecione estado..."} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos os estados</SelectItem>
+            {estados.map((estado) => (
+              <SelectItem key={estado.sigla} value={estado.sigla}>
+                {estado.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Habilidades com Collapsible por categoria */}
-      <div className="space-y-3">
-        <Label className="text-sm">Habilidades</Label>
+      {/* Cidade - só aparece se estado selecionado */}
+      {filters.estado && (
+        <div className="space-y-2 ml-4 border-l-2 border-border pl-4">
+          <Label className="text-sm">Cidade</Label>
+          <Select
+            value={filters.cidade || "__all__"}
+            onValueChange={handleCidadeChange}
+            disabled={loadingMunicipios}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={loadingMunicipios ? "Carregando..." : "Selecione cidade..."} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as cidades</SelectItem>
+              {municipios.map((municipio) => (
+                <SelectItem key={municipio.id} value={municipio.nome}>
+                  {municipio.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-        {/* Badges das habilidades selecionadas */}
-        {selectedSkillNames.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pb-2">
-            {selectedSkillNames.map((skill) => (
-              <Badge
-                key={skill.id}
-                variant="secondary"
-                className="text-xs gap-1 pr-1"
-              >
-                {skill.nome}
-                <button
-                  type="button"
-                  onClick={() => removeSkill(skill.id)}
-                  className="ml-1 hover:bg-muted rounded-full p-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
+      {/* Habilidades - 4 Combobox independentes */}
+      <div className="space-y-4">
+        <Label className="text-sm">Habilidades</Label>
 
         {loadingSkills ? (
           <p className="text-xs text-muted-foreground">Carregando...</p>
         ) : (
-          <div className="space-y-2">
-            <SkillCategoryCollapsible
-              label="Engines"
-              skills={groupedSkills.engine}
-              selectedIds={filters.habilidades || []}
-              onToggle={handleSkillToggle}
-            />
-            <SkillCategoryCollapsible
-              label="Linguagens"
-              skills={groupedSkills.linguagem}
-              selectedIds={filters.habilidades || []}
-              onToggle={handleSkillToggle}
-            />
-            <SkillCategoryCollapsible
-              label="Ferramentas"
-              skills={groupedSkills.ferramenta}
-              selectedIds={filters.habilidades || []}
-              onToggle={handleSkillToggle}
-            />
-            <SkillCategoryCollapsible
-              label="Soft Skills"
-              skills={groupedSkills.soft_skill}
-              selectedIds={filters.habilidades || []}
-              onToggle={handleSkillToggle}
-            />
+          <div className="space-y-3">
+            {/* Engines */}
+            {skillOptions.engine.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Engines</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.engine}
+                  selected={selectedByCategory.engine}
+                  onSelectionChange={(ids) => handleCategorySelection("engine", ids)}
+                  placeholder="Selecione engines..."
+                  searchPlaceholder="Buscar engine..."
+                  emptyMessage="Nenhuma engine encontrada"
+                />
+              </div>
+            )}
+
+            {/* Linguagens */}
+            {skillOptions.linguagem.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Linguagens</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.linguagem}
+                  selected={selectedByCategory.linguagem}
+                  onSelectionChange={(ids) => handleCategorySelection("linguagem", ids)}
+                  placeholder="Selecione linguagens..."
+                  searchPlaceholder="Buscar linguagem..."
+                  emptyMessage="Nenhuma linguagem encontrada"
+                />
+              </div>
+            )}
+
+            {/* Ferramentas */}
+            {skillOptions.ferramenta.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Ferramentas</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.ferramenta}
+                  selected={selectedByCategory.ferramenta}
+                  onSelectionChange={(ids) => handleCategorySelection("ferramenta", ids)}
+                  placeholder="Selecione ferramentas..."
+                  searchPlaceholder="Buscar ferramenta..."
+                  emptyMessage="Nenhuma ferramenta encontrada"
+                />
+              </div>
+            )}
+
+            {/* Soft Skills */}
+            {skillOptions.soft_skill.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Soft Skills</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.soft_skill}
+                  selected={selectedByCategory.soft_skill}
+                  onSelectionChange={(ids) => handleCategorySelection("soft_skill", ids)}
+                  placeholder="Selecione soft skills..."
+                  searchPlaceholder="Buscar soft skill..."
+                  emptyMessage="Nenhuma soft skill encontrada"
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {/* Botao Limpar Filtros */}
-      {activeFilterCount > 0 && (
-        <Button variant="outline" className="w-full" onClick={onClearAll}>
-          <X className="w-4 h-4 mr-2" />
-          Limpar filtros
-        </Button>
-      )}
     </Card>
-  );
-}
-
-function SkillCategoryCollapsible({
-  label,
-  skills,
-  selectedIds,
-  onToggle,
-}: {
-  label: string;
-  skills: Habilidade[];
-  selectedIds: string[];
-  onToggle: (id: string, checked: boolean) => void;
-}) {
-  const selectedCount = skills.filter((s) => selectedIds.includes(s.id)).length;
-
-  return (
-    <Collapsible>
-      <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm text-left hover:bg-muted/50 rounded px-2 -mx-2">
-        <span className="text-muted-foreground">{label}</span>
-        <div className="flex items-center gap-2">
-          {selectedCount > 0 && (
-            <Badge variant="secondary" className="text-xs h-5 px-1.5">
-              {selectedCount}
-            </Badge>
-          )}
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2 pt-2 pb-1">
-        {skills.map((skill) => (
-          <label
-            key={skill.id}
-            className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/30 rounded px-2 py-1 -mx-2"
-          >
-            <Checkbox
-              checked={selectedIds.includes(skill.id)}
-              onCheckedChange={(checked) => onToggle(skill.id, !!checked)}
-            />
-            <span>{skill.nome}</span>
-          </label>
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
   );
 }

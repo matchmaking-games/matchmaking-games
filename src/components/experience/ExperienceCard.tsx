@@ -105,11 +105,11 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-foreground">{experience.empresa}</h3>
-                {(experience.localizacao || experience.remoto) && (
+                {((experience.cidade && experience.estado) || experience.remoto) && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {experience.localizacao}
-                    {experience.localizacao && experience.remoto && " • "}
+                    {experience.cidade && experience.estado && `${experience.cidade}, ${experience.estado}`}
+                    {experience.cidade && experience.estado && experience.remoto && " • "}
                     {experience.remoto && <span className="text-primary">Remoto</span>}
                   </p>
                 )}
@@ -168,12 +168,12 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
               </div>
 
               {/* Location */}
-              {(experience.localizacao || experience.remoto) && (
+              {((experience.cidade && experience.estado) || experience.remoto) && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <span>
-                    {experience.localizacao}
-                    {experience.localizacao && experience.remoto && " • "}
+                    {experience.cidade && experience.estado && `${experience.cidade}, ${experience.estado}`}
+                    {experience.cidade && experience.estado && experience.remoto && " • "}
                     {experience.remoto && <span className="text-primary">Remoto</span>}
                   </span>
                 </div>
