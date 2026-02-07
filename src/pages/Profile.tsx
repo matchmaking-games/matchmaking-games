@@ -10,8 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useIBGELocations } from "@/hooks/useIBGELocations";
 
 const telefoneRegex = /^\(\d{2}\) \d{5}-\d{4}$|^$/;
 
@@ -20,7 +28,6 @@ const profileSchema = z.object({
   nome_exibicao: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   titulo_profissional: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   bio_curta: z.string().max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
-  localizacao: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   telefone: z.string()
     .max(20, "Máximo 20 caracteres")
     .refine((val) => val === "" || telefoneRegex.test(val), {
@@ -70,16 +77,26 @@ export default function Profile() {
   const [nomeExibicao, setNomeExibicao] = useState("");
   const [tituloProfissional, setTituloProfissional] = useState("");
   const [bioCurta, setBioCurta] = useState("");
-  const [localizacao, setLocalizacao] = useState("");
+  const [estado, setEstado] = useState("");
+  const [cidade, setCidade] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [mostrarEmail, setMostrarEmail] = useState(false);
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
+  const { estados, municipios, loadingEstados, loadingMunicipios, fetchMunicipios } = useIBGELocations();
+
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  // Load municipios when estado changes or on initial load with existing estado
+  useEffect(() => {
+    if (estado) {
+      fetchMunicipios(estado);
+    }
+  }, [estado, fetchMunicipios]);
 
   const fetchUserData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -98,9 +115,8 @@ export default function Profile() {
       setNomeExibicao(data.nome_exibicao || "");
       setTituloProfissional(data.titulo_profissional || "");
       setBioCurta(data.bio_curta || "");
-      // Build localizacao from estado/cidade for display
-      const loc = data.cidade && data.estado ? `${data.cidade}, ${data.estado}` : "";
-      setLocalizacao(loc);
+      setEstado(data.estado || "");
+      setCidade(data.cidade || "");
       setAvatarUrl(data.avatar_url);
       setEmail(data.email || "");
       setTelefone(formatPhone(data.telefone));
@@ -115,6 +131,11 @@ export default function Profile() {
     setIsLoading(false);
   };
 
+  const handleEstadoChange = (uf: string) => {
+    setEstado(uf);
+    setCidade(""); // Clear cidade when estado changes
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationErrors({});
@@ -124,7 +145,6 @@ export default function Profile() {
       nome_exibicao: nomeExibicao,
       titulo_profissional: tituloProfissional,
       bio_curta: bioCurta,
-      localizacao: localizacao,
       telefone: telefone,
     };
 
@@ -158,11 +178,6 @@ export default function Profile() {
     // Clean phone number before saving (remove mask characters)
     const cleanedPhone = cleanPhone(telefone);
 
-    // Parse localizacao back to estado/cidade for saving
-    const [cidadeParsed, estadoParsed] = localizacao.includes(", ") 
-      ? localizacao.split(", ") 
-      : [null, null];
-
     const { error } = await supabase
       .from("users")
       .update({
@@ -170,8 +185,8 @@ export default function Profile() {
         nome_exibicao: nomeExibicao || null,
         titulo_profissional: tituloProfissional || null,
         bio_curta: bioCurta || null,
-        estado: estadoParsed || null,
-        cidade: cidadeParsed || null,
+        estado: estado || null,
+        cidade: cidade || null,
         telefone: cleanedPhone || null,
         mostrar_email: mostrarEmail,
         mostrar_telefone: mostrarTelefone,
@@ -198,38 +213,39 @@ export default function Profile() {
 
   return (
     <DashboardLayout>
-      <div className="w-full max-w-4xl mx-auto">
-        <Card className="w-full">
-          <CardContent className="pt-6">
-            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
-              Meu Perfil
-            </h1>
-            <ProfileNavigation />
+      <div className="space-y-6">
+        <ProfileNavigation />
 
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6">
             {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-              <>
-                {/* Avatar Upload */}
-                {userId && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex flex-col items-center gap-4 pb-6 border-b border-border">
                   <AvatarUpload
-                    userId={userId}
+                    userId={userId || ""}
                     currentAvatarUrl={avatarUrl}
                     nomeCompleto={nomeCompleto}
-                    onAvatarUpdated={(newUrl) => setAvatarUrl(newUrl)}
+                    onAvatarUpdated={setAvatarUrl}
                   />
-                )}
+                </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Form Fields */}
+                <div className="grid gap-6 md:grid-cols-2">
                   {/* Nome Completo */}
                   <div className="space-y-2">
-                    <Label htmlFor="nome_completo">Nome completo *</Label>
+                    <Label htmlFor="nome_completo">
+                      Nome completo <span className="text-destructive">*</span>
+                    </Label>
                     <Input
                       id="nome_completo"
                       value={nomeCompleto}
                       onChange={(e) => setNomeCompleto(e.target.value)}
+                      placeholder="Seu nome completo"
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                     {validationErrors.nome_completo && (
@@ -244,22 +260,24 @@ export default function Profile() {
                       id="nome_exibicao"
                       value={nomeExibicao}
                       onChange={(e) => setNomeExibicao(e.target.value)}
+                      placeholder="Como você quer ser chamado"
+                      maxLength={100}
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
-                    <p className="text-xs text-muted-foreground">Como você aparece publicamente</p>
                     {validationErrors.nome_exibicao && (
                       <p className="text-sm text-destructive">{validationErrors.nome_exibicao}</p>
                     )}
                   </div>
 
                   {/* Título Profissional */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="titulo_profissional">Título profissional</Label>
                     <Input
                       id="titulo_profissional"
                       value={tituloProfissional}
                       onChange={(e) => setTituloProfissional(e.target.value)}
-                      placeholder="Ex: Game Developer | Unity Specialist"
+                      placeholder="Ex: Game Designer, Desenvolvedor Unity"
+                      maxLength={100}
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                     {validationErrors.titulo_profissional && (
@@ -268,15 +286,13 @@ export default function Profile() {
                   </div>
 
                   {/* Bio Curta */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="bio_curta">Bio curta</Label>
-                      <span className="text-xs text-muted-foreground">{bioCurta.length}/200</span>
-                    </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="bio_curta">Bio curta</Label>
                     <Textarea
                       id="bio_curta"
                       value={bioCurta}
                       onChange={(e) => setBioCurta(e.target.value)}
+                      placeholder="Uma breve descrição sobre você (máx. 200 caracteres)"
                       maxLength={200}
                       className="min-h-[100px] bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
                     />
@@ -285,19 +301,47 @@ export default function Profile() {
                     )}
                   </div>
 
-                  {/* Localização */}
+                  {/* Localização - Estado e Cidade */}
                   <div className="space-y-2">
-                    <Label htmlFor="localizacao">Localização</Label>
-                    <Input
-                      id="localizacao"
-                      value={localizacao}
-                      onChange={(e) => setLocalizacao(e.target.value)}
-                      placeholder="Ex: São Paulo, SP"
-                      className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    {validationErrors.localizacao && (
-                      <p className="text-sm text-destructive">{validationErrors.localizacao}</p>
-                    )}
+                    <Label>Estado</Label>
+                    <Select value={estado} onValueChange={handleEstadoChange}>
+                      <SelectTrigger className="h-11 bg-input border-border">
+                        <SelectValue placeholder={loadingEstados ? "Carregando..." : "Selecione o estado"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {estados.map((est) => (
+                          <SelectItem key={est.sigla} value={est.sigla}>
+                            {est.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Select 
+                      value={cidade} 
+                      onValueChange={setCidade}
+                      disabled={!estado}
+                    >
+                      <SelectTrigger className="h-11 bg-input border-border">
+                        <SelectValue placeholder={
+                          !estado 
+                            ? "Selecione um estado primeiro" 
+                            : loadingMunicipios 
+                              ? "Carregando..." 
+                              : "Selecione a cidade"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipios.map((mun) => (
+                          <SelectItem key={mun.id} value={mun.nome}>
+                            {mun.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Email */}
@@ -320,17 +364,17 @@ export default function Profile() {
                         checked={mostrarEmail}
                         onCheckedChange={setMostrarEmail}
                       />
-                      <label
-                        htmlFor="mostrar_email"
-                        className="text-sm text-muted-foreground flex items-center gap-1.5 cursor-pointer"
-                      >
+                      <Label htmlFor="mostrar_email" className="text-sm text-muted-foreground cursor-pointer">
                         {mostrarEmail ? (
-                          <Eye className="h-4 w-4" />
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" /> Visível no perfil público
+                          </span>
                         ) : (
-                          <EyeOff className="h-4 w-4" />
+                          <span className="flex items-center gap-1">
+                            <EyeOff className="h-4 w-4" /> Oculto no perfil público
+                          </span>
                         )}
-                        Mostrar email no portfólio público
-                      </label>
+                      </Label>
                     </div>
                   </div>
 
@@ -341,12 +385,10 @@ export default function Profile() {
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                         id="telefone"
+                        type="tel"
                         value={telefone}
-                        onChange={(e) => {
-                          const formatted = formatPhoneInput(e.target.value);
-                          setTelefone(formatted);
-                        }}
-                        placeholder="(11) 98765-4321"
+                        onChange={(e) => setTelefone(formatPhoneInput(e.target.value))}
+                        placeholder="(XX) XXXXX-XXXX"
                         maxLength={15}
                         className="h-11 pl-10 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
                       />
@@ -360,37 +402,39 @@ export default function Profile() {
                         checked={mostrarTelefone}
                         onCheckedChange={setMostrarTelefone}
                       />
-                      <label
-                        htmlFor="mostrar_telefone"
-                        className="text-sm text-muted-foreground flex items-center gap-1.5 cursor-pointer"
-                      >
+                      <Label htmlFor="mostrar_telefone" className="text-sm text-muted-foreground cursor-pointer">
                         {mostrarTelefone ? (
-                          <Eye className="h-4 w-4" />
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" /> Visível no perfil público
+                          </span>
                         ) : (
-                          <EyeOff className="h-4 w-4" />
+                          <span className="flex items-center gap-1">
+                            <EyeOff className="h-4 w-4" /> Oculto no perfil público
+                          </span>
                         )}
-                        Mostrar telefone no portfólio público
-                      </label>
+                      </Label>
                     </div>
                   </div>
+                </div>
 
-                  {/* Botão Submit */}
-                  <Button
-                    type="submit"
+                {/* Submit Button */}
+                <div className="flex justify-end pt-4 border-t border-border">
+                  <Button 
+                    type="submit" 
                     disabled={isSaving}
-                    className="w-full h-12 text-base font-semibold"
+                    className="min-w-[140px]"
                   >
                     {isSaving ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Salvando...
                       </>
                     ) : (
-                      "Salvar Alterações"
+                      "Salvar alterações"
                     )}
                   </Button>
-                </form>
-              </>
+                </div>
+              </form>
             )}
           </CardContent>
         </Card>
