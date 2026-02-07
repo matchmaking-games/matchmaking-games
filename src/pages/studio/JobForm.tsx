@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams, useBlocker } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,6 +19,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
 import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/useJobForm";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
@@ -35,13 +45,13 @@ const vagaFormSchema = z
     remoto: z.enum(["presencial", "hibrido", "remoto"]),
     estado: z.string().optional(),
     cidade: z.string().optional(),
-    contato_candidatura: z.string().max(500, "Máximo 500 caracteres").optional().nullable(),
+    contato_candidatura: z.string().min(1, "Campo obrigatório").max(500, "Máximo 500 caracteres"),
     salario_min: z.number().positive().nullable().optional(),
     salario_max: z.number().positive().nullable().optional(),
     mostrar_salario: z.boolean().default(false),
     descricao: z.string().min(100, "Mínimo 100 caracteres").max(10000, "Máximo 10.000 caracteres"),
     tipo_publicacao: z.enum(["gratuita", "destaque"]).default("gratuita"),
-    habilidades_obrigatorias: z.array(z.string()).default([]),
+    habilidades_obrigatorias: z.array(z.string()).min(1, "Selecione pelo menos uma habilidade obrigatória"),
     habilidades_desejaveis: z.array(z.string()).default([]),
   })
   .refine(
@@ -93,6 +103,13 @@ export default function JobForm() {
 
   const [habilidadesObrigatorias, setHabilidadesObrigatorias] = useState<string[]>([]);
   const [habilidadesDesejaveis, setHabilidadesDesejaveis] = useState<string[]>([]);
+  
+  // State for tracking which button is saving
+  const [savingAction, setSavingAction] = useState<"draft" | "publish" | null>(null);
+  
+  // State for unsaved changes protection
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [formSaved, setFormSaved] = useState(false);
 
   // Detect payment cancelled return from Stripe
   useEffect(() => {
@@ -130,6 +147,44 @@ export default function JobForm() {
     },
   });
 
+  // Watch form changes to track unsaved changes
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (!formSaved) {
+        setHasUnsavedChanges(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, formSaved]);
+
+  // Also track skills changes
+  useEffect(() => {
+    if (!formSaved && (habilidadesObrigatorias.length > 0 || habilidadesDesejaveis.length > 0)) {
+      setHasUnsavedChanges(true);
+    }
+  }, [habilidadesObrigatorias, habilidadesDesejaveis, formSaved]);
+
+  // Intercept browser close/refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && !formSaved) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges, formSaved]);
+
+  // Block internal navigation with react-router
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges && 
+      !formSaved && 
+      currentLocation.pathname !== nextLocation.pathname
+  );
+
   const descricao = form.watch("descricao") || "";
   const charCount = descricao.length;
   const isValidLength = charCount >= 100 && charCount <= 10000;
@@ -165,6 +220,9 @@ export default function JobForm() {
       if (existingJob.estado) {
         fetchMunicipios(existingJob.estado);
       }
+      
+      // Reset unsaved changes after loading existing job
+      setHasUnsavedChanges(false);
     }
   }, [existingJob, form, fetchMunicipios]);
 
@@ -237,10 +295,21 @@ export default function JobForm() {
     };
   };
 
-  // Handle form submission
+  // Handle form submission (publish)
   const onSubmit = async (data: VagaFormSchemaType) => {
+    // Validate required skills
+    if (habilidadesObrigatorias.length === 0) {
+      toast({
+        title: "Erro de validação",
+        description: "Selecione pelo menos uma habilidade obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = transformFormData(data);
 
+    setFormSaved(true);
     if (isEditing && id) {
       await updateJob(id, formData);
     } else {
@@ -251,7 +320,39 @@ export default function JobForm() {
   // Handle save as draft
   const handleSaveDraft = async (data: VagaFormSchemaType) => {
     const formData = transformFormData(data);
+    setFormSaved(true);
     await saveDraft(formData);
+  };
+
+  // Handler for Save Draft button click
+  const handleSaveDraftClick = async () => {
+    setSavingAction("draft");
+    try {
+      await form.handleSubmit(handleSaveDraft)();
+    } finally {
+      setSavingAction(null);
+    }
+  };
+
+  // Handler for Publish button click
+  const handlePublishClick = async () => {
+    // Validate required skills before form submission
+    if (habilidadesObrigatorias.length === 0) {
+      form.trigger(); // Trigger all validations to show errors
+      toast({
+        title: "Erro de validação",
+        description: "Selecione pelo menos uma habilidade obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSavingAction("publish");
+    try {
+      await form.handleSubmit(onSubmit)();
+    } finally {
+      setSavingAction(null);
+    }
   };
 
   // Redirect if not authorized
@@ -291,7 +392,7 @@ export default function JobForm() {
 
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
               {/* SECTION: BASIC INFO */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Informações Básicas</h3>
@@ -553,7 +654,9 @@ export default function JobForm() {
                   name="contato_candidatura"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Como candidatos devem entrar em contato?</FormLabel>
+                      <FormLabel>
+                        Meio de contato <span className="text-destructive">*</span>
+                      </FormLabel>
 
                       <p className="text-xs text-muted-foreground">
                         Informe um email, link de formulário ou instruções de como se candidatar a esta vaga.
@@ -675,13 +778,20 @@ export default function JobForm() {
                 <h3 className="text-lg font-semibold">Habilidades</h3>
                 <Separator />
 
-                <JobSkillsSelector
-                  label="Habilidades obrigatórias"
-                  helperText="Habilidades que o candidato deve ter para a vaga."
-                  selectedSkillIds={habilidadesObrigatorias}
-                  onSkillsChange={setHabilidadesObrigatorias}
-                  excludeSkillIds={habilidadesDesejaveis}
-                />
+                <div className="space-y-2">
+                  <JobSkillsSelector
+                    label={<>Habilidades obrigatórias <span className="text-destructive">*</span></>}
+                    helperText="Habilidades que o candidato deve ter para a vaga."
+                    selectedSkillIds={habilidadesObrigatorias}
+                    onSkillsChange={setHabilidadesObrigatorias}
+                    excludeSkillIds={habilidadesDesejaveis}
+                  />
+                  {habilidadesObrigatorias.length === 0 && form.formState.isSubmitted && (
+                    <p className="text-sm font-medium text-destructive">
+                      Selecione pelo menos uma habilidade obrigatória
+                    </p>
+                  )}
+                </div>
 
                 <JobSkillsSelector
                   label="Habilidades desejáveis (diferenciais)"
@@ -719,14 +829,33 @@ export default function JobForm() {
                       <FormItem>
                         <FormControl>
                           <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
-                            <div className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors">
+                            {/* Card Gratuita */}
+                            <div 
+                              className={cn(
+                                "flex items-start space-x-3 p-3 rounded-md border transition-colors cursor-pointer",
+                                field.value === "gratuita" 
+                                  ? "border-primary bg-primary/5" 
+                                  : "border-border hover:bg-muted/50"
+                              )}
+                              onClick={() => field.onChange("gratuita")}
+                            >
                               <RadioGroupItem value="gratuita" id="pub-gratuita" className="mt-1" />
                               <Label htmlFor="pub-gratuita" className="flex-1 cursor-pointer">
                                 <span className="font-medium">Gratuita</span>
                                 <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
                               </Label>
                             </div>
-                            <div className="flex items-start space-x-3 p-3 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors">
+                            
+                            {/* Card Destaque */}
+                            <div 
+                              className={cn(
+                                "flex items-start space-x-3 p-3 rounded-md border transition-colors cursor-pointer",
+                                field.value === "destaque" 
+                                  ? "border-primary bg-primary/5" 
+                                  : "border-border hover:bg-muted/50"
+                              )}
+                              onClick={() => field.onChange("destaque")}
+                            >
                               <RadioGroupItem value="destaque" id="pub-destaque" className="mt-1" />
                               <Label htmlFor="pub-destaque" className="flex-1 cursor-pointer">
                                 <span className="font-medium flex items-center gap-2">
@@ -749,7 +878,7 @@ export default function JobForm() {
 
               {/* ACTION BUTTONS */}
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate("/studio/jobs")}>
+                <Button type="button" variant="ghost" onClick={() => navigate("/studio/jobs")}>
                   Cancelar
                 </Button>
 
@@ -759,15 +888,25 @@ export default function JobForm() {
                     type="button" 
                     variant="ghost"
                     disabled={isSaving}
-                    onClick={form.handleSubmit(handleSaveDraft)}
+                    onClick={handleSaveDraftClick}
                   >
-                    {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                    Salvar Rascunho
+                    {savingAction === "draft" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      "Salvar Rascunho"
+                    )}
                   </Button>
                 )}
                 
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? (
+                <Button 
+                  type="button" 
+                  disabled={isSaving}
+                  onClick={handlePublishClick}
+                >
+                  {savingAction === "publish" ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       {form.getValues("tipo_publicacao") === "destaque" && !isEditing
@@ -787,6 +926,26 @@ export default function JobForm() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* AlertDialog for unsaved changes confirmation */}
+      <AlertDialog open={blocker.state === "blocked"}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações não salvas. Deseja realmente sair sem salvar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+              Continuar editando
+            </AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => blocker.proceed?.()}>
+              Descartar e sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </StudioDashboardLayout>
   );
 }
