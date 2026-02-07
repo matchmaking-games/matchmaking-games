@@ -8,7 +8,7 @@ import { useAvailableSkills, type Habilidade } from "@/hooks/useAvailableSkills"
 import { cn } from "@/lib/utils";
 
 interface JobSkillsSelectorProps {
-  label: string;
+  label: React.ReactNode;
   helperText?: string;
   selectedSkillIds: string[];
   onSkillsChange: (skillIds: string[]) => void;
