@@ -128,9 +128,6 @@ export default function NewStudio() {
     const formData = { nome, slug, estado, cidade, tamanho };
     const result = createStudioSchema.safeParse(formData);
 
-    // Build location string from state + city
-    const localizacao = `${cidade}, ${estado}`;
-
     if (!result.success) {
       const errors: Record<string, string> = {};
       result.error.errors.forEach((err) => {
@@ -168,7 +165,8 @@ export default function NewStudio() {
       .insert({
         nome: nome,
         slug: slug,
-        localizacao: localizacao,
+        estado: estado,
+        cidade: cidade,
         tamanho: tamanho as "micro" | "pequeno" | "medio" | "grande",
         criado_por: session.user.id,
       });
