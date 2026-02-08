@@ -178,11 +178,14 @@ export default function JobForm() {
   }, [hasUnsavedChanges, formSaved]);
 
   // Block internal navigation with react-router
+  // Only block if there are unsaved changes and we haven't just saved
+  const shouldBlock = hasUnsavedChanges && !formSaved;
+  
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasUnsavedChanges && 
-      !formSaved && 
-      currentLocation.pathname !== nextLocation.pathname
+    shouldBlock
+      ? ({ currentLocation, nextLocation }) =>
+          currentLocation.pathname !== nextLocation.pathname
+      : false
   );
 
   const descricao = form.watch("descricao") || "";
