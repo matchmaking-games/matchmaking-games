@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate, useSearchParams, useBlocker } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -110,6 +110,7 @@ export default function JobForm() {
   // State for unsaved changes protection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [formSaved, setFormSaved] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
 
   // Detect payment cancelled return from Stripe
   useEffect(() => {
@@ -177,16 +178,14 @@ export default function JobForm() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges, formSaved]);
 
-  // Block internal navigation with react-router
-  // Only block if there are unsaved changes and we haven't just saved
-  const shouldBlock = hasUnsavedChanges && !formSaved;
-  
-  const blocker = useBlocker(
-    shouldBlock
-      ? ({ currentLocation, nextLocation }) =>
-          currentLocation.pathname !== nextLocation.pathname
-      : false
-  );
+  // Handle cancel button click with unsaved changes check
+  const handleCancelClick = () => {
+    if (hasUnsavedChanges && !formSaved) {
+      setShowExitDialog(true);
+    } else {
+      navigate("/studio/jobs");
+    }
+  };
 
   const descricao = form.watch("descricao") || "";
   const charCount = descricao.length;
@@ -881,7 +880,7 @@ export default function JobForm() {
 
               {/* ACTION BUTTONS */}
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => navigate("/studio/jobs")}>
+                <Button type="button" variant="ghost" onClick={handleCancelClick}>
                   Cancelar
                 </Button>
 
@@ -931,7 +930,7 @@ export default function JobForm() {
       </Card>
 
       {/* AlertDialog for unsaved changes confirmation */}
-      <AlertDialog open={blocker.state === "blocked"}>
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
@@ -940,10 +939,10 @@ export default function JobForm() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+            <AlertDialogCancel onClick={() => setShowExitDialog(false)}>
               Continuar editando
             </AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => blocker.proceed?.()}>
+            <AlertDialogAction variant="destructive" onClick={() => navigate("/studio/jobs")}>
               Descartar e sair
             </AlertDialogAction>
           </AlertDialogFooter>
