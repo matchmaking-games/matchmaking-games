@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,7 +50,10 @@ const vagaFormSchema = z
     salario_max: z.number().positive().nullable().optional(),
     mostrar_salario: z.boolean().default(false),
     descricao: z.string().min(100, "Mínimo 100 caracteres").max(10000, "Máximo 10.000 caracteres"),
-    tipo_publicacao: z.enum(["gratuita", "destaque"]).default("gratuita"),
+    tipo_publicacao: z.enum(["gratuita", "destaque"]).nullable().refine(
+      (val) => val !== null,
+      { message: "Escolha um tipo de vaga antes de publicar" }
+    ),
     habilidades_obrigatorias: z.array(z.string()).min(1, "Selecione pelo menos uma habilidade obrigatória"),
     habilidades_desejaveis: z.array(z.string()).default([]),
   })
@@ -142,7 +145,7 @@ export default function JobForm() {
       salario_max: null,
       mostrar_salario: false,
       descricao: "",
-      tipo_publicacao: "gratuita",
+      tipo_publicacao: null,
       habilidades_obrigatorias: [],
       habilidades_desejaveis: [],
     },
@@ -213,7 +216,7 @@ export default function JobForm() {
         salario_max: existingJob.salario_max,
         mostrar_salario: existingJob.mostrar_salario || false,
         descricao: existingJob.descricao,
-        tipo_publicacao: existingJob.tipo_publicacao || "gratuita",
+        tipo_publicacao: existingJob.tipo_publicacao || null,
         habilidades_obrigatorias: [],
         habilidades_desejaveis: [],
       });
@@ -291,7 +294,7 @@ export default function JobForm() {
       salario_max: data.salario_max || null,
       mostrar_salario: data.mostrar_salario,
       descricao: data.descricao,
-      tipo_publicacao: data.tipo_publicacao,
+      tipo_publicacao: data.tipo_publicacao as "gratuita" | "destaque",
       habilidades_obrigatorias: habilidadesObrigatorias,
       habilidades_desejaveis: habilidadesDesejaveis,
     };
@@ -830,7 +833,7 @@ export default function JobForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
+                          <div className="space-y-3">
                             {/* Card Gratuita */}
                             <div 
                               className={cn(
@@ -841,11 +844,20 @@ export default function JobForm() {
                               )}
                               onClick={() => field.onChange("gratuita")}
                             >
-                              <RadioGroupItem value="gratuita" id="pub-gratuita" className="mt-1" />
-                              <Label htmlFor="pub-gratuita" className="flex-1 cursor-pointer">
+                              <div className={cn(
+                                "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                field.value === "gratuita" 
+                                  ? "border-primary" 
+                                  : "border-muted-foreground"
+                              )}>
+                                {field.value === "gratuita" && (
+                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <div className="flex-1">
                                 <span className="font-medium">Gratuita</span>
                                 <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
-                              </Label>
+                              </div>
                             </div>
                             
                             {/* Card Destaque */}
@@ -858,8 +870,17 @@ export default function JobForm() {
                               )}
                               onClick={() => field.onChange("destaque")}
                             >
-                              <RadioGroupItem value="destaque" id="pub-destaque" className="mt-1" />
-                              <Label htmlFor="pub-destaque" className="flex-1 cursor-pointer">
+                              <div className={cn(
+                                "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                field.value === "destaque" 
+                                  ? "border-primary" 
+                                  : "border-muted-foreground"
+                              )}>
+                                {field.value === "destaque" && (
+                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <div className="flex-1">
                                 <span className="font-medium flex items-center gap-2">
                                   <Sparkles className="h-4 w-4 text-primary" />
                                   Destaque (R$ 97)
@@ -867,9 +888,9 @@ export default function JobForm() {
                                 <p className="text-sm text-muted-foreground">
                                   Topo da lista por 30 dias + badge de destaque
                                 </p>
-                              </Label>
+                              </div>
                             </div>
-                          </RadioGroup>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -911,13 +932,13 @@ export default function JobForm() {
                   {savingAction === "publish" ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {form.getValues("tipo_publicacao") === "destaque" && !isEditing
+                      {form.watch("tipo_publicacao") === "destaque" && !isEditing
                         ? "Processando..." 
                         : "Salvando..."}
                     </>
                   ) : isEditing && existingJob?.status === 'publicada' ? (
                     "Salvar Alterações"
-                  ) : form.getValues("tipo_publicacao") === "destaque" ? (
+                  ) : form.watch("tipo_publicacao") === "destaque" ? (
                     "Publicar e Pagar R$ 97"
                   ) : (
                     "Publicar Vaga"
