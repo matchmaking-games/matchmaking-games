@@ -36,7 +36,10 @@ const tipoContratoLabels: Record<string, string> = {
   estagio: "Estágio",
 };
 
-function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" {
+function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "rascunho" {
+  // Check if draft first
+  if (vaga.status === 'rascunho') return "rascunho";
+  
   const now = new Date();
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
@@ -49,6 +52,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
   inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
   expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 };
 
 export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: JobsMobileCardProps) {
