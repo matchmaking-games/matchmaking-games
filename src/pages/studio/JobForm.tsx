@@ -280,21 +280,21 @@ export default function JobForm() {
   };
 
   // Transform form data to VagaFormData
-  const transformFormData = (data: VagaFormSchemaType): VagaFormData => {
+  const transformFormData = (data: Partial<VagaFormSchemaType>): VagaFormData => {
     return {
-      titulo: data.titulo,
-      tipo_funcao: data.tipo_funcao,
-      nivel: data.nivel,
-      tipo_contrato: data.tipo_contrato,
-      remoto: data.remoto,
+      titulo: data.titulo || "",
+      tipo_funcao: data.tipo_funcao || [],
+      nivel: data.nivel || "pleno",
+      tipo_contrato: data.tipo_contrato || "clt",
+      remoto: data.remoto || "remoto",
       estado: data.estado || null,
       cidade: data.cidade || null,
       contato_candidatura: data.contato_candidatura || null,
       salario_min: data.salario_min || null,
       salario_max: data.salario_max || null,
-      mostrar_salario: data.mostrar_salario,
-      descricao: data.descricao,
-      tipo_publicacao: data.tipo_publicacao as "gratuita" | "destaque",
+      mostrar_salario: data.mostrar_salario || false,
+      descricao: data.descricao || "",
+      tipo_publicacao: (data.tipo_publicacao || "gratuita") as "gratuita" | "destaque",
       habilidades_obrigatorias: habilidadesObrigatorias,
       habilidades_desejaveis: habilidadesDesejaveis,
     };
@@ -331,9 +331,33 @@ export default function JobForm() {
 
   // Handler for Save Draft button click
   const handleSaveDraftClick = async () => {
+    // Minimal validation for draft - only title is required
+    const titulo = form.getValues("titulo");
+    if (!titulo || titulo.length < 3) {
+      form.setError("titulo", { 
+        type: "manual", 
+        message: "Mínimo 3 caracteres para salvar rascunho" 
+      });
+      toast({
+        title: "Erro de validação",
+        description: "Preencha o título da vaga para salvar o rascunho.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSavingAction("draft");
     try {
-      await form.handleSubmit(handleSaveDraft)();
+      const formData = transformFormData(form.getValues());
+      setFormSaved(true);
+      await saveDraft(formData);
+    } catch (err) {
+      console.error("Error saving draft:", err);
+      toast({
+        title: "Erro ao salvar rascunho",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setSavingAction(null);
     }
@@ -341,9 +365,24 @@ export default function JobForm() {
 
   // Handler for Publish button click
   const handlePublishClick = async () => {
-    // Validate required skills before form submission
+    // Trigger all form validations
+    const isValid = await form.trigger();
+    
+    if (!isValid) {
+      // Check specifically for tipo_publicacao for custom message
+      const tipoPublicacao = form.getValues("tipo_publicacao");
+      if (!tipoPublicacao) {
+        toast({
+          title: "Erro de validação",
+          description: "Escolha um tipo de vaga antes de publicar.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Validate required skills
     if (habilidadesObrigatorias.length === 0) {
-      form.trigger(); // Trigger all validations to show errors
       toast({
         title: "Erro de validação",
         description: "Selecione pelo menos uma habilidade obrigatória.",
@@ -354,7 +393,22 @@ export default function JobForm() {
     
     setSavingAction("publish");
     try {
-      await form.handleSubmit(onSubmit)();
+      const data = form.getValues();
+      const formData = transformFormData(data);
+      
+      setFormSaved(true);
+      if (isEditing && id) {
+        await updateJob(id, formData);
+      } else {
+        await createJob(formData);
+      }
+    } catch (err) {
+      console.error("Error publishing job:", err);
+      toast({
+        title: "Erro ao publicar vaga",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setSavingAction(null);
     }

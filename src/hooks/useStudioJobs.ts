@@ -17,6 +17,7 @@ export interface StudioVaga {
   criada_em: string | null;
   expira_em: string | null;
   estudio_id: string;
+  status: string | null;
 }
 
 interface UseStudioJobsReturn {
@@ -107,7 +108,7 @@ export function useStudioJobs(): UseStudioJobsReturn {
 
       const { data, error: fetchError } = await supabase
         .from("vagas")
-        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, expira_em, estudio_id")
+        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, expira_em, estudio_id, status")
         .order("ativa", { ascending: false })
         .order("criada_em", { ascending: false });
 
