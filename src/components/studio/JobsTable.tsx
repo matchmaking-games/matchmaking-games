@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { format, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MoreVertical, Pencil, ExternalLink, Power, Trash2, Sparkles } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink, Power, Trash2, Sparkles, EyeOff, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -20,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
 import type { StudioVaga } from "@/hooks/useStudioJobs";
 
 interface JobsTableProps {
@@ -38,14 +36,8 @@ const nivelConfig: Record<string, { label: string; className: string }> = {
   lead: { label: "Lead", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
 };
 
-const tipoContratoLabels: Record<string, string> = {
-  clt: "CLT",
-  pj: "PJ",
-  freelance: "Freelance",
-  estagio: "Estágio",
-};
-
-function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "rascunho" {
+// Updated to include "oculta" status
+function getJobStatus(vaga: StudioVaga): "ativa" | "oculta" | "expirada" | "rascunho" {
   // Check if draft first
   if (vaga.status === 'rascunho') return "rascunho";
   
@@ -53,13 +45,14 @@ function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "ras
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
   if (expiraEm && expiraEm < now) return "expirada";
-  if (!vaga.ativa) return "inativa";
+  if (!vaga.ativa) return "oculta";
   return "ativa";
 }
 
+// Updated status config with "oculta" instead of "inativa"
 const statusConfig: Record<string, { label: string; className: string }> = {
   ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  oculta: { label: "Oculta", className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" },
   expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
   rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 };
@@ -73,11 +66,6 @@ function renderExpiraEm(vaga: StudioVaga) {
   const diasRestantes = differenceInDays(expiraEm, new Date());
   const isExpired = isPast(expiraEm);
   const isAtiva = vaga.ativa;
-
-  // Warning for inconsistent data
-  if (diasRestantes < 0 && !isExpired) {
-    console.warn(`Vaga ${vaga.id} deveria estar expirada mas status não foi atualizado`);
-  }
 
   // Show counter only if all conditions are true
   const showCounter = isAtiva && !isExpired && diasRestantes < 7 && diasRestantes >= 0;
@@ -106,9 +94,8 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Título</TableHead>
+            <TableHead className="min-w-[200px]">Título</TableHead>
             <TableHead>Nível</TableHead>
-            <TableHead>Contrato</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Publicada em</TableHead>
             <TableHead>Expira em</TableHead>
@@ -123,15 +110,14 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
 
             return (
               <TableRow key={vaga.id}>
-                <TableCell>
+                <TableCell className="max-w-[300px]">
                   <div className="flex items-center gap-2">
-                    <span className={vaga.tipo_publicacao !== "destaque" ? "text-muted-foreground" : "font-medium"}>
+                    <span className="text-foreground/90 break-words">
                       {vaga.titulo}
                     </span>
                     {vaga.tipo_publicacao === "destaque" && (
-                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        DESTAQUE
+                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400 shrink-0" title="Destaque">
+                        <Sparkles className="h-3 w-3" />
                       </Badge>
                     )}
                   </div>
@@ -141,7 +127,6 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                     {nivel.label}
                   </Badge>
                 </TableCell>
-                <TableCell>{tipoContratoLabels[vaga.tipo_contrato] || vaga.tipo_contrato}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={statusBadge.className}>
                     {statusBadge.label}
@@ -162,22 +147,46 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Ver página pública
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => onToggleAtiva(vaga)}
-                        disabled={isToggling}
-                      >
-                        <Power className="h-4 w-4 mr-2" />
-                        {vaga.ativa ? "Desativar vaga" : "Ativar vaga"}
-                      </DropdownMenuItem>
+                      {/* Editar - available for ATIVA, OCULTA, RASCUNHO (not EXPIRADA) */}
+                      {status !== "expirada" && (
+                        <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {/* Ver página pública - only for ATIVA and OCULTA */}
+                      {(status === "ativa" || status === "oculta") && (
+                        <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Ver página pública
+                        </DropdownMenuItem>
+                      )}
+                      
+                      {/* Toggle visibility - only for ATIVA and OCULTA */}
+                      {(status === "ativa" || status === "oculta") && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onToggleAtiva(vaga)}
+                            disabled={isToggling}
+                          >
+                            {vaga.ativa ? (
+                              <>
+                                <EyeOff className="h-4 w-4 mr-2" />
+                                Ocultar vaga
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Mostrar vaga
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      
+                      {/* Excluir - always available */}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => onDelete(vaga)}

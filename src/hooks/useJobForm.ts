@@ -66,7 +66,11 @@ interface UseJobFormReturn {
   saveDraft: (data: VagaFormData) => Promise<void>;
 }
 
-export function useJobForm(jobId?: string): UseJobFormReturn {
+interface UseJobFormReturnComplete extends UseJobFormReturn {
+  updateDraft: (id: string, data: VagaFormData) => Promise<void>;
+}
+
+export function useJobForm(jobId?: string): UseJobFormReturnComplete {
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -331,6 +335,75 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
     }
   }, [estudioId, navigate, toast]);
 
+  // Update existing draft
+  const updateDraft = useCallback(async (id: string, data: VagaFormData) => {
+    if (!estudioId) {
+      toast({
+        title: "Erro",
+        description: "Estúdio não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      // Regenerate slug if title changed
+      let slug = existingJob?.slug || "";
+      if (existingJob && data.titulo !== existingJob.titulo) {
+        slug = await generateUniqueSlug(data.titulo, id);
+      }
+
+      // UPDATE the existing job (keep current status)
+      const { error: updateError } = await supabase
+        .from("vagas")
+        .update({
+          titulo: data.titulo,
+          slug,
+          descricao: data.descricao,
+          tipo_funcao: data.tipo_funcao,
+          nivel: data.nivel,
+          tipo_contrato: data.tipo_contrato,
+          remoto: data.remoto,
+          estado: data.estado,
+          cidade: data.cidade,
+          salario_min: data.salario_min,
+          salario_max: data.salario_max,
+          mostrar_salario: data.mostrar_salario,
+          tipo_publicacao: data.tipo_publicacao,
+          contato_candidatura: data.contato_candidatura,
+          // Keep current status - don't force anything
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        console.error("Error updating draft:", updateError);
+        throw new Error("Erro ao atualizar rascunho.");
+      }
+
+      // Delete old skills and insert new ones
+      await supabase.from("vaga_habilidades").delete().eq("vaga_id", id);
+      await insertSkills(id, data.habilidades_obrigatorias, data.habilidades_desejaveis);
+
+      toast({
+        title: "Rascunho atualizado!",
+        description: "Alterações salvas com sucesso.",
+      });
+
+      navigate("/studio/jobs");
+    } catch (err) {
+      console.error("Error updating draft:", err);
+      toast({
+        title: "Erro ao atualizar rascunho",
+        description: err instanceof Error ? err.message : "Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [estudioId, existingJob, navigate, toast]);
+
   // Create new job
   const createJob = useCallback(async (data: VagaFormData) => {
     if (!estudioId) {
@@ -568,5 +641,6 @@ export function useJobForm(jobId?: string): UseJobFormReturn {
     createJob,
     updateJob,
     saveDraft,
+    updateDraft,
   };
 }

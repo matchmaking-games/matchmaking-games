@@ -98,7 +98,7 @@ export default function JobForm() {
   const { toast } = useToast();
   const isEditing = !!id;
 
-  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft } =
+  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft, updateDraft } =
     useJobForm(id);
 
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
@@ -350,7 +350,13 @@ export default function JobForm() {
     try {
       const formData = transformFormData(form.getValues());
       setFormSaved(true);
-      await saveDraft(formData);
+      
+      // FIX: Use updateDraft when editing, saveDraft when creating new
+      if (isEditing && id) {
+        await updateDraft(id, formData);
+      } else {
+        await saveDraft(formData);
+      }
     } catch (err) {
       console.error("Error saving draft:", err);
       toast({

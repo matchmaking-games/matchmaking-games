@@ -1,6 +1,6 @@
 import { format, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MoreVertical, Pencil, ExternalLink, Power, Trash2, Sparkles, Calendar, Clock } from "lucide-react";
+import { MoreVertical, Pencil, ExternalLink, Trash2, Sparkles, Calendar, Clock, EyeOff, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,28 +29,22 @@ const nivelConfig: Record<string, { label: string; className: string }> = {
   lead: { label: "Lead", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
 };
 
-const tipoContratoLabels: Record<string, string> = {
-  clt: "CLT",
-  pj: "PJ",
-  freelance: "Freelance",
-  estagio: "Estágio",
-};
-
-function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "rascunho" {
-  // Check if draft first
+// Updated to include "oculta" status
+function getJobStatus(vaga: StudioVaga): "ativa" | "oculta" | "expirada" | "rascunho" {
   if (vaga.status === 'rascunho') return "rascunho";
   
   const now = new Date();
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
   if (expiraEm && expiraEm < now) return "expirada";
-  if (!vaga.ativa) return "inativa";
+  if (!vaga.ativa) return "oculta";
   return "ativa";
 }
 
+// Updated status config with "oculta" instead of "inativa"
 const statusConfig: Record<string, { label: string; className: string }> = {
   ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  oculta: { label: "Oculta", className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" },
   expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
   rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 };
@@ -80,13 +74,12 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className={`font-medium truncate ${vaga.tipo_publicacao !== "destaque" ? "text-muted-foreground" : ""}`}>
+                    <h3 className="text-foreground/90 break-words">
                       {vaga.titulo}
                     </h3>
                     {vaga.tipo_publicacao === "destaque" && (
-                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        DESTAQUE
+                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400" title="Destaque">
+                        <Sparkles className="h-3 w-3" />
                       </Badge>
                     )}
                   </div>
@@ -95,9 +88,6 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                     <Badge variant="outline" className={nivel.className}>
                       {nivel.label}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {tipoContratoLabels[vaga.tipo_contrato] || vaga.tipo_contrato}
-                    </span>
                     <Badge variant="outline" className={statusBadge.className}>
                       {statusBadge.label}
                     </Badge>
@@ -134,22 +124,46 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Ver página pública
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onToggleAtiva(vaga)}
-                      disabled={isToggling}
-                    >
-                      <Power className="h-4 w-4 mr-2" />
-                      {vaga.ativa ? "Desativar vaga" : "Ativar vaga"}
-                    </DropdownMenuItem>
+                    {/* Editar - available for ATIVA, OCULTA, RASCUNHO (not EXPIRADA) */}
+                    {status !== "expirada" && (
+                      <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {/* Ver página pública - only for ATIVA and OCULTA */}
+                    {(status === "ativa" || status === "oculta") && (
+                      <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Ver página pública
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {/* Toggle visibility - only for ATIVA and OCULTA */}
+                    {(status === "ativa" || status === "oculta") && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onToggleAtiva(vaga)}
+                          disabled={isToggling}
+                        >
+                          {vaga.ativa ? (
+                            <>
+                              <EyeOff className="h-4 w-4 mr-2" />
+                              Ocultar vaga
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Mostrar vaga
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
+                    {/* Excluir - always available */}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => onDelete(vaga)}
