@@ -15,6 +15,7 @@ export interface StudioVaga {
   ativa: boolean | null;
   tipo_publicacao: TipoPublicacaoVaga | null;
   criada_em: string | null;
+  atualizada_em: string | null;
   expira_em: string | null;
   estudio_id: string;
   status: string | null;
@@ -108,9 +109,9 @@ export function useStudioJobs(): UseStudioJobsReturn {
 
       const { data, error: fetchError } = await supabase
         .from("vagas")
-        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, expira_em, estudio_id, status")
-        .order("ativa", { ascending: false })
-        .order("criada_em", { ascending: false });
+        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, atualizada_em, expira_em, estudio_id, status")
+        .eq("estudio_id", estudioId)
+        .order("atualizada_em", { ascending: false });
 
       if (fetchError) throw fetchError;
 
