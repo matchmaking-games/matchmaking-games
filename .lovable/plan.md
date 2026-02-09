@@ -1,284 +1,265 @@
 
-# Plano: Corrigir Botões de Salvar Rascunho e Publicar
+# Plano: Correções Críticas na Página de Vagas do Estúdio
 
-## Problema Identificado
+## Resumo das Correções
 
-Os botões não estão funcionando porque:
-
-1. **Validação bloqueando rascunho**: O campo `tipo_publicacao` tem um `.refine()` que exige valor não-nulo, mas rascunhos não precisam dessa seleção
-2. **handleSubmit silencioso**: Quando `form.handleSubmit(handler)()` falha na validação, ele simplesmente não chama o handler, sem mostrar feedback
-3. **Erros de validação não propagados**: O try/finally no handler não captura erros de validação do Zod
-
-## Solução
-
-Separar a validação para rascunhos vs publicação:
-- **Rascunho**: Validar apenas campos essenciais (titulo, descricao com mínimos reduzidos)
-- **Publicar**: Validar tudo incluindo tipo de publicação
+Este plano aborda 5 problemas reportados na página de listagem e edição de vagas.
 
 ---
 
-## Arquivo a Modificar
+## Problema 1: Bug Crítico ao Editar Vaga e Salvar Rascunho
 
-| Arquivo | Ação |
-|---------|------|
-| `src/pages/studio/JobForm.tsx` | EDITAR |
-| `src/components/studio/JobsTable.tsx` | EDITAR |
-| `src/components/studio/JobsMobileCard.tsx` | EDITAR |
+### Diagnóstico
+O `handleSaveDraftClick` no arquivo `JobForm.tsx` sempre chama `saveDraft()`, que executa um **INSERT** no banco de dados. Quando o usuário está editando uma vaga existente (modo de edição com ID na URL), deveria chamar uma função de **UPDATE** ao invés de criar uma nova vaga.
+
+### Solução
+Modificar `handleSaveDraftClick` para verificar se está no modo de edição (`isEditing && id`) e, nesse caso:
+- Chamar uma nova função `updateDraft(id, formData)` ao invés de `saveDraft(formData)`
+- Criar a função `updateDraft` no hook `useJobForm.ts` que faz UPDATE mantendo status de rascunho
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useJobForm.ts` | Criar função `updateDraft(id, data)` que faz UPDATE na vaga existente |
+| `src/pages/studio/JobForm.tsx` | Modificar `handleSaveDraftClick` para usar `updateDraft` quando `isEditing` |
 
 ---
 
-## Mudanças em JobForm.tsx
+## Problema 2: Ordenação Incorreta na Listagem
 
-### 1. Criar schema separado para rascunho (após linha 71)
+### Diagnóstico
+A query atual ordena por `ativa DESC, criada_em DESC`. Vagas editadas não sobem para o topo porque `criada_em` nunca muda.
 
-```typescript
-// Schema para rascunho - validações mais relaxadas
-const draftFormSchema = z.object({
-  titulo: z.string().min(3, "Mínimo 3 caracteres").max(100, "Máximo 100 caracteres"),
-  tipo_funcao: z.array(z.string()).default([]),
-  nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
-  tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
-  remoto: z.enum(["presencial", "hibrido", "remoto"]),
-  estado: z.string().optional(),
-  cidade: z.string().optional(),
-  contato_candidatura: z.string().max(500, "Máximo 500 caracteres").optional(),
-  salario_min: z.number().positive().nullable().optional(),
-  salario_max: z.number().positive().nullable().optional(),
-  mostrar_salario: z.boolean().default(false),
-  descricao: z.string().max(10000, "Máximo 10.000 caracteres").optional(),
-  tipo_publicacao: z.enum(["gratuita", "destaque"]).nullable(),
-  habilidades_obrigatorias: z.array(z.string()).default([]),
-  habilidades_desejaveis: z.array(z.string()).default([]),
-});
+### Solução
+Alterar a ordenação para usar `atualizada_em DESC` (campo que existe na tabela `vagas` conforme schema).
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/useStudioJobs.ts` | Alterar `.order()` para usar `atualizada_em DESC` |
+| `src/hooks/useStudioJobs.ts` | Adicionar `atualizada_em` ao `.select()` e interface `StudioVaga` |
+
+---
+
+## Problema 3: Layout da Tabela
+
+### 3.1 Remover Coluna "Contrato"
+Eliminar a coluna de tipo de contrato da tabela para economizar espaço.
+
+### 3.2 Simplificar Badge de Destaque
+Mudar de `⚡ DESTAQUE` para apenas `⚡` (só o ícone).
+
+### 3.3 Quebra de Linha no Título
+Adicionar classe CSS para quebra de linha em títulos longos.
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/studio/JobsTable.tsx` | Remover coluna "Contrato", simplificar badge, adicionar `break-words` |
+| `src/components/studio/JobsMobileCard.tsx` | Mesmas alterações de badge e título |
+
+---
+
+## Problema 4: Cores Poluídas
+
+### Diagnóstico
+Vagas destaque usam `font-medium` e cor normal, enquanto vagas gratuitas usam `text-muted-foreground`, criando diferença visual excessiva.
+
+### Solução
+Unificar cor do texto usando `text-foreground/90` para todas as vagas. A única diferença visual será a badge de destaque.
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/studio/JobsTable.tsx` | Remover lógica condicional de cores do título |
+| `src/components/studio/JobsMobileCard.tsx` | Mesma alteração |
+
+---
+
+## Problema 5: Lógica do Dropdown por Status
+
+### Regras de Negócio
+
+```text
+┌──────────────┬────────────────────────────────────────────────┐
+│ Status       │ Ações Disponíveis                              │
+├──────────────┼────────────────────────────────────────────────┤
+│ ATIVA        │ Editar, Ver página, Ocultar vaga, Excluir      │
+│ OCULTA       │ Editar, Ver página, Mostrar vaga, Excluir      │
+│ RASCUNHO     │ Editar, Excluir                                │
+│ EXPIRADA     │ Excluir                                        │
+└──────────────┴────────────────────────────────────────────────┘
 ```
 
-### 2. Modificar handleSaveDraftClick (linha 333-340)
+### Notas Adicionais
+- "Ocultar vaga" / "Mostrar vaga" alterna baseado no campo `ativa`
+- Badge de status também alterna: "Ativa" quando visível, "Oculta" quando `ativa=false`
+- Atualizar `statusConfig` para incluir status "oculta" com estilo apropriado
 
-Validar manualmente apenas campos mínimos para rascunho:
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/components/studio/JobsTable.tsx` | Implementar dropdown condicional por status |
+| `src/components/studio/JobsMobileCard.tsx` | Mesma implementação |
+
+---
+
+## Detalhes Técnicos de Implementação
+
+### Hook useJobForm.ts - Nova função updateDraft
+
+```typescript
+// Adicionar após a função saveDraft (linha ~332)
+const updateDraft = useCallback(async (id: string, data: VagaFormData) => {
+  if (!estudioId) {
+    toast({ title: "Erro", description: "Estúdio não encontrado.", variant: "destructive" });
+    return;
+  }
+
+  try {
+    setIsSaving(true);
+
+    // Regenerar slug se título mudou
+    let slug = existingJob?.slug || "";
+    if (existingJob && data.titulo !== existingJob.titulo) {
+      slug = await generateUniqueSlug(data.titulo, id);
+    }
+
+    // UPDATE na vaga existente, mantendo status de rascunho
+    const { error: updateError } = await supabase
+      .from("vagas")
+      .update({
+        titulo: data.titulo,
+        slug,
+        descricao: data.descricao,
+        tipo_funcao: data.tipo_funcao,
+        nivel: data.nivel,
+        tipo_contrato: data.tipo_contrato,
+        remoto: data.remoto,
+        estado: data.estado,
+        cidade: data.cidade,
+        salario_min: data.salario_min,
+        salario_max: data.salario_max,
+        mostrar_salario: data.mostrar_salario,
+        tipo_publicacao: data.tipo_publicacao,
+        contato_candidatura: data.contato_candidatura,
+        // Manter status atual (não forçar rascunho)
+      })
+      .eq("id", id);
+
+    if (updateError) throw new Error("Erro ao atualizar rascunho.");
+
+    // Atualizar habilidades (delete + insert)
+    await supabase.from("vaga_habilidades").delete().eq("vaga_id", id);
+    await insertSkills(id, data.habilidades_obrigatorias, data.habilidades_desejaveis);
+
+    toast({ title: "Rascunho atualizado!", description: "Alterações salvas." });
+    navigate("/studio/jobs");
+  } catch (err) {
+    toast({ title: "Erro", description: err.message, variant: "destructive" });
+  } finally {
+    setIsSaving(false);
+  }
+}, [estudioId, existingJob, navigate, toast]);
+```
+
+### JobForm.tsx - Modificar handleSaveDraftClick
 
 ```typescript
 const handleSaveDraftClick = async () => {
-  // Validação mínima para rascunho - apenas título é obrigatório
   const titulo = form.getValues("titulo");
   if (!titulo || titulo.length < 3) {
-    form.setError("titulo", { 
-      type: "manual", 
-      message: "Mínimo 3 caracteres para salvar rascunho" 
-    });
-    toast({
-      title: "Erro de validação",
-      description: "Preencha o título da vaga para salvar o rascunho.",
-      variant: "destructive",
-    });
+    // validação existente...
     return;
   }
 
   setSavingAction("draft");
   try {
-    const formData = transformFormData(form.getValues() as VagaFormSchemaType);
+    const formData = transformFormData(form.getValues());
     setFormSaved(true);
-    await saveDraft(formData);
-  } catch (err) {
-    console.error("Error saving draft:", err);
-    toast({
-      title: "Erro ao salvar rascunho",
-      description: "Tente novamente.",
-      variant: "destructive",
-    });
-  } finally {
-    setSavingAction(null);
-  }
-};
-```
-
-### 3. Modificar handlePublishClick (linha 343-361)
-
-Garantir que validação é acionada corretamente:
-
-```typescript
-const handlePublishClick = async () => {
-  // Validar todos os campos (incluindo tipo_publicacao)
-  const isValid = await form.trigger();
-  
-  if (!isValid) {
-    // Verificar especificamente o tipo_publicacao para mensagem customizada
-    const tipoPublicacao = form.getValues("tipo_publicacao");
-    if (!tipoPublicacao) {
-      // Já tem a mensagem de erro no schema, apenas foco visual
-      toast({
-        title: "Erro de validação",
-        description: "Escolha um tipo de vaga antes de publicar.",
-        variant: "destructive",
-      });
-    }
-    return;
-  }
-
-  // Validar habilidades obrigatórias
-  if (habilidadesObrigatorias.length === 0) {
-    toast({
-      title: "Erro de validação",
-      description: "Selecione pelo menos uma habilidade obrigatória.",
-      variant: "destructive",
-    });
-    return;
-  }
-  
-  setSavingAction("publish");
-  try {
-    const data = form.getValues();
-    const formData = transformFormData(data as VagaFormSchemaType);
     
-    setFormSaved(true);
+    // CORREÇÃO: Verificar se está editando
     if (isEditing && id) {
-      await updateJob(id, formData);
+      await updateDraft(id, formData);
     } else {
-      await createJob(formData);
+      await saveDraft(formData);
     }
   } catch (err) {
-    console.error("Error publishing job:", err);
-    toast({
-      title: "Erro ao publicar vaga",
-      description: "Tente novamente.",
-      variant: "destructive",
-    });
+    // erro existente...
   } finally {
     setSavingAction(null);
   }
 };
 ```
 
-### 4. Atualizar transformFormData (linha 283-301)
-
-Tratar valores opcionais/null corretamente para rascunhos:
+### JobsTable.tsx - Dropdown Condicional
 
 ```typescript
-const transformFormData = (data: VagaFormSchemaType): VagaFormData => {
-  return {
-    titulo: data.titulo,
-    tipo_funcao: data.tipo_funcao || [],
-    nivel: data.nivel,
-    tipo_contrato: data.tipo_contrato,
-    remoto: data.remoto,
-    estado: data.estado || null,
-    cidade: data.cidade || null,
-    contato_candidatura: data.contato_candidatura || null,
-    salario_min: data.salario_min || null,
-    salario_max: data.salario_max || null,
-    mostrar_salario: data.mostrar_salario,
-    descricao: data.descricao || "",
-    tipo_publicacao: (data.tipo_publicacao || "gratuita") as "gratuita" | "destaque",
-    habilidades_obrigatorias: habilidadesObrigatorias,
-    habilidades_desejaveis: habilidadesDesejaveis,
-  };
-};
-```
-
-### 5. Remover onSubmit do form element (linha 400)
-
-Manter `onSubmit={(e) => e.preventDefault()}` para prevenir submit HTML padrão.
-
----
-
-## Mudanças em JobsTable.tsx
-
-### Adicionar badge de "Rascunho" para vagas com status 'rascunho'
-
-**Atualizar getJobStatus (linha 48-55)**:
-
-```typescript
-function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "rascunho" {
-  // Verificar primeiro se é rascunho
+// Atualizar getJobStatus para diferenciar ativa/oculta
+function getJobStatus(vaga: StudioVaga): "ativa" | "oculta" | "expirada" | "rascunho" {
   if (vaga.status === 'rascunho') return "rascunho";
   
   const now = new Date();
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
   if (expiraEm && expiraEm < now) return "expirada";
-  if (!vaga.ativa) return "inativa";
+  if (!vaga.ativa) return "oculta";  // Mudança de "inativa" para "oculta"
   return "ativa";
 }
-```
 
-**Atualizar statusConfig (linha 57-61)**:
-
-```typescript
-const statusConfig: Record<string, { label: string; className: string }> = {
-  ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+// Atualizar statusConfig
+const statusConfig = {
+  ativa: { label: "Ativa", className: "bg-green-100 text-green-800 ..." },
+  oculta: { label: "Oculta", className: "bg-gray-100 text-gray-500 ..." },
+  expirada: { label: "Expirada", className: "bg-yellow-100 ..." },
+  rascunho: { label: "Rascunho", className: "bg-gray-100 ..." },
 };
-```
 
----
-
-## Mudanças em JobsMobileCard.tsx
-
-### Mesmas mudanças de status
-
-**Atualizar getJobStatus (linha 39-46)**:
-
-```typescript
-function getJobStatus(vaga: StudioVaga): "ativa" | "inativa" | "expirada" | "rascunho" {
-  if (vaga.status === 'rascunho') return "rascunho";
+// No dropdown, renderizar condicionalmente:
+<DropdownMenuContent align="end">
+  {/* Editar - disponível para ATIVA, OCULTA, RASCUNHO */}
+  {status !== "expirada" && (
+    <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
+      <Pencil /> Editar
+    </DropdownMenuItem>
+  )}
   
-  const now = new Date();
-  const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
-
-  if (expiraEm && expiraEm < now) return "expirada";
-  if (!vaga.ativa) return "inativa";
-  return "ativa";
-}
-```
-
-**Atualizar statusConfig (linha 48-52)**:
-
-```typescript
-const statusConfig: Record<string, { label: string; className: string }> = {
-  ativa: { label: "Ativa", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  inativa: { label: "Inativa", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  expirada: { label: "Expirada", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
-};
+  {/* Ver página - disponível apenas para ATIVA e OCULTA */}
+  {(status === "ativa" || status === "oculta") && (
+    <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
+      <ExternalLink /> Ver página pública
+    </DropdownMenuItem>
+  )}
+  
+  {/* Toggle visibilidade - disponível apenas para ATIVA e OCULTA */}
+  {(status === "ativa" || status === "oculta") && (
+    <>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={() => onToggleAtiva(vaga)}>
+        <Power /> {vaga.ativa ? "Ocultar vaga" : "Mostrar vaga"}
+      </DropdownMenuItem>
+    </>
+  )}
+  
+  {/* Excluir - sempre disponível */}
+  <DropdownMenuSeparator />
+  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(vaga)}>
+    <Trash2 /> Excluir
+  </DropdownMenuItem>
+</DropdownMenuContent>
 ```
 
 ---
 
-## Fluxo Esperado Após Correção
+## Arquivos a Modificar
 
-| Ação | Comportamento |
-|------|---------------|
-| Clicar "Salvar Rascunho" sem título | Erro "Mínimo 3 caracteres para salvar rascunho" |
-| Clicar "Salvar Rascunho" com título | Salva rascunho, redireciona para /studio/jobs |
-| Ver lista de vagas com rascunho | Badge "Rascunho" aparece na coluna Status |
-| Clicar "Publicar Vaga" sem tipo selecionado | Erro "Escolha um tipo de vaga antes de publicar" |
-| Clicar "Publicar Vaga" tipo Gratuita | Publica vaga normalmente |
-| Clicar "Publicar e Pagar" tipo Destaque | Redireciona para Stripe |
+| Arquivo | Alterações |
+|---------|------------|
+| `src/hooks/useJobForm.ts` | Adicionar função `updateDraft`, expor no return |
+| `src/hooks/useStudioJobs.ts` | Alterar ordenação para `atualizada_em DESC`, adicionar campo à interface |
+| `src/pages/studio/JobForm.tsx` | Modificar `handleSaveDraftClick` para usar `updateDraft` quando editando |
+| `src/components/studio/JobsTable.tsx` | Remover coluna contrato, simplificar badge, unificar cores, dropdown condicional |
+| `src/components/studio/JobsMobileCard.tsx` | Mesmas alterações de badge, cores e dropdown |
 
 ---
 
 ## O que NÃO será alterado
-
-- Lógica do hook useJobForm (createJob, updateJob, saveDraft)
+- Fluxo de criação de nova vaga (botão publicar)
 - Lógica de integração com Stripe
-- Lógica de verificação de pagamento
-- Proteção contra perda de dados (beforeunload, AlertDialog)
-- Seleção de tipo de vaga (cards clicáveis)
-- Validação de tipo de vaga como obrigatório para publicar
-
----
-
-## Checklist de Implementação
-
-- [ ] handleSaveDraftClick: Validação manual mínima (apenas título)
-- [ ] handleSaveDraftClick: Chamar saveDraft diretamente sem form.handleSubmit
-- [ ] handlePublishClick: Usar form.trigger() para validar antes de submeter
-- [ ] handlePublishClick: Mostrar toast específico para tipo_publicacao não selecionado
-- [ ] transformFormData: Tratar valores null/undefined
-- [ ] JobsTable: Adicionar status "rascunho" no getJobStatus
-- [ ] JobsTable: Adicionar badge "Rascunho" no statusConfig
-- [ ] JobsMobileCard: Mesmas mudanças de status
-- [ ] Testar fluxo completo de rascunho
-- [ ] Testar fluxo de vaga gratuita
-- [ ] Testar fluxo de vaga destaque com Stripe
+- Validações do formulário
+- Outras páginas do sistema
