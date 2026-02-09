@@ -213,11 +213,13 @@ export default function Profile() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <ProfileNavigation />
-
-        <Card className="bg-card border-border">
+      <div className="max-w-4xl mx-auto">
+        <Card>
           <CardContent className="pt-6">
+            <h1 className="font-display text-3xl font-bold text-foreground mb-4">
+              Meu Perfil
+            </h1>
+            <ProfileNavigation />
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

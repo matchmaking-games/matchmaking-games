@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const navItems = [
   { label: "Perfil", to: "/dashboard/profile", value: "perfil" },
-  { label: "Portfólio", to: "/dashboard/profile/portfolio", value: "portfolio" },
+  { label: "Links", to: "/dashboard/profile/portfolio", value: "portfolio" },
   { label: "Projetos", to: "/dashboard/profile/projects", value: "projetos" },
   { label: "Habilidades", to: "/dashboard/profile/skills", value: "habilidades" },
   { label: "Experiência", to: "/dashboard/profile/experience", value: "experiencia" },
