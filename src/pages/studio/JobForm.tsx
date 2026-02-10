@@ -396,6 +396,10 @@ export default function JobForm() {
       return;
     }
 
+    // Sync skills state into form before validation
+    form.setValue("habilidades_obrigatorias", habilidadesObrigatorias);
+    form.setValue("habilidades_desejaveis", habilidadesDesejaveis);
+
     // Trigger all form validations
     const isValid = await form.trigger();
     
