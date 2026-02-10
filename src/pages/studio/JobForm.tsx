@@ -36,39 +36,21 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 // Form schema with Zod
-const vagaFormSchema = z
-  .object({
-    titulo: z.string().min(5, "Mínimo 5 caracteres").max(100, "Máximo 100 caracteres"),
-    tipo_funcao: z.array(z.string()).min(1, "Selecione pelo menos um tipo de função"),
-    nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
-    tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
-    remoto: z.enum(["presencial", "hibrido", "remoto"]),
-    estado: z.string().optional(),
-    cidade: z.string().optional(),
-    contato_candidatura: z.string().min(1, "Campo obrigatório").max(500, "Máximo 500 caracteres"),
-    salario_min: z.number().positive().nullable().optional(),
-    salario_max: z.number().positive().nullable().optional(),
-    mostrar_salario: z.boolean().default(false),
-    descricao: z.string().min(100, "Mínimo 100 caracteres").max(10000, "Máximo 10.000 caracteres"),
-    tipo_publicacao: z.enum(["gratuita", "destaque"]).nullable().refine(
-      (val) => val !== null,
-      { message: "Escolha um tipo de vaga antes de publicar" }
-    ),
-    habilidades_obrigatorias: z.array(z.string()).min(1, "Selecione pelo menos uma habilidade obrigatória"),
-    habilidades_desejaveis: z.array(z.string()).default([]),
-  })
-  .refine(
-    (data) => {
-      if (data.salario_min && data.salario_max) {
-        return data.salario_max >= data.salario_min;
-      }
-      return true;
-    },
-    {
-      message: "Salário máximo deve ser maior ou igual ao mínimo",
-      path: ["salario_max"],
-    },
-  );
+const vagaFormSchema = z.object({
+  titulo: z.string().min(5, "Mínimo 5 caracteres").max(100, "Máximo 100 caracteres"),
+  tipo_funcao: z.array(z.string()).min(1, "Selecione pelo menos um tipo de função"),
+  nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
+  tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
+  remoto: z.enum(["presencial", "hibrido", "remoto"]),
+  estado: z.string().optional(),
+  cidade: z.string().optional(),
+  contato_candidatura: z.string().min(1, "Campo obrigatório").max(500, "Máximo 500 caracteres"),
+  salario_min: z.number().positive().nullable().optional(),
+  salario_max: z.number().positive().nullable().optional(),
+  mostrar_salario: z.boolean().default(false),
+  descricao: z.string().min(100, "Mínimo 100 caracteres").max(10000, "Máximo 10.000 caracteres"),
+  tipo_publicacao: z.enum(["gratuita", "destaque"]).nullable(),
+});
 
 type VagaFormSchemaType = z.infer<typeof vagaFormSchema>;
 
@@ -146,8 +128,6 @@ export default function JobForm() {
       mostrar_salario: false,
       descricao: "",
       tipo_publicacao: null,
-      habilidades_obrigatorias: [],
-      habilidades_desejaveis: [],
     },
   });
 
@@ -217,8 +197,6 @@ export default function JobForm() {
         mostrar_salario: existingJob.mostrar_salario || false,
         descricao: existingJob.descricao,
         tipo_publicacao: existingJob.tipo_publicacao || null,
-        habilidades_obrigatorias: [],
-        habilidades_desejaveis: [],
       });
 
       // Load municipalities if state exists
@@ -371,7 +349,7 @@ export default function JobForm() {
 
   // Handler for Publish button click
   const handlePublishClick = async () => {
-    // Validate required skills first (not part of form schema)
+    // 1. Validate required skills (managed via useState, not form)
     if (habilidadesObrigatorias.length === 0) {
       toast({
         title: "Erro de validação",
@@ -381,13 +359,9 @@ export default function JobForm() {
       return;
     }
 
-    // Check tipo_publicacao before triggering full validation
+    // 2. Validate tipo_publicacao (managed via form but without refine)
     const tipoPublicacao = form.getValues("tipo_publicacao");
     if (!tipoPublicacao) {
-      form.setError("tipo_publicacao", {
-        type: "manual",
-        message: "Escolha um tipo de vaga antes de publicar",
-      });
       toast({
         title: "Erro de validação",
         description: "Escolha um tipo de vaga antes de publicar.",
@@ -396,11 +370,19 @@ export default function JobForm() {
       return;
     }
 
-    // Sync skills state into form before validation
-    form.setValue("habilidades_obrigatorias", habilidadesObrigatorias);
-    form.setValue("habilidades_desejaveis", habilidadesDesejaveis);
+    // 3. Validate salary manually (max >= min)
+    const salarioMin = form.getValues("salario_min");
+    const salarioMax = form.getValues("salario_max");
+    if (salarioMin && salarioMax && salarioMax < salarioMin) {
+      toast({
+        title: "Erro de validação",
+        description: "Salário máximo deve ser maior ou igual ao mínimo.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Trigger all form validations
+    // 4. Trigger form validation for remaining fields
     const isValid = await form.trigger();
     
     if (!isValid) {
@@ -412,6 +394,7 @@ export default function JobForm() {
       return;
     }
     
+    // 5. All validations passed - publish
     setSavingAction("publish");
     try {
       const data = form.getValues();

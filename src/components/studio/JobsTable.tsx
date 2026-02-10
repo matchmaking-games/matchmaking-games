@@ -97,7 +97,7 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
             <TableHead className="min-w-[200px]">Título</TableHead>
             <TableHead>Nível</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Publicada em</TableHead>
+            
             <TableHead>Expira em</TableHead>
             <TableHead className="w-[60px]"></TableHead>
           </TableRow>
@@ -131,11 +131,6 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                   <Badge variant="outline" className={statusBadge.className}>
                     {statusBadge.label}
                   </Badge>
-                </TableCell>
-                <TableCell>
-                  {vaga.criada_em
-                    ? format(new Date(vaga.criada_em), "dd/MM/yyyy", { locale: ptBR })
-                    : "-"}
                 </TableCell>
                 <TableCell>{renderExpiraEm(vaga)}</TableCell>
                 <TableCell>
