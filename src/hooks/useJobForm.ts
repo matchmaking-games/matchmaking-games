@@ -276,9 +276,8 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
 
       // Generate unique slug
       const slug = await generateUniqueSlug(data.titulo);
-      const expiraEm = addDays(new Date(), 30).toISOString();
 
-      // Insert job as draft
+      // Insert job as draft - expires_at is always null for drafts
       const { data: vaga, error: insertError } = await supabase
         .from("vagas")
         .insert({
@@ -298,7 +297,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           contato_candidatura: data.contato_candidatura,
           status: 'rascunho',
           ativa: false,
-          expira_em: expiraEm,
+          expira_em: null,
           criada_por: session.user.id,
           estudio_id: estudioId,
         })
@@ -495,7 +494,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
             contato_candidatura: data.contato_candidatura,
             status: 'aguardando_pagamento',
             ativa: false,
-            expira_em: expiraEm,
+            expira_em: null,
             criada_por: session.user.id,
             estudio_id: estudioId,
           })
