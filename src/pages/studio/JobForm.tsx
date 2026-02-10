@@ -371,27 +371,38 @@ export default function JobForm() {
 
   // Handler for Publish button click
   const handlePublishClick = async () => {
-    // Trigger all form validations
-    const isValid = await form.trigger();
-    
-    if (!isValid) {
-      // Check specifically for tipo_publicacao for custom message
-      const tipoPublicacao = form.getValues("tipo_publicacao");
-      if (!tipoPublicacao) {
-        toast({
-          title: "Erro de validação",
-          description: "Escolha um tipo de vaga antes de publicar.",
-          variant: "destructive",
-        });
-      }
-      return;
-    }
-
-    // Validate required skills
+    // Validate required skills first (not part of form schema)
     if (habilidadesObrigatorias.length === 0) {
       toast({
         title: "Erro de validação",
         description: "Selecione pelo menos uma habilidade obrigatória.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check tipo_publicacao before triggering full validation
+    const tipoPublicacao = form.getValues("tipo_publicacao");
+    if (!tipoPublicacao) {
+      form.setError("tipo_publicacao", {
+        type: "manual",
+        message: "Escolha um tipo de vaga antes de publicar",
+      });
+      toast({
+        title: "Erro de validação",
+        description: "Escolha um tipo de vaga antes de publicar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Trigger all form validations
+    const isValid = await form.trigger();
+    
+    if (!isValid) {
+      toast({
+        title: "Erro de validação",
+        description: "Preencha todos os campos obrigatórios antes de publicar.",
         variant: "destructive",
       });
       return;
