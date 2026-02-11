@@ -382,13 +382,14 @@ export default function JobForm() {
       return;
     }
 
-    // 4. Trigger form validation for remaining fields
-    const isValid = await form.trigger();
-    
-    if (!isValid) {
+    // 4. Validate form fields directly with Zod (bypasses zodResolver timing issues)
+    const parseResult = vagaFormSchema.safeParse(form.getValues());
+
+    if (!parseResult.success) {
+      const firstError = parseResult.error.errors[0];
       toast({
         title: "Erro de validação",
-        description: "Preencha todos os campos obrigatórios antes de publicar.",
+        description: firstError.message,
         variant: "destructive",
       });
       return;
