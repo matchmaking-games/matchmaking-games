@@ -8,6 +8,7 @@ import {
   Settings,
   CreditCard,
   Mail,
+  ExternalLink,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -147,6 +148,15 @@ export function DashboardSidebar() {
                 <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
                   <Mail className="mr-2 h-4 w-4" />
                   Suporte
+                </a>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild>
+                <a href={`/p/${user.slug}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Ver perfil público
                 </a>
               </DropdownMenuItem>
 
