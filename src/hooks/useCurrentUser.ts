@@ -5,6 +5,7 @@ export interface CurrentUser {
   id: string;
   nome_completo: string;
   avatar_url: string | null;
+  slug: string;
 }
 
 export function useCurrentUser() {
@@ -16,7 +17,7 @@ export function useCurrentUser() {
 
       const { data, error } = await supabase
         .from("users")
-        .select("nome_completo, avatar_url")
+        .select("nome_completo, avatar_url, slug")
         .eq("id", session.user.id)
         .single();
 
@@ -29,6 +30,7 @@ export function useCurrentUser() {
         id: session.user.id,
         nome_completo: data.nome_completo,
         avatar_url: data.avatar_url,
+        slug: data.slug,
       };
     },
     staleTime: 1000 * 60 * 5,
