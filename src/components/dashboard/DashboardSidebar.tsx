@@ -39,7 +39,7 @@ import { useHasStudio } from "@/hooks/useHasStudio";
 
 const baseNavItems = [
   { title: "Visão Geral", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Vagas", url: "/dashboard/jobs", icon: Briefcase },
+  { title: "Buscar Vagas", url: "/jobs", icon: Briefcase },
   { title: "Meu Perfil", url: "/dashboard/profile", icon: User },
 ];
 
