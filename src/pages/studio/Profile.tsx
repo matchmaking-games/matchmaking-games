@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { Loader2, Camera } from "lucide-react";
+import { Loader2, Camera, Check, X, AlertTriangle } from "lucide-react";
 import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,15 +23,28 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { Database } from "@/integrations/supabase/types";
 
 type TamanhoEstudio = Database["public"]["Enums"]["tamanho_estudio"];
+type SlugStatus = "idle" | "checking" | "available" | "taken" | "invalid";
+
+const slugRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
+
+const filterSlugInput = (value: string): string => {
+  return value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30);
+};
 
 const studioProfileSchema = z.object({
   nome: z
     .string()
     .min(2, "Nome deve ter pelo menos 2 caracteres")
     .max(100, "Nome muito longo"),
+  slug: z
+    .string()
+    .min(3, "Mínimo 3 caracteres")
+    .max(30, "Máximo 30 caracteres")
+    .regex(slugRegex, "Use apenas letras minúsculas, números e hífen"),
   descricao: z
     .string()
     .max(500, "Máximo 500 caracteres")
@@ -81,6 +94,8 @@ export default function StudioProfile() {
   // Form fields
   const [nome, setNome] = useState("");
   const [slug, setSlug] = useState("");
+  const [originalSlug, setOriginalSlug] = useState("");
+  const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
   const [descricao, setDescricao] = useState("");
   const [sobre, setSobre] = useState("");
   const [estado, setEstado] = useState("");
@@ -91,8 +106,92 @@ export default function StudioProfile() {
   const [fundadoEm, setFundadoEm] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
+  const debouncedSlug = useDebounce(slug, 500);
+
   // IBGE Locations hook
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } = useIBGELocations();
+
+  // Slug availability check
+  useEffect(() => {
+    if (!debouncedSlug || !membership?.estudio.id) return;
+
+    if (debouncedSlug.length < 3) {
+      setSlugStatus("invalid");
+      return;
+    }
+    if (!slugRegex.test(debouncedSlug)) {
+      setSlugStatus("invalid");
+      return;
+    }
+
+    if (debouncedSlug === originalSlug) {
+      setSlugStatus("available");
+      return;
+    }
+
+    const checkAvailability = async () => {
+      setSlugStatus("checking");
+      const { data, error } = await supabase
+        .from("estudios")
+        .select("id")
+        .eq("slug", debouncedSlug)
+        .maybeSingle();
+
+      if (error) {
+        setSlugStatus("invalid");
+        return;
+      }
+      setSlugStatus(!data || data.id === membership.estudio.id ? "available" : "taken");
+    };
+
+    checkAvailability();
+  }, [debouncedSlug, originalSlug, membership?.estudio.id]);
+
+  const handleSlugChange = (value: string) => {
+    const filtered = filterSlugInput(value);
+    setSlug(filtered);
+    if (!filtered || filtered.length < 3) {
+      setSlugStatus("invalid");
+    } else if (!slugRegex.test(filtered)) {
+      setSlugStatus("invalid");
+    } else if (filtered === originalSlug) {
+      setSlugStatus("available");
+    } else {
+      setSlugStatus("checking");
+    }
+  };
+
+  const slugIcon = () => {
+    switch (slugStatus) {
+      case "checking":
+        return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+      case "available":
+        return <Check className="h-4 w-4 text-primary" />;
+      case "taken":
+        return <X className="h-4 w-4 text-destructive" />;
+      case "invalid":
+        return slug.length > 0 ? <AlertTriangle className="h-4 w-4 text-yellow-500" /> : null;
+      default:
+        return null;
+    }
+  };
+
+  const slugMessage = () => {
+    if (!slug) return null;
+    switch (slugStatus) {
+      case "checking":
+        return <span className="text-muted-foreground">Verificando disponibilidade...</span>;
+      case "available":
+        return <span className="text-primary">✓ Slug disponível</span>;
+      case "taken":
+        return <span className="text-destructive">✗ Este slug já está em uso</span>;
+      case "invalid":
+        if (slug.length < 3) return <span className="text-yellow-500">Mínimo 3 caracteres</span>;
+        return <span className="text-yellow-500">Use apenas letras minúsculas, números e hífen</span>;
+      default:
+        return null;
+    }
+  };
 
   useEffect(() => {
     async function fetchStudioData() {
@@ -117,6 +216,8 @@ export default function StudioProfile() {
       if (data) {
         setNome(data.nome || "");
         setSlug(data.slug || "");
+        setOriginalSlug(data.slug || "");
+        if (data.slug) setSlugStatus("available");
         setDescricao(data.descricao || "");
         setSobre(data.sobre || "");
         
@@ -222,14 +323,20 @@ export default function StudioProfile() {
 
     if (!membership?.estudio.id) return;
 
+    if (slugStatus === "checking" || slugStatus === "taken" || slugStatus === "invalid") {
+      toast({ title: "Erro", description: "Corrija o slug antes de salvar.", variant: "destructive" });
+      return;
+    }
+
     // Build location string from state + city for validation only
     const localizacao = estado && cidade ? `${cidade}, ${estado}` : "";
     
     const formData = {
       nome,
+      slug,
       descricao,
       sobre,
-      localizacao, // Keep for validation schema compatibility
+      localizacao,
       tamanho: tamanho || null,
       website,
       especialidades,
@@ -255,6 +362,7 @@ export default function StudioProfile() {
       .from("estudios")
       .update({
         nome,
+        slug,
         descricao: descricao || null,
         sobre: sobre || null,
         estado: estado || null,
@@ -279,6 +387,7 @@ export default function StudioProfile() {
       return;
     }
 
+    setOriginalSlug(slug);
     toast({
       title: "Perfil atualizado!",
       description: "As alterações foram salvas com sucesso.",
@@ -370,16 +479,35 @@ export default function StudioProfile() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="url">URL pública</Label>
-                  <Input
-                    id="url"
-                    value={`matchmaking.games/studio/${slug}`}
-                    disabled
-                    className="h-11 bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    O slug do estúdio não pode ser alterado.
-                  </p>
+                  <Label htmlFor="slug">
+                    Slug <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="slug"
+                      value={slug}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      placeholder="slug-do-estudio"
+                      maxLength={30}
+                      className="h-11 lowercase pr-10"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {slugIcon()}
+                    </div>
+                  </div>
+                  {slug && (
+                    <p className="text-xs text-muted-foreground">
+                      matchmaking.games/studio/{slug}
+                    </p>
+                  )}
+                  {slugMessage() && (
+                    <p className="text-sm">{slugMessage()}</p>
+                  )}
+                  {validationErrors.slug && (
+                    <p className="text-sm text-destructive">
+                      {validationErrors.slug}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -566,7 +694,7 @@ export default function StudioProfile() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSaving}>
+                <Button type="submit" disabled={isSaving || slugStatus === "checking" || slugStatus === "taken" || slugStatus === "invalid"}>
                   {isSaving && (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
