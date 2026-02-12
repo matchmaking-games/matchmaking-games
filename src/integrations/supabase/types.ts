@@ -867,8 +867,8 @@ export type Database = {
           mostrar_email: boolean | null
           mostrar_telefone: boolean | null
           nome_completo: string
-          nome_exibicao: string | null
           portfolio_url: string | null
+          pronomes: string | null
           slug: string
           sobre: string | null
           telefone: string | null
@@ -894,8 +894,8 @@ export type Database = {
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo: string
-          nome_exibicao?: string | null
           portfolio_url?: string | null
+          pronomes?: string | null
           slug: string
           sobre?: string | null
           telefone?: string | null
@@ -921,8 +921,8 @@ export type Database = {
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo?: string
-          nome_exibicao?: string | null
           portfolio_url?: string | null
+          pronomes?: string | null
           slug?: string
           sobre?: string | null
           telefone?: string | null
@@ -1091,8 +1091,8 @@ export type Database = {
           id: string | null
           linkedin_url: string | null
           nome_completo: string | null
-          nome_exibicao: string | null
           portfolio_url: string | null
+          pronomes: string | null
           slug: string | null
           tipo_trabalho_preferido:
             | Database["public"]["Enums"]["tipo_trabalho"][]
@@ -1112,8 +1112,8 @@ export type Database = {
           id?: string | null
           linkedin_url?: string | null
           nome_completo?: string | null
-          nome_exibicao?: string | null
           portfolio_url?: string | null
+          pronomes?: string | null
           slug?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
@@ -1133,8 +1133,8 @@ export type Database = {
           id?: string | null
           linkedin_url?: string | null
           nome_completo?: string | null
-          nome_exibicao?: string | null
           portfolio_url?: string | null
+          pronomes?: string | null
           slug?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]

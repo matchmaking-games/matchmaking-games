@@ -33,7 +33,7 @@ export function Header() {
       .toUpperCase();
   };
 
-  const displayName = user?.nome_exibicao || user?.nome_completo || "";
+  const displayName = user?.nome_completo || "";
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border">

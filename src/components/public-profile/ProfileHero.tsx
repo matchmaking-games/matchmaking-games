@@ -30,7 +30,7 @@ export function ProfileHero({ user }: ProfileHeroProps) {
     }
   };
 
-  const displayName = user.nome_exibicao || user.nome_completo;
+  const displayName = user.nome_completo;
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
