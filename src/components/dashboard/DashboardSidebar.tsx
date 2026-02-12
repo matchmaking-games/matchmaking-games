@@ -59,7 +59,7 @@ export function DashboardSidebar() {
   const { data: hasStudio, isLoading: isLoadingStudio } = useHasStudio();
 
   const navItems = hasStudio
-    ? [...baseNavItems, { title: "Meu Estúdio", url: "/studio/dashboard", icon: Building2 }]
+    ? [...baseNavItems, { title: "Meu estúdio", url: "/studio/dashboard", icon: Building2 }]
     : baseNavItems;
 
   const handleSignOut = async () => {
