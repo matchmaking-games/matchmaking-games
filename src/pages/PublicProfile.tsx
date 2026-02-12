@@ -68,7 +68,7 @@ export default function PublicProfile() {
     if (!data?.user) return;
 
     const { user } = data;
-    const name = user.nome_exibicao || user.nome_completo;
+    const name = user.nome_completo;
     const title = user.titulo_profissional || "Profissional";
     const description =
       user.bio_curta?.slice(0, 160) || `Perfil de ${name} no Matchmaking`;

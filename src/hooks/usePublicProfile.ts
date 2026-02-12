@@ -11,7 +11,6 @@ type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
 
 export interface PublicUserData {
   id: string;
-  nome_exibicao: string | null;
   nome_completo: string;
   titulo_profissional: string | null;
   bio_curta: string | null;
@@ -120,7 +119,7 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   const { data: user, error: userError } = await supabase
     .from("users")
     .select(`
-      id, nome_exibicao, nome_completo, titulo_profissional,
+      id, nome_completo, titulo_profissional,
       bio_curta, sobre, estado, cidade, avatar_url, banner_url,
       disponivel_para_trabalho, website, linkedin_url, github_url,
       portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug

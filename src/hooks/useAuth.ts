@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 export interface AuthUser {
   id: string;
   nome_completo: string;
-  nome_exibicao: string | null;
   avatar_url: string | null;
 }
 
@@ -19,7 +18,7 @@ export function useAuth() {
         if (session) {
           const { data } = await supabase
             .from("users")
-            .select("nome_completo, nome_exibicao, avatar_url")
+            .select("nome_completo, avatar_url")
             .eq("id", session.user.id)
             .maybeSingle();
           
@@ -27,7 +26,6 @@ export function useAuth() {
             setUser({
               id: session.user.id,
               nome_completo: data.nome_completo,
-              nome_exibicao: data.nome_exibicao,
               avatar_url: data.avatar_url,
             });
           }
@@ -47,7 +45,7 @@ export function useAuth() {
           if (event === "SIGNED_IN" && session) {
             const { data } = await supabase
               .from("users")
-              .select("nome_completo, nome_exibicao, avatar_url")
+              .select("nome_completo, avatar_url")
               .eq("id", session.user.id)
               .maybeSingle();
             
@@ -55,7 +53,6 @@ export function useAuth() {
               setUser({
                 id: session.user.id,
                 nome_completo: data.nome_completo,
-                nome_exibicao: data.nome_exibicao,
                 avatar_url: data.avatar_url,
               });
             }
