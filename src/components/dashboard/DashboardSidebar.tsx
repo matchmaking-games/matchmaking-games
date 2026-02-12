@@ -38,9 +38,9 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useHasStudio } from "@/hooks/useHasStudio";
 
 const baseNavItems = [
-  { title: "Visão Geral", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Buscar Vagas", url: "/jobs", icon: Briefcase },
-  { title: "Meu Perfil", url: "/dashboard/profile", icon: User },
+  { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
+  { title: "Meu perfil", url: "/dashboard/profile", icon: User },
 ];
 
 const getInitials = (name: string) => {
