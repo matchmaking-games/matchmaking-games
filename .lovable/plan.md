@@ -1,75 +1,108 @@
-# Pagina Publica do Estudio (/studio/:slug)
+
+
+# Reorganizar Rotas Privadas do Estudio: /studio/* para /studio/manage/*
 
 ## Resumo
 
-Criar uma pagina publica para exibir informacoes de um estudio de games, acessivel em `/studio/:slug`. A pagina busca dados do estudio pelo slug na URL e exibe header, sobre, e vagas ativas usando Cards do shadcn/ui.
+Renomear todas as rotas privadas de gerenciamento do estudio de `/studio/*` para `/studio/manage/*`, liberando `/studio/:slug` para a pagina publica sem conflitos.
 
-## Arquivos a criar
+## Mapeamento de Rotas
 
-### 1. `src/hooks/usePublicStudio.ts`
+```text
+/studio/new             -->  /studio/manage/new
+/studio/dashboard       -->  /studio/manage/dashboard
+/studio/profile         -->  /studio/manage/profile
+/studio/team            -->  /studio/manage/team
+/studio/jobs            -->  /studio/manage/jobs
+/studio/jobs/new        -->  /studio/manage/jobs/new
+/studio/jobs/:id/edit   -->  /studio/manage/jobs/:id/edit
+```
 
-Hook com `useQuery` do TanStack que:
+## Rotas que NAO mudam
 
-- Busca o estudio na tabela `estudios` pelo slug (select de todos os campos publicos: id, nome, slug, logo_url, sobre, cidade, estado, tamanho, website, fundado_em, especialidades)
-- Em paralelo, busca vagas ativas do estudio com a mesma estrutura do `useJobs` para compatibilidade com `JobCard`:
-  - Tabela `vagas` com select de: id, titulo, slug, nivel, remoto, tipo_contrato, tipo_publicacao, tipo_funcao, estado, cidade, criada_em
-  - Join com `estudio:estudios(nome, slug, logo_url, estado, cidade)`
-  - Join com `vaga_habilidades(id, obrigatoria, habilidade:habilidades(id, nome, categoria))`
-  - Filtros: `estudio_id = estudio.id`, `ativa = true`, `expira_em > now()`
-  - Ordenacao: tipo_publicacao DESC, criada_em DESC
-- Retorna `{ studio, vagas }` tipados
-- `staleTime: 5 minutos`
-- `enabled: !!slug`
+- `/studio/:slug` -- pagina publica (permanece como esta)
+- `/studio/${membership.estudio.slug}` -- link para pagina publica no sidebar footer (e uma URL publica, nao rota privada)
+- `matchmaking.games/studio/` -- preview de URL no formulario de slug (e texto visual, nao rota)
 
-### 2. `src/pages/StudioPublicProfile.tsx`
+## Arquivos afetados (10 arquivos, todas as ocorrencias)
 
-Pagina com 3 cards:
+### 1. `src/App.tsx` (6 rotas a alterar)
 
-**Card 1 - Header do Estudio:**
+Alterar os paths das rotas:
+- `/studio/new` para `/studio/manage/new`
+- `/studio/dashboard` para `/studio/manage/dashboard`
+- `/studio/profile` para `/studio/manage/profile`
+- `/studio/jobs` para `/studio/manage/jobs`
+- `/studio/jobs/new` para `/studio/manage/jobs/new`
+- `/studio/jobs/:id/edit` para `/studio/manage/jobs/:id/edit`
 
-- Avatar com logo ou iniciais (usando Avatar do shadcn)
-- Nome do estudio (font-display, text-3xl, font-bold)
-- Localizacao (icone MapPin + cidade, estado) -- condicional
-- Tamanho (icone Users + texto formatado via `formatTamanhoEstudio`) -- condicional
-- Website (icone Globe + link externo clicavel, target _blank) -- condicional
-- Ano de fundacao (icone Calendar + "Fundado em YYYY") -- condicional
-- Especialidades como Badges (variant secondary) -- condicional
+A rota `/studio/:slug` permanece inalterada.
 
-**Card 2 - Sobre o Estudio:**
+### 2. `src/components/studio/StudioSidebar.tsx` (4 ocorrencias)
 
-- Titulo "Sobre o Estudio" (font-display, text-xl, font-semibold)
-- Texto do campo `sobre` com `whitespace-pre-line` para preservar quebras de linha
-- Nao renderizar este card se `sobre` estiver vazio/null
+Array `navItems`:
+- `"/studio/dashboard"` para `"/studio/manage/dashboard"`
+- `"/studio/jobs"` para `"/studio/manage/jobs"`
+- `"/studio/profile"` para `"/studio/manage/profile"`
+- `"/studio/team"` para `"/studio/manage/team"`
 
-**Card 3 - Vagas Ativas:**
+Tambem atualizar a comparacao `end={item.url === "/studio/dashboard"}` para `"/studio/manage/dashboard"`.
 
-- Titulo "Vagas Ativas" (font-display, text-xl, font-semibold)
-- Lista de vagas usando o componente `JobCard` existente, passando cada vaga como `VagaListItem`
-- Se nao houver vagas: mensagem "Este estudio nao possui vagas abertas no momento" em texto muted
+NAO alterar: `href={/studio/${membership.estudio.slug}}` (link publico).
 
-**Estados:**
+### 3. `src/components/dashboard/DashboardSidebar.tsx` (2 ocorrencias)
 
-- Loading: skeleton similar ao usado em PublicProfile.tsx
-- Estudio nao encontrado: reutilizar padrao do ProfileNotFound com texto adaptado ("Estudio nao encontrado")
+- Linha 62: `"/studio/dashboard"` para `"/studio/manage/dashboard"` (nav item "Meu estudio")
+- Linha 128: `"/studio/new"` para `"/studio/manage/new"` (link "Criar Estudio" no dropdown)
 
-**Layout:**
+### 4. `src/components/studio/StudioDashboardLayout.tsx` (1 ocorrencia)
 
-- `max-w-4xl mx-auto px-4 py-12`
-- `space-y-6` entre os cards
-- Header global fixo (componente Header) com pt-16 para compensar
+- Linha 18: `navigate("/studio/new")` para `navigate("/studio/manage/new")`
 
-## Arquivo a modificar
+### 5. `src/pages/studio/NewStudio.tsx` (2 ocorrencias)
 
-### 3. `src/App.tsx`
+- Linha 95: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
+- Linha 203: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
 
-- Importar `StudioPublicProfile` de `src/pages/StudioPublicProfile`
-- Adicionar rota `/studio/:slug` (publica, sem ProtectedRoute)
+NAO alterar: `matchmaking.games/studio/` (texto visual do preview de URL).
 
-## Detalhes tecnicos
+### 6. `src/pages/studio/Profile.tsx` (2 ocorrencias)
 
-- Reutilizar `formatTamanhoEstudio` de `src/lib/formatters.ts` para formatar o tamanho
-- Reutilizar `VagaListItem` de `src/hooks/useJobs` como tipo para as vagas
-- Reutilizar `JobCard` de `src/components/jobs/JobCard.tsx` para renderizar cada vaga
-- Reutilizar `Header` de `src/components/layout/Header.tsx`
-- Icones do lucide-react: MapPin, Users, Globe, Calendar
-- Nenhuma migracao de banco necessaria -- todos os dados ja existem
+- Linha 247: `navigate("/studio/new")` para `navigate("/studio/manage/new")`
+- Linha 692: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
+
+NAO alterar: `matchmaking.games/studio/` (texto do preview de URL do slug).
+
+### 7. `src/pages/studio/Jobs.tsx` (4 ocorrencias)
+
+- Linha 119: `navigate('/studio/jobs', ...)` para `navigate('/studio/manage/jobs', ...)`
+- Linha 132: `navigate('/studio/jobs', ...)` para `navigate('/studio/manage/jobs', ...)`
+- Linha 257: `navigate("/studio/jobs/new")` para `navigate("/studio/manage/jobs/new")`
+- Linha 315: `navigate("/studio/jobs/new")` para `navigate("/studio/manage/jobs/new")`
+
+### 8. `src/pages/studio/JobForm.tsx` (4 ocorrencias)
+
+- Linha 169: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+- Linha 424: `<Navigate to="/studio/jobs" replace />` para `<Navigate to="/studio/manage/jobs" replace />`
+- Linha 450: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+- Linha 1025: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+
+### 9. `src/hooks/useJobForm.ts` (4 ocorrencias)
+
+- Linha 324: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+- Linha 393: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+- Linha 474: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+- Linha 619: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
+
+### 10. `src/components/studio/JobsTable.tsx` (1 ocorrencia)
+
+- Linha 147: `` navigate(`/studio/jobs/${vaga.id}/edit`) `` para `` navigate(`/studio/manage/jobs/${vaga.id}/edit`) ``
+
+### 11. `src/components/studio/JobsMobileCard.tsx` (1 ocorrencia)
+
+- Linha 129: `` navigate(`/studio/jobs/${vaga.id}/edit`) `` para `` navigate(`/studio/manage/jobs/${vaga.id}/edit`) ``
+
+## Total: 31 ocorrencias em 11 arquivos
+
+Nenhuma migracao de banco, nenhuma alteracao de logica. Apenas substituicao de strings de rota.
+
