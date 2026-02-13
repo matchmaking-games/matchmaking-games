@@ -24,6 +24,7 @@ import StudioProfile from "./pages/studio/Profile";
 import StudioJobs from "./pages/studio/Jobs";
 import JobForm from "./pages/studio/JobForm";
 import ProtectedRoute from "./components/ProtectedRoute";
+import StudioPublicProfile from "./pages/StudioPublicProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -99,6 +100,7 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
+          <Route path="/studio/:slug" element={<StudioPublicProfile />} />
           <Route
             path="/studio/new"
             element={
