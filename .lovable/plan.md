@@ -1,99 +1,75 @@
-
-# Atualizar Formulario de Perfil (/dashboard/profile)
+# Pagina Publica do Estudio (/studio/:slug)
 
 ## Resumo
 
-Atualizar o formulario de edicao de perfil para refletir as mudancas no banco de dados: remover campo removido, adicionar novos campos (slug editavel, pronomes, disponibilidade), e reorganizar a ordem.
+Criar uma pagina publica para exibir informacoes de um estudio de games, acessivel em `/studio/:slug`. A pagina busca dados do estudio pelo slug na URL e exibe header, sobre, e vagas ativas usando Cards do shadcn/ui.
 
-## Estado Atual do Banco
+## Arquivos a criar
 
-- `nome_exibicao` -- JA REMOVIDO do banco (ainda referenciado no codigo)
-- `pronomes` -- JA EXISTE no banco (text, nullable)
-- `disponivel_para_trabalho` -- JA EXISTE (boolean, default false)
-- RPC `check_slug_availability` -- JA EXISTE para verificar slug de usuario
+### 1. `src/hooks/usePublicStudio.ts`
 
-## Mudancas
+Hook com `useQuery` do TanStack que:
 
-### 1. Arquivo: `src/pages/Profile.tsx`
+- Busca o estudio na tabela `estudios` pelo slug (select de todos os campos publicos: id, nome, slug, logo_url, sobre, cidade, estado, tamanho, website, fundado_em, especialidades)
+- Em paralelo, busca vagas ativas do estudio com a mesma estrutura do `useJobs` para compatibilidade com `JobCard`:
+  - Tabela `vagas` com select de: id, titulo, slug, nivel, remoto, tipo_contrato, tipo_publicacao, tipo_funcao, estado, cidade, criada_em
+  - Join com `estudio:estudios(nome, slug, logo_url, estado, cidade)`
+  - Join com `vaga_habilidades(id, obrigatoria, habilidade:habilidades(id, nome, categoria))`
+  - Filtros: `estudio_id = estudio.id`, `ativa = true`, `expira_em > now()`
+  - Ordenacao: tipo_publicacao DESC, criada_em DESC
+- Retorna `{ studio, vagas }` tipados
+- `staleTime: 5 minutos`
+- `enabled: !!slug`
 
-**Remover:**
-- Estado `nomeExibicao` e todo o bloco do campo "Nome de exibicao" no JSX
-- Referencia a `nome_exibicao` no schema Zod, no fetch, no submit
+### 2. `src/pages/StudioPublicProfile.tsx`
 
-**Renomear:**
-- Label "Nome completo" para "Nome"
-- Placeholder "Seu nome completo" para "Seu nome"
+Pagina com 3 cards:
 
-**Adicionar estados:**
-- `slug` (string) -- username editavel
-- `originalSlug` (string) -- slug original para comparacao
-- `slugStatus` (string) -- 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
-- `pronomes` (string) -- campo de pronomes
-- `disponivelParaTrabalho` (boolean) -- switch de disponibilidade
+**Card 1 - Header do Estudio:**
 
-**Adicionar imports:**
-- `useDebounce` hook (ja existe)
-- Icones: `Check`, `X`, `AlertTriangle`, `Loader2` (lucide)
+- Avatar com logo ou iniciais (usando Avatar do shadcn)
+- Nome do estudio (font-display, text-3xl, font-bold)
+- Localizacao (icone MapPin + cidade, estado) -- condicional
+- Tamanho (icone Users + texto formatado via `formatTamanhoEstudio`) -- condicional
+- Website (icone Globe + link externo clicavel, target _blank) -- condicional
+- Ano de fundacao (icone Calendar + "Fundado em YYYY") -- condicional
+- Especialidades como Badges (variant secondary) -- condicional
 
-**Logica de validacao do slug:**
-- Regex: `/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/` (minusculas, numeros, hifen, sem hifen nas pontas)
-- Minimo 3, maximo 30 caracteres
-- Debounce 500ms antes de verificar disponibilidade
-- Se slug === originalSlug, marcar como disponivel sem consultar o banco
-- Caso contrario, consultar via `supabase.from('users').select('id').eq('slug', slug).maybeSingle()` e comparar com userId
-- Feedback visual: icone verde (disponivel), vermelho (em uso), amarelo (formato invalido), spinner (verificando)
+**Card 2 - Sobre o Estudio:**
 
-**Campo slug no JSX (apos Nome, col-span-2):**
-- Input com classe `lowercase`, maxLength 30
-- onChange filtra caracteres invalidos automaticamente
-- Preview da URL: `matchmaking.games/p/{slug}`
-- Mensagem dinamica abaixo baseada no status
+- Titulo "Sobre o Estudio" (font-display, text-xl, font-semibold)
+- Texto do campo `sobre` com `whitespace-pre-line` para preservar quebras de linha
+- Nao renderizar este card se `sobre` estiver vazio/null
 
-**Campo pronomes no JSX (apos slug):**
-- Input simples, maxLength 30
-- Placeholder: "Ex: ele/dele, ela/dela, elu/delu"
-- Descricao: "Como voce prefere ser chamado(a)"
+**Card 3 - Vagas Ativas:**
 
-**Switch disponivel_para_trabalho (apos titulo profissional, col-span-2):**
-- Componente Switch do shadcn/ui
-- Texto dinamico baseado no estado on/off
-- OFF: "Seu perfil nao indica que voce esta procurando oportunidades"
-- ON: com check verde "Seu perfil mostra que voce esta aberto a oportunidades"
+- Titulo "Vagas Ativas" (font-display, text-xl, font-semibold)
+- Lista de vagas usando o componente `JobCard` existente, passando cada vaga como `VagaListItem`
+- Se nao houver vagas: mensagem "Este estudio nao possui vagas abertas no momento" em texto muted
 
-**Atualizar fetchUserData:**
-- Adicionar `slug, pronomes, disponivel_para_trabalho` ao select
-- Popular os novos estados
+**Estados:**
 
-**Atualizar handleSubmit:**
-- Remover `nome_exibicao` do update
-- Adicionar `slug, pronomes, disponivel_para_trabalho`
-- Bloquear submit se slug invalido ou em uso
+- Loading: skeleton similar ao usado em PublicProfile.tsx
+- Estudio nao encontrado: reutilizar padrao do ProfileNotFound com texto adaptado ("Estudio nao encontrado")
 
-**Atualizar schema Zod:**
-- Remover `nome_exibicao`
-- Adicionar `slug` com validacoes (min 3, max 30, regex)
-- Adicionar `pronomes` (max 30, opcional)
-- Manter `titulo_profissional` com max 150
+**Layout:**
 
-### 2. Ordem final dos campos no JSX
+- `max-w-4xl mx-auto px-4 py-12`
+- `space-y-6` entre os cards
+- Header global fixo (componente Header) com pt-16 para compensar
 
-1. Avatar (existente)
-2. Nome (renomeado, 1 coluna)
-3. Slug (novo, 1 coluna -- ao lado do Nome)
-4. Pronomes (novo, 1 coluna)
-5. Titulo profissional (existente, 1 coluna -- ao lado dos pronomes)
-6. Disponivel para trabalho (novo, col-span-2, switch)
-7. Bio curta (existente, col-span-2)
-8. Estado + Cidade (existentes, 1 col cada)
-9. Email + Telefone com toggles (existentes, 1 col cada)
-10. Botao salvar (existente)
+## Arquivo a modificar
 
-### 3. Desabilitar botao salvar
+### 3. `src/App.tsx`
 
-O botao "Salvar alteracoes" deve ficar desabilitado quando:
-- `isSaving` esta true (ja existe)
-- `slugStatus` e 'checking', 'taken' ou 'invalid'
+- Importar `StudioPublicProfile` de `src/pages/StudioPublicProfile`
+- Adicionar rota `/studio/:slug` (publica, sem ProtectedRoute)
 
-## Nenhuma migracao necessaria
+## Detalhes tecnicos
 
-Todas as colunas necessarias ja existem no banco. A RPC `check_slug_availability` ja existe. Apenas mudancas no frontend.
+- Reutilizar `formatTamanhoEstudio` de `src/lib/formatters.ts` para formatar o tamanho
+- Reutilizar `VagaListItem` de `src/hooks/useJobs` como tipo para as vagas
+- Reutilizar `JobCard` de `src/components/jobs/JobCard.tsx` para renderizar cada vaga
+- Reutilizar `Header` de `src/components/layout/Header.tsx`
+- Icones do lucide-react: MapPin, Users, Globe, Calendar
+- Nenhuma migracao de banco necessaria -- todos os dados ja existem
