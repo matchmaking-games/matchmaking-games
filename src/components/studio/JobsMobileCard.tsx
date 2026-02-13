@@ -126,7 +126,7 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                   <DropdownMenuContent align="end">
                     {/* Editar - available for ATIVA, OCULTA, RASCUNHO (not EXPIRADA) */}
                     {status !== "expirada" && (
-                      <DropdownMenuItem onClick={() => navigate(`/studio/jobs/${vaga.id}/edit`)}>
+                      <DropdownMenuItem onClick={() => navigate(`/studio/manage/jobs/${vaga.id}/edit`)}>
                         <Pencil className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>

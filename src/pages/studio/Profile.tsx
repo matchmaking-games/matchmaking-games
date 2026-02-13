@@ -244,7 +244,7 @@ export default function StudioProfile() {
     if (!loadingMembership && membership) {
       fetchStudioData();
     } else if (!loadingMembership && !membership) {
-      navigate("/studio/new");
+      navigate("/studio/manage/new");
     }
   }, [membership, loadingMembership, navigate, toast, fetchMunicipios]);
 
@@ -689,7 +689,7 @@ export default function StudioProfile() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate("/studio/dashboard")}
+                  onClick={() => navigate("/studio/manage/dashboard")}
                   disabled={isSaving}
                 >
                   Cancelar

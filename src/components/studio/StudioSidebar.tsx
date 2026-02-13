@@ -11,19 +11,19 @@ import { Separator } from "@/components/ui/separator";
 import { StudioMembership } from "@/hooks/useStudioMembership";
 const navItems = [{
   title: "Dashboard",
-  url: "/studio/dashboard",
+  url: "/studio/manage/dashboard",
   icon: LayoutDashboard
 }, {
   title: "Vagas",
-  url: "/studio/jobs",
+  url: "/studio/manage/jobs",
   icon: Briefcase
 }, {
   title: "Perfil do Estúdio",
-  url: "/studio/profile",
+  url: "/studio/manage/profile",
   icon: Building2
 }, {
   title: "Equipe",
-  url: "/studio/team",
+  url: "/studio/manage/team",
   icon: UserPlus
 }];
 const getInitials = (name: string) => {
@@ -74,7 +74,7 @@ export function StudioSidebar({
 
               {navItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end={item.url === "/studio/dashboard"} className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
+                    <NavLink to={item.url} end={item.url === "/studio/manage/dashboard"} className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
                       <item.icon className="h-[22px] w-[22px]" />
                       <span>{item.title}</span>
                     </NavLink>

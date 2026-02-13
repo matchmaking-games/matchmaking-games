@@ -59,7 +59,7 @@ export function DashboardSidebar() {
   const { data: hasStudio, isLoading: isLoadingStudio } = useHasStudio();
 
   const navItems = hasStudio
-    ? [...baseNavItems, { title: "Meu estúdio", url: "/studio/dashboard", icon: Building2 }]
+    ? [...baseNavItems, { title: "Meu estúdio", url: "/studio/manage/dashboard", icon: Building2 }]
     : baseNavItems;
 
   const handleSignOut = async () => {
@@ -125,7 +125,7 @@ export function DashboardSidebar() {
               {!isLoadingStudio && !hasStudio && (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link to="/studio/new" className="cursor-pointer">
+                    <Link to="/studio/manage/new" className="cursor-pointer">
                       <Building2 className="mr-2 h-4 w-4" />
                       Criar Estúdio
                     </Link>

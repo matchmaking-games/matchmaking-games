@@ -166,7 +166,7 @@ export default function JobForm() {
     if (hasUnsavedChanges && !formSaved) {
       setShowExitDialog(true);
     } else {
-      navigate("/studio/jobs");
+      navigate("/studio/manage/jobs");
     }
   };
 
@@ -421,7 +421,7 @@ export default function JobForm() {
 
   // Redirect if not authorized
   if (!isLoading && !isAuthorized) {
-    return <Navigate to="/studio/jobs" replace />;
+    return <Navigate to="/studio/manage/jobs" replace />;
   }
 
   // Loading state
@@ -447,7 +447,7 @@ export default function JobForm() {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/studio/jobs")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/studio/manage/jobs")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <CardTitle className="font-display text-2xl">{isEditing ? "Editar Vaga" : "Criar Nova Vaga"}</CardTitle>
@@ -1022,7 +1022,7 @@ export default function JobForm() {
             <AlertDialogCancel onClick={() => setShowExitDialog(false)}>
               Continuar editando
             </AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => navigate("/studio/jobs")}>
+            <AlertDialogAction variant="destructive" onClick={() => navigate("/studio/manage/jobs")}>
               Descartar e sair
             </AlertDialogAction>
           </AlertDialogFooter>

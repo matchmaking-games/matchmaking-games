@@ -116,7 +116,7 @@ export default function StudioJobs() {
     }
 
     // Clean query params
-    navigate('/studio/jobs', { replace: true });
+    navigate('/studio/manage/jobs', { replace: true });
   }, [verifyPaymentWithPolling, refetch, navigate]);
 
   // Detect payment return from Stripe
@@ -129,7 +129,7 @@ export default function StudioJobs() {
         handlePaymentSuccess(sessionId);
       } else {
         console.warn('[VERIFY-PAYMENT] Invalid session_id format:', sessionId);
-        navigate('/studio/jobs', { replace: true });
+        navigate('/studio/manage/jobs', { replace: true });
       }
     }
   }, [searchParams, handlePaymentSuccess, navigate]);
@@ -254,7 +254,7 @@ export default function StudioJobs() {
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h1 className="text-2xl font-display font-bold">Minhas Vagas</h1>
-              <Button onClick={() => navigate("/studio/jobs/new")}>
+              <Button onClick={() => navigate("/studio/manage/jobs/new")}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Vaga
               </Button>
@@ -312,7 +312,7 @@ export default function StudioJobs() {
                     : "Não há vagas nesta categoria"}
                 </p>
                 {activeTab === "todas" && (
-                  <Button onClick={() => navigate("/studio/jobs/new")}>
+                  <Button onClick={() => navigate("/studio/manage/jobs/new")}>
                     <Plus className="h-4 w-4 mr-2" />
                     Publicar Vaga
                   </Button>
