@@ -306,7 +306,6 @@ export type Database = {
           cidade: string | null
           criado_em: string | null
           criado_por: string
-          descricao: string | null
           especialidades: string[] | null
           estado: string | null
           fundado_em: string | null
@@ -323,7 +322,6 @@ export type Database = {
           cidade?: string | null
           criado_em?: string | null
           criado_por: string
-          descricao?: string | null
           especialidades?: string[] | null
           estado?: string | null
           fundado_em?: string | null
@@ -340,7 +338,6 @@ export type Database = {
           cidade?: string | null
           criado_em?: string | null
           criado_por?: string
-          descricao?: string | null
           especialidades?: string[] | null
           estado?: string | null
           fundado_em?: string | null

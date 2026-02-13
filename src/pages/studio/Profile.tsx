@@ -218,7 +218,7 @@ export default function StudioProfile() {
         setSlug(data.slug || "");
         setOriginalSlug(data.slug || "");
         if (data.slug) setSlugStatus("available");
-        setDescricao(data.descricao || "");
+        setDescricao((data as any).descricao || "");
         setSobre(data.sobre || "");
         
         // Use estado and cidade directly from database
@@ -363,7 +363,7 @@ export default function StudioProfile() {
       .update({
         nome,
         slug,
-        descricao: descricao || null,
+        // descricao field removed - column doesn't exist in estudios table
         sobre: sobre || null,
         estado: estado || null,
         cidade: cidade || null,
