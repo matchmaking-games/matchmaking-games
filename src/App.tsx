@@ -102,7 +102,7 @@ const App = () => (
           <Route path="/p/:slug" element={<PublicProfile />} />
           <Route path="/studio/:slug" element={<StudioPublicProfile />} />
           <Route
-            path="/studio/new"
+            path="/studio/manage/new"
             element={
               <ProtectedRoute>
                 <NewStudio />
@@ -110,7 +110,7 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/dashboard"
+            path="/studio/manage/dashboard"
             element={
               <ProtectedRoute>
                 <StudioDashboard />
@@ -118,7 +118,7 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/profile"
+            path="/studio/manage/profile"
             element={
               <ProtectedRoute>
                 <StudioProfile />
@@ -126,7 +126,7 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/jobs"
+            path="/studio/manage/jobs"
             element={
               <ProtectedRoute>
                 <StudioJobs />
@@ -134,7 +134,7 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/jobs/new"
+            path="/studio/manage/jobs/new"
             element={
               <ProtectedRoute>
                 <JobForm />
@@ -142,7 +142,7 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/jobs/:id/edit"
+            path="/studio/manage/jobs/:id/edit"
             element={
               <ProtectedRoute>
                 <JobForm />

@@ -92,7 +92,7 @@ export default function NewStudio() {
           title: "Você já tem um estúdio",
           description: "Redirecionando para o dashboard...",
         });
-        navigate("/studio/dashboard");
+        navigate("/studio/manage/dashboard");
       }
     };
 
@@ -200,7 +200,7 @@ export default function NewStudio() {
     queryClient.invalidateQueries({ queryKey: ["has-studio"] });
 
     // Redirecionar para dashboard do estúdio
-    navigate("/studio/dashboard");
+    navigate("/studio/manage/dashboard");
   };
 
   const renderSlugStatus = () => {

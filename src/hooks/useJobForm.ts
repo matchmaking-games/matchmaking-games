@@ -321,7 +321,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
         description: "Você pode continuar editando depois.",
       });
 
-      navigate("/studio/jobs");
+      navigate("/studio/manage/jobs");
     } catch (err) {
       console.error("Error saving draft:", err);
       toast({
@@ -390,7 +390,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
         description: "Alterações salvas com sucesso.",
       });
 
-      navigate("/studio/jobs");
+      navigate("/studio/manage/jobs");
     } catch (err) {
       console.error("Error updating draft:", err);
       toast({
@@ -471,7 +471,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           description: `A vaga "${data.titulo}" foi criada com sucesso.`,
         });
 
-        navigate("/studio/jobs");
+        navigate("/studio/manage/jobs");
 
       } else if (data.tipo_publicacao === 'destaque') {
         // Featured job: save as awaiting payment, then redirect to Stripe
@@ -616,7 +616,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
         description: `A vaga "${data.titulo}" foi atualizada com sucesso.`,
       });
 
-      navigate("/studio/jobs");
+      navigate("/studio/manage/jobs");
     } catch (err) {
       console.error("Error updating job:", err);
       toast({

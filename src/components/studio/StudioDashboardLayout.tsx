@@ -15,7 +15,7 @@ export function StudioDashboardLayout({ children }: StudioDashboardLayoutProps) 
 
   useEffect(() => {
     if (!isLoading && !membership) {
-      navigate("/studio/new");
+      navigate("/studio/manage/new");
     }
   }, [isLoading, membership, navigate]);
 
