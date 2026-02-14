@@ -29,15 +29,18 @@ export interface PublicUserData {
   mostrar_email: boolean | null;
   mostrar_telefone: boolean | null;
   slug: string;
+  pronomes: string | null;
 }
 
 export interface PublicProjectData {
   id: string;
   titulo: string;
+  slug: string | null;
   descricao_curta: string | null;
   imagem_capa_url: string | null;
   tipo: TipoProjeto;
   status: StatusProjeto;
+  destaque: boolean | null;
   demo_url: string | null;
   video_url: string | null;
   codigo_url: string | null;
@@ -108,7 +111,8 @@ export interface PublicEducationData {
 
 export interface PublicProfileData {
   user: PublicUserData | null;
-  projects: PublicProjectData[];
+  featuredProjects: PublicProjectData[];
+  otherProjects: PublicProjectData[];
   skills: PublicSkillData[];
   experiences: PublicExperienceData[];
   educations: PublicEducationData[];
@@ -122,7 +126,7 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       id, nome_completo, titulo_profissional,
       bio_curta, sobre, estado, cidade, avatar_url, banner_url,
       disponivel_para_trabalho, website, linkedin_url, github_url,
-      portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug
+      portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug, pronomes
     `)
     .eq("slug", slug)
     .single();
@@ -130,7 +134,8 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   if (userError || !user) {
     return {
       user: null,
-      projects: [],
+      featuredProjects: [],
+      otherProjects: [],
       skills: [],
       experiences: [],
       educations: [],
@@ -142,12 +147,11 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
     supabase
       .from("projetos")
       .select(`
-        id, titulo, descricao_curta, imagem_capa_url, tipo, status,
-        demo_url, video_url, codigo_url, ordem,
+        id, titulo, slug, descricao_curta, imagem_capa_url, tipo, status,
+        destaque, demo_url, video_url, codigo_url, ordem,
         projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))
       `)
       .eq("user_id", user.id)
-      .eq("destaque", true)
       .neq("status", "arquivado")
       .order("ordem"),
 
@@ -191,9 +195,14 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
     )
   }));
 
+  const allProjects = (projectsRes.data || []) as PublicProjectData[];
+  const featuredProjects = allProjects.filter(p => p.destaque === true);
+  const otherProjects = allProjects.filter(p => p.destaque !== true);
+
   return {
     user: user as PublicUserData,
-    projects: (projectsRes.data || []) as PublicProjectData[],
+    featuredProjects,
+    otherProjects,
     skills: (skillsRes.data || []) as PublicSkillData[],
     experiences: experiencesWithSortedCargos as PublicExperienceData[],
     educations: (educationsRes.data || []) as PublicEducationData[],

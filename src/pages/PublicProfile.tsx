@@ -123,7 +123,7 @@ export default function PublicProfile() {
     );
   }
 
-  const { user, projects, skills, experiences, educations } = data;
+  const { user, featuredProjects, otherProjects, skills, experiences, educations } = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,7 +141,7 @@ export default function PublicProfile() {
         {/* Seções */}
         <main className="max-w-4xl mx-auto px-4 py-12 space-y-8">
           <AboutSection user={user} />
-          <ProjectsSection projects={projects} />
+          <ProjectsSection featuredProjects={featuredProjects} otherProjects={otherProjects} userSlug={user.slug} />
           <SkillsSection skills={skills} />
           <ExperienceSection experiences={experiences} />
           <EducationSection educations={educations} />

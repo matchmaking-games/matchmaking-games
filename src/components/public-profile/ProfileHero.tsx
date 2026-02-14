@@ -1,8 +1,6 @@
-import { Share2, MapPin, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin, CheckCircle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import type { PublicUserData } from "@/hooks/usePublicProfile";
 
 interface ProfileHeroProps {
@@ -10,26 +8,6 @@ interface ProfileHeroProps {
 }
 
 export function ProfileHero({ user }: ProfileHeroProps) {
-  const { toast } = useToast();
-
-  const handleShare = async () => {
-    const url = `https://matchmaking.games/p/${user.slug}`;
-    
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Link copiado!",
-        description: "O link do perfil foi copiado para a área de transferência.",
-      });
-    } catch {
-      toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar o link.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const displayName = user.nome_completo;
   const initials = displayName
     .split(" ")
@@ -66,19 +44,16 @@ export function ProfileHero({ user }: ProfileHeroProps) {
             </Avatar>
           </div>
 
-          {/* Share button - absolute positioned */}
-          <div className="absolute right-0 top-4">
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar
-            </Button>
-          </div>
-
           {/* Info section */}
           <div className="pt-[70px] md:pt-[80px] lg:pt-[90px] pb-6 space-y-3">
             <div>
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground">
                 {displayName}
+                {user.pronomes && (
+                  <span className="text-base md:text-lg text-muted-foreground font-normal ml-2">
+                    · {user.pronomes}
+                  </span>
+                )}
               </h1>
               {user.titulo_profissional && (
                 <p className="text-lg text-muted-foreground mt-1">
