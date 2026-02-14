@@ -1,10 +1,11 @@
-import { ExternalLink, Play, Code } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import type { PublicProjectData } from "@/hooks/usePublicProfile";
 
 interface ProjectsSectionProps {
-  projects: PublicProjectData[];
+  featuredProjects: PublicProjectData[];
+  otherProjects: PublicProjectData[];
+  userSlug: string;
 }
 
 const typeLabels: Record<string, string> = {
@@ -21,105 +22,141 @@ const typeColors: Record<string, string> = {
   open_source: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
 };
 
-export function ProjectsSection({ projects }: ProjectsSectionProps) {
+function getProjectUrl(userSlug: string, project: PublicProjectData) {
+  const projectSlug = project.slug || project.id;
+  return `/p/${userSlug}/project/${projectSlug}`;
+}
+
+function FeaturedProjectCard({ project, userSlug }: { project: PublicProjectData; userSlug: string }) {
+  return (
+    <a
+      href={getProjectUrl(userSlug, project)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <Card className="overflow-hidden border-border/50 hover:border-border shadow-md hover:shadow-lg transition-all cursor-pointer">
+        {/* Cover image */}
+        <div className="relative aspect-video bg-muted overflow-hidden">
+          {project.imagem_capa_url ? (
+            <img
+              src={project.imagem_capa_url}
+              alt={project.titulo}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              <span className="text-3xl font-display font-bold text-muted-foreground/20">
+                {project.titulo.charAt(0)}
+              </span>
+            </div>
+          )}
+
+          {/* Type badge */}
+          <Badge
+            className={`absolute top-3 left-3 border-0 ${typeColors[project.tipo] || "bg-muted text-muted-foreground"}`}
+          >
+            {typeLabels[project.tipo] || project.tipo}
+          </Badge>
+        </div>
+
+        <CardContent className="p-4 space-y-2">
+          <h3 className="font-semibold text-foreground line-clamp-1">
+            {project.titulo}
+          </h3>
+          {project.descricao_curta && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {project.descricao_curta}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </a>
+  );
+}
+
+function CompactProjectCard({ project, userSlug }: { project: PublicProjectData; userSlug: string }) {
+  return (
+    <a
+      href={getProjectUrl(userSlug, project)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <Card className="overflow-hidden border-border/50 hover:border-border shadow-sm hover:shadow-md transition-all cursor-pointer p-4 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-semibold text-foreground text-sm line-clamp-1">
+            {project.titulo}
+          </h3>
+          <Badge
+            className={`shrink-0 text-xs border-0 ${typeColors[project.tipo] || "bg-muted text-muted-foreground"}`}
+          >
+            {typeLabels[project.tipo] || project.tipo}
+          </Badge>
+        </div>
+        {project.descricao_curta && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {project.descricao_curta}
+          </p>
+        )}
+      </Card>
+    </a>
+  );
+}
+
+export function ProjectsSection({ featuredProjects, otherProjects, userSlug }: ProjectsSectionProps) {
+  const isEmpty = featuredProjects.length === 0 && otherProjects.length === 0;
+
   return (
     <Card id="projetos" className="scroll-mt-32 shadow-none">
       <CardHeader>
         <h2 className="text-xl font-display font-semibold text-foreground">
-          Projetos em Destaque
+          Projetos
         </h2>
       </CardHeader>
-      <CardContent>
-        {projects.length === 0 ? (
+      <CardContent className="space-y-8">
+        {isEmpty ? (
           <p className="text-muted-foreground italic">
-            Nenhum projeto em destaque ainda.
+            Nenhum projeto adicionado ainda.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <Card
-                key={project.id}
-                className="overflow-hidden border-border/50 hover:border-border shadow-md hover:shadow-lg transition-all group"
-              >
-                {/* Cover image */}
-                <div className="relative aspect-video bg-muted overflow-hidden">
-                  {project.imagem_capa_url ? (
-                    <img
-                      src={project.imagem_capa_url}
-                      alt={project.titulo}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          <>
+            {/* Featured projects */}
+            {featuredProjects.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-display font-semibold text-foreground">
+                  Em Destaque
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {featuredProjects.map((project) => (
+                    <FeaturedProjectCard
+                      key={project.id}
+                      project={project}
+                      userSlug={userSlug}
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-                      <span className="text-3xl font-display font-bold text-muted-foreground/20">
-                        {project.titulo.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Type badge */}
-                  <Badge
-                    className={`absolute top-3 left-3 border-0 ${typeColors[project.tipo] || "bg-muted text-muted-foreground"}`}
-                  >
-                    {typeLabels[project.tipo] || project.tipo}
-                  </Badge>
+                  ))}
                 </div>
+              </div>
+            )}
 
-                <CardContent className="p-4 space-y-3">
-                  {/* Title */}
-                  <h3 className="font-semibold text-foreground line-clamp-1">
-                    {project.titulo}
-                  </h3>
-
-                  {/* Description */}
-                  {project.descricao_curta && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {project.descricao_curta}
-                    </p>
-                  )}
-
-                  {/* Links */}
-                  {(project.demo_url || project.video_url || project.codigo_url) && (
-                    <div className="flex gap-2 pt-2">
-                      {project.demo_url && (
-                        <a
-                          href={project.demo_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title="Ver demo"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
-                      {project.video_url && (
-                        <a
-                          href={project.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title="Ver vídeo"
-                        >
-                          <Play className="w-4 h-4" />
-                        </a>
-                      )}
-                      {project.codigo_url && (
-                        <a
-                          href={project.codigo_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                          title="Ver código"
-                        >
-                          <Code className="w-4 h-4" />
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            {/* Other projects */}
+            {otherProjects.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-display font-semibold text-foreground">
+                  Outros Projetos
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {otherProjects.map((project) => (
+                    <CompactProjectCard
+                      key={project.id}
+                      project={project}
+                      userSlug={userSlug}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

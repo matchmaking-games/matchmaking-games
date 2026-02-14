@@ -18,6 +18,7 @@ import Projects from "./pages/Projects";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
+import ProjectDetail from "./pages/ProjectDetail";
 import NewStudio from "./pages/studio/NewStudio";
 import StudioDashboard from "./pages/studio/Dashboard";
 import StudioProfile from "./pages/studio/Profile";
@@ -100,6 +101,7 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
+          <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
           <Route path="/studio/:slug" element={<StudioPublicProfile />} />
           <Route
             path="/studio/manage/new"

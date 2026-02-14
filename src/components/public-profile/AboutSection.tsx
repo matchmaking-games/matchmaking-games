@@ -1,5 +1,7 @@
-import { Globe, Linkedin, Github, Briefcase, Mail, Phone } from "lucide-react";
+import { Globe, Linkedin, Github, Briefcase, Mail, Phone, Copy } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 import type { PublicUserData } from "@/hooks/usePublicProfile";
 
 interface AboutSectionProps {
@@ -7,7 +9,7 @@ interface AboutSectionProps {
 }
 
 export function AboutSection({ user }: AboutSectionProps) {
-  const hasLinks = user.website || user.linkedin_url || user.github_url || user.portfolio_url;
+  const { toast } = useToast();
   const showEmail = user.mostrar_email && user.email;
   const showPhone = user.mostrar_telefone && user.telefone;
   const hasContact = showEmail || showPhone;
@@ -18,6 +20,23 @@ export function AboutSection({ user }: AboutSectionProps) {
     { url: user.github_url, icon: Github, label: "GitHub" },
     { url: user.portfolio_url, icon: Briefcase, label: "Portfolio" },
   ].filter((link) => link.url);
+
+  const handleCopyUrl = async () => {
+    const url = `https://matchmaking.games/p/${user.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copiado!",
+        description: "O link do perfil foi copiado para a área de transferência.",
+      });
+    } catch {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card id="sobre" className="scroll-mt-32">
@@ -39,23 +58,35 @@ export function AboutSection({ user }: AboutSectionProps) {
           </div>
         )}
 
-        {/* Links sociais */}
-        {hasLinks && (
-          <div className="flex flex-wrap gap-3">
-            {socialLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.url!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+        {/* Links sociais + copiar URL */}
+        <div className="flex flex-wrap gap-2">
+          {socialLinks.map((link) => (
+            <Tooltip key={link.label}>
+              <TooltipTrigger asChild>
+                <a
+                  href={link.url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center p-2.5 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <link.icon className="w-4 h-4" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>{link.label}</TooltipContent>
+            </Tooltip>
+          ))}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleCopyUrl}
+                className="inline-flex items-center justify-center p-2.5 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <link.icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{link.label}</span>
-              </a>
-            ))}
-          </div>
-        )}
+                <Copy className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Copiar link do perfil</TooltipContent>
+          </Tooltip>
+        </div>
 
         {/* Contato */}
         {hasContact && (
@@ -87,7 +118,7 @@ export function AboutSection({ user }: AboutSectionProps) {
         )}
 
         {/* Estado vazio */}
-        {!user.bio_curta && !user.sobre && !hasLinks && !hasContact && (
+        {!user.bio_curta && !user.sobre && socialLinks.length === 0 && !hasContact && (
           <p className="text-muted-foreground italic">
             Nenhuma informação disponível ainda.
           </p>
