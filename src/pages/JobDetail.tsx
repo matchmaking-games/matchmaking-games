@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Copy, MapPin, Users, ChevronLeft } from "lucide-react";
+import { Copy, MapPin, Users, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -252,42 +252,82 @@ export default function JobDetail() {
             {/* Sidebar (mobile: first, desktop: right) */}
             <aside className="lg:flex-1 space-y-4 order-first lg:order-last">
               {/* Studio card */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="w-16 h-16 rounded-lg">
-                      <AvatarImage
-                        src={vaga.estudio?.logo_url || undefined}
-                        alt={vaga.estudio?.nome}
-                      />
-                      <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-lg">
-                        {vaga.estudio?.nome?.charAt(0).toUpperCase() || "E"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      {/* Plain text - no link */}
-                      <h2 className="font-semibold text-lg">
-                        {vaga.estudio?.nome}
-                      </h2>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 text-sm text-muted-foreground">
-                    {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 flex-shrink-0" />
-                        <span>{vaga.estudio.cidade}, {vaga.estudio.estado}</span>
+              {vaga.estudio?.slug ? (
+                <Link to={`/studio/${vaga.estudio.slug}`} className="block">
+                  <Card className="transition-colors duration-200 hover:bg-accent cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <Avatar className="w-16 h-16 rounded-lg">
+                          <AvatarImage
+                            src={vaga.estudio?.logo_url || undefined}
+                            alt={vaga.estudio?.nome}
+                          />
+                          <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-lg">
+                            {vaga.estudio?.nome?.charAt(0).toUpperCase() || "E"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h2 className="font-semibold text-lg flex items-center gap-1">
+                            {vaga.estudio?.nome}
+                            <ChevronRight className="w-4 h-4 text-muted-foreground md:hidden" />
+                          </h2>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 flex-shrink-0" />
-                      <span>
-                        {formatTamanhoEstudio(vaga.estudio?.tamanho || null)}
-                      </span>
+
+                      <div className="space-y-3 text-sm text-muted-foreground">
+                        {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 flex-shrink-0" />
+                            <span>{vaga.estudio.cidade}, {vaga.estudio.estado}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 flex-shrink-0" />
+                          <span>
+                            {formatTamanhoEstudio(vaga.estudio?.tamanho || null)}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ) : (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Avatar className="w-16 h-16 rounded-lg">
+                        <AvatarImage
+                          src={vaga.estudio?.logo_url || undefined}
+                          alt={vaga.estudio?.nome}
+                        />
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-lg">
+                          {vaga.estudio?.nome?.charAt(0).toUpperCase() || "E"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h2 className="font-semibold text-lg">
+                          {vaga.estudio?.nome}
+                        </h2>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 flex-shrink-0" />
+                          <span>{vaga.estudio?.cidade}, {vaga.estudio?.estado}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 flex-shrink-0" />
+                        <span>
+                          {formatTamanhoEstudio(vaga.estudio?.tamanho || null)}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* How to apply - only show if contact exists */}
               {vaga.contato_candidatura && (
@@ -298,6 +338,9 @@ export default function JobDetail() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Para se candidatar a esta vaga, entre em contato através do email abaixo:
+                    </p>
                     <div className="flex gap-2">
                       <div
                         onClick={handleCopy}

@@ -52,6 +52,7 @@ async function fetchJobDetail(slug: string): Promise<JobDetailData | null> {
     `)
     .eq("slug", slug)
     .eq("ativa", true)
+    .eq("status", "publicada")
     .gt("expira_em", now)
     .single();
 
