@@ -1,108 +1,70 @@
 
 
-# Reorganizar Rotas Privadas do Estudio: /studio/* para /studio/manage/*
+# Melhorias na Pagina de Detalhe da Vaga (/jobs/:slug)
 
-## Resumo
+## Verificacao previa
 
-Renomear todas as rotas privadas de gerenciamento do estudio de `/studio/*` para `/studio/manage/*`, liberando `/studio/:slug` para a pagina publica sem conflitos.
+Antes das melhorias, confirmei o estado atual:
 
-## Mapeamento de Rotas
+1. **Logo do estudio**: OK. O card lateral ja usa Avatar com `logo_url` e fallback com inicial do nome (linha 258-266).
+2. **Validacao de visibilidade**: Parcialmente OK. A query filtra `ativa = true` e `expira_em > now()`, mas **NAO filtra `status = 'publicada'`**. Isso sera corrigido.
+3. **Pagina 404**: OK. O componente `JobNotFound` ja e exibido quando a vaga nao e encontrada (linha 134-143).
 
-```text
-/studio/new             -->  /studio/manage/new
-/studio/dashboard       -->  /studio/manage/dashboard
-/studio/profile         -->  /studio/manage/profile
-/studio/team            -->  /studio/manage/team
-/studio/jobs            -->  /studio/manage/jobs
-/studio/jobs/new        -->  /studio/manage/jobs/new
-/studio/jobs/:id/edit   -->  /studio/manage/jobs/:id/edit
+## Correcao: Adicionar filtro de status na query
+
+### Arquivo: `src/hooks/useJobDetail.ts`
+
+Adicionar `.eq("status", "publicada")` a query do Supabase, entre `.eq("ativa", true)` e `.gt("expira_em", now)`. Isso garante que rascunhos e vagas ocultas nao sejam acessiveis pela URL publica.
+
+## Melhoria 1: Texto explicativo de candidatura
+
+### Arquivo: `src/pages/JobDetail.tsx`
+
+No card "Como se candidatar" (linhas 293-318), adicionar um paragrafo explicativo entre o `CardHeader` e o bloco do email:
+
+```
+<p className="text-sm text-muted-foreground mb-3">
+  Para se candidatar a esta vaga, entre em contato através do email abaixo:
+</p>
 ```
 
-## Rotas que NAO mudam
+Posicionar dentro do `CardContent`, antes da div com o email e botao de copia.
 
-- `/studio/:slug` -- pagina publica (permanece como esta)
-- `/studio/${membership.estudio.slug}` -- link para pagina publica no sidebar footer (e uma URL publica, nao rota privada)
-- `matchmaking.games/studio/` -- preview de URL no formulario de slug (e texto visual, nao rota)
+## Melhoria 2: Card do estudio clicavel
 
-## Arquivos afetados (10 arquivos, todas as ocorrencias)
+### Arquivo: `src/pages/JobDetail.tsx`
 
-### 1. `src/App.tsx` (6 rotas a alterar)
+**Mudancas:**
+- Importar `ChevronRight` do lucide-react
+- Envolver o card do estudio (linhas 255-290) com `<Link to={/studio/${vaga.estudio?.slug}}>` 
+- Adicionar classes de hover ao Card: `transition-colors duration-200 hover:bg-accent cursor-pointer`
+- Ao lado do nome do estudio, adicionar icone `ChevronRight` com classe `md:hidden` (visivel apenas no mobile)
+- O nome do estudio fica em uma div flex com `items-center gap-1` para alinhar o icone
 
-Alterar os paths das rotas:
-- `/studio/new` para `/studio/manage/new`
-- `/studio/dashboard` para `/studio/manage/dashboard`
-- `/studio/profile` para `/studio/manage/profile`
-- `/studio/jobs` para `/studio/manage/jobs`
-- `/studio/jobs/new` para `/studio/manage/jobs/new`
-- `/studio/jobs/:id/edit` para `/studio/manage/jobs/:id/edit`
+**Estrutura resultante:**
+```
+<Link to={`/studio/${vaga.estudio?.slug}`} className="block">
+  <Card className="transition-colors duration-200 hover:bg-accent cursor-pointer">
+    <CardContent className="pt-6">
+      <!-- Avatar + Nome com icone mobile -->
+      <div>
+        <h2 className="font-semibold text-lg flex items-center gap-1">
+          {vaga.estudio?.nome}
+          <ChevronRight className="w-4 h-4 text-muted-foreground md:hidden" />
+        </h2>
+      </div>
+      <!-- Localizacao, tamanho -->
+    </CardContent>
+  </Card>
+</Link>
+```
 
-A rota `/studio/:slug` permanece inalterada.
+O Link so sera renderizado se `vaga.estudio?.slug` existir. Caso contrario, manter o card sem link (fallback seguro).
 
-### 2. `src/components/studio/StudioSidebar.tsx` (4 ocorrencias)
+## Resumo das alteracoes
 
-Array `navItems`:
-- `"/studio/dashboard"` para `"/studio/manage/dashboard"`
-- `"/studio/jobs"` para `"/studio/manage/jobs"`
-- `"/studio/profile"` para `"/studio/manage/profile"`
-- `"/studio/team"` para `"/studio/manage/team"`
-
-Tambem atualizar a comparacao `end={item.url === "/studio/dashboard"}` para `"/studio/manage/dashboard"`.
-
-NAO alterar: `href={/studio/${membership.estudio.slug}}` (link publico).
-
-### 3. `src/components/dashboard/DashboardSidebar.tsx` (2 ocorrencias)
-
-- Linha 62: `"/studio/dashboard"` para `"/studio/manage/dashboard"` (nav item "Meu estudio")
-- Linha 128: `"/studio/new"` para `"/studio/manage/new"` (link "Criar Estudio" no dropdown)
-
-### 4. `src/components/studio/StudioDashboardLayout.tsx` (1 ocorrencia)
-
-- Linha 18: `navigate("/studio/new")` para `navigate("/studio/manage/new")`
-
-### 5. `src/pages/studio/NewStudio.tsx` (2 ocorrencias)
-
-- Linha 95: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
-- Linha 203: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
-
-NAO alterar: `matchmaking.games/studio/` (texto visual do preview de URL).
-
-### 6. `src/pages/studio/Profile.tsx` (2 ocorrencias)
-
-- Linha 247: `navigate("/studio/new")` para `navigate("/studio/manage/new")`
-- Linha 692: `navigate("/studio/dashboard")` para `navigate("/studio/manage/dashboard")`
-
-NAO alterar: `matchmaking.games/studio/` (texto do preview de URL do slug).
-
-### 7. `src/pages/studio/Jobs.tsx` (4 ocorrencias)
-
-- Linha 119: `navigate('/studio/jobs', ...)` para `navigate('/studio/manage/jobs', ...)`
-- Linha 132: `navigate('/studio/jobs', ...)` para `navigate('/studio/manage/jobs', ...)`
-- Linha 257: `navigate("/studio/jobs/new")` para `navigate("/studio/manage/jobs/new")`
-- Linha 315: `navigate("/studio/jobs/new")` para `navigate("/studio/manage/jobs/new")`
-
-### 8. `src/pages/studio/JobForm.tsx` (4 ocorrencias)
-
-- Linha 169: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-- Linha 424: `<Navigate to="/studio/jobs" replace />` para `<Navigate to="/studio/manage/jobs" replace />`
-- Linha 450: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-- Linha 1025: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-
-### 9. `src/hooks/useJobForm.ts` (4 ocorrencias)
-
-- Linha 324: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-- Linha 393: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-- Linha 474: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-- Linha 619: `navigate("/studio/jobs")` para `navigate("/studio/manage/jobs")`
-
-### 10. `src/components/studio/JobsTable.tsx` (1 ocorrencia)
-
-- Linha 147: `` navigate(`/studio/jobs/${vaga.id}/edit`) `` para `` navigate(`/studio/manage/jobs/${vaga.id}/edit`) ``
-
-### 11. `src/components/studio/JobsMobileCard.tsx` (1 ocorrencia)
-
-- Linha 129: `` navigate(`/studio/jobs/${vaga.id}/edit`) `` para `` navigate(`/studio/manage/jobs/${vaga.id}/edit`) ``
-
-## Total: 31 ocorrencias em 11 arquivos
-
-Nenhuma migracao de banco, nenhuma alteracao de logica. Apenas substituicao de strings de rota.
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/hooks/useJobDetail.ts` | Adicionar filtro `.eq("status", "publicada")` |
+| `src/pages/JobDetail.tsx` | Texto explicativo no card de candidatura + card do estudio clicavel com hover e icone mobile |
 
