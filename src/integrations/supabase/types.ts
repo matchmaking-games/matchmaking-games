@@ -717,10 +717,8 @@ export type Database = {
           codigo_url: string | null
           criado_em: string | null
           demo_url: string | null
-          descricao_completa: string | null
-          descricao_curta: string | null
+          descricao: string | null
           destaque: boolean | null
-          em_andamento: boolean | null
           fim: string | null
           id: string
           imagem_capa_url: string | null
@@ -740,10 +738,8 @@ export type Database = {
           codigo_url?: string | null
           criado_em?: string | null
           demo_url?: string | null
-          descricao_completa?: string | null
-          descricao_curta?: string | null
+          descricao?: string | null
           destaque?: boolean | null
-          em_andamento?: boolean | null
           fim?: string | null
           id?: string
           imagem_capa_url?: string | null
@@ -763,10 +759,8 @@ export type Database = {
           codigo_url?: string | null
           criado_em?: string | null
           demo_url?: string | null
-          descricao_completa?: string | null
-          descricao_curta?: string | null
+          descricao?: string | null
           destaque?: boolean | null
-          em_andamento?: boolean | null
           fim?: string | null
           id?: string
           imagem_capa_url?: string | null
@@ -1164,7 +1158,7 @@ export type Database = {
         | "entrevista"
         | "contratado"
       status_jogo: "lancado" | "em_desenvolvimento" | "cancelado"
-      status_projeto: "publicado" | "em_desenvolvimento" | "arquivado"
+      status_projeto: "em_andamento" | "concluido"
       tamanho_estudio: "micro" | "pequeno" | "medio" | "grande"
       tipo_contrato: "clt" | "pj" | "freelance" | "estagio"
       tipo_educacao: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao"
@@ -1311,7 +1305,7 @@ export const Constants = {
         "contratado",
       ],
       status_jogo: ["lancado", "em_desenvolvimento", "cancelado"],
-      status_projeto: ["publicado", "em_desenvolvimento", "arquivado"],
+      status_projeto: ["em_andamento", "concluido"],
       tamanho_estudio: ["micro", "pequeno", "medio", "grande"],
       tipo_contrato: ["clt", "pj", "freelance", "estagio"],
       tipo_educacao: ["graduacao", "pos", "tecnico", "curso", "certificacao"],
