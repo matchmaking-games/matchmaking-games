@@ -1,81 +1,105 @@
 
-# Atualizar Sistema de Projetos para Novo Schema do Banco
+# Pagina de Detalhes do Projeto (/p/:slug/project/:projectSlug)
 
 ## Resumo
 
-Atualizar o codigo para refletir as mudancas no banco de dados: remover campos deletados (`em_andamento`, `descricao_curta`, `descricao_completa`), usar o novo campo `descricao`, e atualizar o enum `status_projeto` de 3 para 2 valores (`em_andamento`, `concluido`).
+Criar a pagina completa de detalhes de um projeto individual, acessivel publicamente. Inclui criacao de um hook dedicado `useProjectDetail` para buscar dados do projeto com joins (habilidades, estudios colaboradores, dono do projeto), e a implementacao completa do componente `ProjectDetail.tsx` substituindo o placeholder atual.
 
-## Arquivos a modificar (6 arquivos)
+## Arquivos a criar/modificar
 
-### 1. `src/integrations/supabase/types.ts`
+### 1. Criar `src/hooks/useProjectDetail.ts` (novo arquivo)
 
-Atualizar o tipo `projetos` (Row, Insert, Update):
-- Remover `descricao_curta`, `descricao_completa`, `em_andamento`
-- Adicionar `descricao: string | null` (Row) e `descricao?: string | null` (Insert/Update)
-- Atualizar enum `status_projeto` de `"publicado" | "em_desenvolvimento" | "arquivado"` para `"em_andamento" | "concluido"`
-- Atualizar o array de valores do enum tambem (na secao Enums)
+Hook dedicado que recebe `userSlug` e `projectSlug` como parametros.
 
-### 2. `src/components/projects/ProjectForm.tsx`
+**Query Supabase:**
+1. Buscar usuario pelo `userSlug` na tabela `users` para obter o `user_id` (campos: id, nome_completo, titulo_profissional, avatar_url, slug)
+2. Buscar projeto na tabela `projetos` filtrando por `user_id` e por `slug = projectSlug` (com fallback para `id = projectSlug` caso slug seja null)
+3. Join com `projeto_habilidades` -> `habilidades` para pegar skills (id, nome, categoria, icone_url)
+4. Join com `projeto_estudios` -> `estudios` para pegar estudios colaboradores (id, nome, slug, logo_url)
+5. Retornar objeto tipado com projeto + owner + skills + estudios
 
-**Schema Zod (linhas 24-36):**
-- Renomear `descricao_curta` para `descricao` com `.max(1000, "Maximo 1000 caracteres")`
-- Atualizar enum de status: `z.enum(["em_andamento", "concluido"])`
+**Tipos exportados:**
+```
+ProjectDetailData {
+  project: { todos os campos do projeto }
+  owner: { id, nome_completo, titulo_profissional, avatar_url, slug }
+  skills: { id, nome, categoria, icone_url }[]
+  studios: { id, nome, slug, logo_url }[]
+}
+```
 
-**Default values (linhas 95-107, 132-144):**
-- `descricao_curta: ""` vira `descricao: ""`
-- `status: "em_desenvolvimento"` vira `status: "em_andamento"`
+**Usar `useQuery` do TanStack** com queryKey `["project-detail", userSlug, projectSlug]` e staleTime de 5 minutos.
 
-**Reset ao editar (linhas 113-126):**
-- `descricao_curta: editingProject.descricao_curta` vira `descricao: editingProject.descricao`
+### 2. Reescrever `src/pages/ProjectDetail.tsx`
 
-**onSubmit projectData (linhas 191-203):**
-- `descricao_curta: values.descricao_curta` vira `descricao: values.descricao`
+Substituir o placeholder atual pela pagina completa. Estrutura da pagina:
 
-**Watch (linha 233):**
-- `form.watch("descricao_curta")` vira `form.watch("descricao")` e renomear variavel para `descricaoValue`
+**Importacoes:** Header, Card, Badge, Button, Avatar, Skeleton, AspectRatio, Separator, useProjectDetail, formatters, lucide icons (ChevronLeft, Play, Code, Video, ExternalLink, Calendar, Briefcase), Link e useParams do react-router-dom.
 
-**Campo do formulario (linhas 349-373):**
-- Atualizar `name` para `"descricao"`, label para `"Descricao"`, `maxLength` para `1000`, contador para `/1000`
-- Aumentar `rows` para 4
+**Loading state:** Skeleton similar ao JobDetail - hero skeleton + content skeletons.
 
-**Radio de status (linhas 375-413):**
-- Remover opcao "Arquivado" (linhas 402-407)
-- Mudar opcoes para:
-  - `value="em_andamento"` label "Em desenvolvimento"
-  - `value="concluido"` label "Concluido"
+**Error/404 state:** Card centralizado com mensagem "Projeto nao encontrado" e botao "Voltar ao perfil" linkando para `/p/:slug`.
 
-### 3. `src/components/projects/ProjectCard.tsx`
+**SEO:** useEffect para atualizar `document.title` com o nome do projeto.
 
-**Funcao `getStatusBadgeClasses` (linhas 32-39):**
-- Remover entrada `arquivado`
-- Renomear `publicado` para `concluido` e `em_desenvolvimento` para `em_andamento`
+**Layout da pagina (de cima para baixo):**
 
-### 4. `src/lib/formatters.ts`
+**a) Back button:**
+- Botao ghost "Voltar ao perfil" com ChevronLeft, linkando para `/p/${userSlug}`
 
-**Funcao `formatStatusProjeto` (linhas 144-151):**
-- Remover `arquivado: "Arquivado"` e `publicado: "Publicado"`
-- Adicionar `em_andamento: "Em desenvolvimento"` e `concluido: "Concluido"`
+**b) Hero - Imagem de capa:**
+- Se `imagem_capa_url` existir: imagem full-width com AspectRatio 16/9, rounded-lg, overflow-hidden
+- Se nao existir: div com gradiente sutil e inicial do titulo centralizada (similar ao FeaturedProjectCard)
 
-### 5. `src/hooks/usePublicProfile.ts`
+**c) Titulo + Badges + Owner (abaixo da imagem):**
+- Titulo: `text-3xl md:text-4xl font-display font-bold`
+- Linha de badges: Badge de tipo (com cores do ProjectsSection) + Badge de status (amarelo para em_andamento, verde para concluido)
+- Owner card inline: flex row com Avatar pequeno (w-8 h-8) + nome + titulo profissional, clicavel para `/p/${owner.slug}`, com hover sutil
 
-**Tipo `PublicProjectData` (linha 39):**
-- Renomear `descricao_curta` para `descricao`
+**d) Layout 2 colunas (desktop) / 1 coluna (mobile):**
 
-**Query select (linha 150):**
-- Trocar `descricao_curta` por `descricao` no select
-- Remover `.neq("status", "arquivado")` (linha 155) - todos os projetos sao publicos
+Coluna principal (flex-[2]):
 
-### 6. `src/components/public-profile/ProjectsSection.tsx`
+- **Secao "Sobre o Projeto":** descricao em `whitespace-pre-wrap text-muted-foreground`, dentro de um Card
+- **Video embed (condicional):** Se `video_url` contem "youtube.com" ou "youtu.be", extrair video ID e renderizar iframe embed responsivo com AspectRatio 16/9. Se contem "vimeo.com", embed do Vimeo. Caso contrario, nao fazer embed (sera mostrado como link na secao de links)
+- **Secao "Habilidades Utilizadas" (condicional):** Grid/flex-wrap de badges com nome da habilidade. Usar cores por categoria (similar ao perfil publico). Mostrar icone_url se existir (img pequena ao lado do nome no badge)
 
-**FeaturedProjectCard (linha 67-70):**
-- `project.descricao_curta` vira `project.descricao`
+Sidebar (flex-1, order-first no mobile):
 
-**CompactProjectCard (linhas 97-100):**
-- `project.descricao_curta` vira `project.descricao`
+- **Card "Detalhes":** Lista key-value com:
+  - Papel (se existir): icone Briefcase + valor
+  - Periodo: icone Calendar + data formatada usando formatDateRange ou logica similar (inicio - fim, ou "Inicio - Ate o momento" se status em_andamento e sem fim)
+  - Tipo: badge com label formatado (formatTipoProjeto)
+  - Status: badge com cor (amarelo/verde)
 
-## O que NAO muda
+- **Card "Links" (condicional - so se algum link existir):**
+  - Botao primario para demo_url: icone Play + "Jogar / Ver Demo"
+  - Botao secondary para codigo_url: icone Code + "Ver Codigo"
+  - Botao secondary para video_url: icone Video + "Assistir Video" (link direto, complementar ao embed)
+  - Todos com target="_blank"
+  - Botoes em largura total (`w-full`) empilhados
 
-- Logica de destaque (permanece igual)
-- Estrutura de skills dos projetos
-- Upload de imagens
-- Hook `useProjects` (usa `select("*")` que ja reflete o banco automaticamente, mas as referencias a `descricao_curta` no ProjectForm serao atualizadas)
+- **Card "Estudios Colaboradores" (condicional):**
+  - Lista de estudios com Avatar (logo) + nome
+  - Cada item clicavel para `/studio/${studio.slug}` (se slug existir)
+  - Hover sutil
+
+### 3. Rota no `src/App.tsx`
+
+Ja existe a rota `/p/:slug/project/:projectSlug` apontando para ProjectDetail. Nao precisa alterar.
+
+## Funcao helper para YouTube embed
+
+Criar funcao utilitaria dentro do ProjectDetail (ou em formatters.ts) para extrair YouTube video ID:
+- Input: URL string
+- Detectar padroes: `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/embed/ID`
+- Retornar ID ou null
+
+## Detalhes de design
+
+- Manter identidade visual consistente com JobDetail e perfil publico
+- Cores de badge de tipo: reusar o mapeamento `typeColors` do ProjectsSection
+- Badge de status: `em_andamento` -> `bg-yellow-500/10 text-yellow-500`, `concluido` -> `bg-green-500/10 text-green-500`
+- Cards com `shadow-sm` ou `shadow-none` consistente com o resto
+- Transicoes suaves em hovers
+- Font display para titulos, font sans para corpo
