@@ -26,8 +26,8 @@ const projectSchema = z.object({
   slug: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
-  descricao_curta: z.string().max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
-  status: z.enum(["publicado", "em_desenvolvimento", "arquivado"]),
+  descricao: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
+  status: z.enum(["em_andamento", "concluido"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   video_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
@@ -97,8 +97,8 @@ export function ProjectForm({
       slug: "",
       tipo: "profissional",
       papel: "",
-      descricao_curta: "",
-      status: "em_desenvolvimento",
+      descricao: "",
+      status: "em_andamento",
       demo_url: "",
       video_url: "",
       codigo_url: "",
@@ -116,7 +116,7 @@ export function ProjectForm({
           slug: editingProject.slug ?? "",
           tipo: editingProject.tipo,
           papel: editingProject.papel ?? "",
-          descricao_curta: editingProject.descricao_curta ?? "",
+          descricao: editingProject.descricao ?? "",
           status: editingProject.status,
           demo_url: editingProject.demo_url ?? "",
           video_url: editingProject.video_url ?? "",
@@ -134,8 +134,8 @@ export function ProjectForm({
           slug: "",
           tipo: "profissional",
           papel: "",
-          descricao_curta: "",
-          status: "em_desenvolvimento",
+          descricao: "",
+          status: "em_andamento",
           demo_url: "",
           video_url: "",
           codigo_url: "",
@@ -193,7 +193,7 @@ export function ProjectForm({
         slug: values.slug,
         tipo: values.tipo,
         papel: values.papel || null,
-        descricao_curta: values.descricao_curta || null,
+        descricao: values.descricao || null,
         status: values.status,
         demo_url: values.demo_url || null,
         video_url: values.video_url || null,
@@ -230,7 +230,7 @@ export function ProjectForm({
     }
   };
 
-  const descricaoCurtaValue = form.watch("descricao_curta") || "";
+  const descricaoValue = form.watch("descricao") || "";
   const slugValue = form.watch("slug");
   const destaqueValue = form.watch("destaque");
   const imagemCapaUrl = form.watch("imagem_capa_url");
@@ -346,26 +346,26 @@ export function ProjectForm({
                   />
                 </div>
 
-                {/* Short Description */}
+                {/* Description */}
                 <FormField
                   control={form.control}
-                  name="descricao_curta"
+                  name="descricao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição curta</FormLabel>
+                      <FormLabel>Descrição</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Jogo de nave arcade com mecânicas roguelike..."
                           className="resize-none"
-                          rows={3}
-                          maxLength={200}
+                          rows={4}
+                          maxLength={1000}
                           {...field}
                         />
                       </FormControl>
                       <div className="flex justify-between">
                         <FormMessage />
                         <span className="text-xs text-muted-foreground">
-                          {descricaoCurtaValue.length}/200 caracteres
+                          {descricaoValue.length}/1000 caracteres
                         </span>
                       </div>
                     </FormItem>
@@ -388,21 +388,15 @@ export function ProjectForm({
                           className="flex flex-col sm:flex-row gap-4"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="publicado" id="publicado" />
-                            <Label htmlFor="publicado" className="font-normal">
-                              Publicado
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="em_desenvolvimento" id="em_desenvolvimento" />
-                            <Label htmlFor="em_desenvolvimento" className="font-normal">
+                            <RadioGroupItem value="em_andamento" id="em_andamento" />
+                            <Label htmlFor="em_andamento" className="font-normal">
                               Em desenvolvimento
                             </Label>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="arquivado" id="arquivado" />
-                            <Label htmlFor="arquivado" className="font-normal">
-                              Arquivado
+                            <RadioGroupItem value="concluido" id="concluido" />
+                            <Label htmlFor="concluido" className="font-normal">
+                              Concluído
                             </Label>
                           </div>
                         </RadioGroup>

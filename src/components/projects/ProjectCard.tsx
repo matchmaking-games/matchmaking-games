@@ -31,9 +31,8 @@ function getTypeBadgeClasses(tipo: string): string {
 
 function getStatusBadgeClasses(status: string): string {
   const map: Record<string, string> = {
-    publicado: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    em_desenvolvimento: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-    arquivado: "bg-gray-500/20 text-gray-300 border-gray-500/30",
+    em_andamento: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+    concluido: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
   };
   return map[status] || "bg-muted text-muted-foreground border-border";
 }

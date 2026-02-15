@@ -36,7 +36,7 @@ export interface PublicProjectData {
   id: string;
   titulo: string;
   slug: string | null;
-  descricao_curta: string | null;
+  descricao: string | null;
   imagem_capa_url: string | null;
   tipo: TipoProjeto;
   status: StatusProjeto;
@@ -142,17 +142,16 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
     };
   }
 
-  // 2. Buscar projetos em destaque (não arquivados) - em paralelo
+  // 2. Buscar projetos - em paralelo
   const [projectsRes, skillsRes, experiencesRes, educationsRes] = await Promise.all([
     supabase
       .from("projetos")
       .select(`
-        id, titulo, slug, descricao_curta, imagem_capa_url, tipo, status,
+        id, titulo, slug, descricao, imagem_capa_url, tipo, status,
         destaque, demo_url, video_url, codigo_url, ordem,
         projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))
       `)
       .eq("user_id", user.id)
-      .neq("status", "arquivado")
       .order("ordem"),
 
     // 3. Buscar habilidades com join

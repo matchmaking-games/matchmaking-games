@@ -143,9 +143,8 @@ export function formatTipoProjeto(tipo: string): string {
  */
 export function formatStatusProjeto(status: string): string {
   const map: Record<string, string> = {
-    publicado: "Publicado",
-    em_desenvolvimento: "Em desenvolvimento",
-    arquivado: "Arquivado",
+    em_andamento: "Em desenvolvimento",
+    concluido: "Concluído",
   };
   return map[status] || status;
 }

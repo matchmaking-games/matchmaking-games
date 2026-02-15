@@ -64,9 +64,9 @@ function FeaturedProjectCard({ project, userSlug }: { project: PublicProjectData
           <h3 className="font-semibold text-foreground line-clamp-1">
             {project.titulo}
           </h3>
-          {project.descricao_curta && (
+          {project.descricao && (
             <p className="text-sm text-muted-foreground line-clamp-2">
-              {project.descricao_curta}
+              {project.descricao}
             </p>
           )}
         </CardContent>
@@ -94,9 +94,9 @@ function CompactProjectCard({ project, userSlug }: { project: PublicProjectData;
             {typeLabels[project.tipo] || project.tipo}
           </Badge>
         </div>
-        {project.descricao_curta && (
+        {project.descricao && (
           <p className="text-xs text-muted-foreground line-clamp-2">
-            {project.descricao_curta}
+            {project.descricao}
           </p>
         )}
       </Card>
