@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface StudioMembership {
+  id: string;
   estudio: {
     id: string;
     nome: string;
@@ -12,38 +13,65 @@ export interface StudioMembership {
   ativo: boolean;
 }
 
-export function useStudioMembership() {
-  return useQuery({
-    queryKey: ["studio-membership"],
-    queryFn: async (): Promise<StudioMembership | null> => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
+interface UseStudioMembershipReturn {
+  studios: StudioMembership[];
+  isLoading: boolean;
+}
 
-      const { data, error } = await supabase
-        .from("estudio_membros")
-        .select(`
-          role,
-          ativo,
-          estudios!estudio_id (
+export function useStudioMembership(): UseStudioMembershipReturn {
+  const [studios, setStudios] = useState<StudioMembership[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMemberships = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setStudios([]);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("estudio_membros")
+          .select(`
             id,
-            nome,
-            slug,
-            logo_url
-          )
-        `)
-        .eq("user_id", session.user.id)
-        .eq("ativo", true)
-        .limit(1)
-        .maybeSingle();
+            role,
+            ativo,
+            estudios!estudio_id (
+              id,
+              nome,
+              slug,
+              logo_url
+            )
+          `)
+          .eq("user_id", session.user.id)
+          .eq("ativo", true)
+          .order("adicionado_em", { ascending: false });
 
-      if (error || !data) return null;
+        if (error || !data || data.length === 0) {
+          setStudios([]);
+          setIsLoading(false);
+          return;
+        }
 
-      return {
-        estudio: data.estudios as StudioMembership["estudio"],
-        role: data.role as StudioMembership["role"],
-        ativo: data.ativo ?? true,
-      };
-    },
-    staleTime: 1000 * 60 * 5,
-  });
+        const memberships: StudioMembership[] = data.map((item) => ({
+          id: item.id,
+          estudio: item.estudios as StudioMembership["estudio"],
+          role: item.role as StudioMembership["role"],
+          ativo: item.ativo ?? true,
+        }));
+
+        setStudios(memberships);
+      } catch {
+        setStudios([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMemberships();
+  }, []);
+
+  return { studios, isLoading };
 }

@@ -25,79 +25,18 @@ interface UseStudioJobsReturn {
   vagas: StudioVaga[];
   isLoading: boolean;
   error: string | null;
-  isAuthorized: boolean;
-  estudioId: string | null;
   refetch: () => Promise<void>;
   toggleAtiva: (id: string, currentValue: boolean) => Promise<void>;
   deleteVaga: (id: string) => Promise<void>;
 }
 
-export function useStudioJobs(): UseStudioJobsReturn {
+export function useStudioJobs(estudioId: string | null): UseStudioJobsReturn {
   const [vagas, setVagas] = useState<StudioVaga[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [estudioId, setEstudioId] = useState<string | null>(null);
-  const [membershipChecked, setMembershipChecked] = useState(false);
 
-  // EFFECT 1: Check permissions and get estudioId
-  useEffect(() => {
-    const checkMembership = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setIsAuthorized(false);
-          setError("Você precisa estar logado.");
-          return;
-        }
-
-        const { data: membership, error: membershipError } = await supabase
-          .from("estudio_membros")
-          .select("role, estudio_id")
-          .eq("user_id", session.user.id)
-          .eq("ativo", true)
-          .maybeSingle();
-
-        if (membershipError) {
-          console.error("Error checking membership:", membershipError);
-          setError("Erro ao verificar permissões.");
-          setIsAuthorized(false);
-          return;
-        }
-
-        if (!membership) {
-          setIsAuthorized(false);
-          setError("Você não está associado a nenhum estúdio.");
-          return;
-        }
-
-        if (membership.role !== "super_admin") {
-          setIsAuthorized(false);
-          setError("Apenas administradores podem gerenciar vagas.");
-          return;
-        }
-
-        setIsAuthorized(true);
-        setEstudioId(membership.estudio_id);
-      } catch (err) {
-        console.error("Error checking membership:", err);
-        setError("Erro ao verificar permissões.");
-        setIsAuthorized(false);
-      } finally {
-        setMembershipChecked(true);
-      }
-    };
-
-    checkMembership();
-  }, []);
-
-  // Fetch jobs function
   const fetchVagas = useCallback(async () => {
     if (!estudioId) {
-      setError("Você não está associado a nenhum estúdio.");
       setVagas([]);
       setIsLoading(false);
       return;
@@ -124,16 +63,9 @@ export function useStudioJobs(): UseStudioJobsReturn {
     }
   }, [estudioId]);
 
-  // EFFECT 2: Fetch jobs only when authorized
   useEffect(() => {
-    if (membershipChecked) {
-      if (isAuthorized && estudioId) {
-        fetchVagas();
-      } else {
-        setIsLoading(false);
-      }
-    }
-  }, [isAuthorized, estudioId, membershipChecked, fetchVagas]);
+    fetchVagas();
+  }, [fetchVagas]);
 
   const toggleAtiva = useCallback(async (id: string, currentValue: boolean) => {
     const { error } = await supabase
@@ -157,8 +89,6 @@ export function useStudioJobs(): UseStudioJobsReturn {
     vagas,
     isLoading,
     error,
-    isAuthorized,
-    estudioId,
     refetch: fetchVagas,
     toggleAtiva,
     deleteVaga,

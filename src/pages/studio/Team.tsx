@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
 import { useStudioMembers, type StudioMember } from "@/hooks/useStudioMembers";
+import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,7 @@ import type { Database } from "@/integrations/supabase/types";
 type UserRole = Database["public"]["Enums"]["user_role"];
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
+  return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
@@ -46,10 +42,12 @@ function RoleBadge({ role }: { role: UserRole }) {
 }
 
 export default function Team() {
+  const { activeStudio } = useActiveStudio();
+  const estudioId = activeStudio?.estudio.id ?? null;
   const {
-    members, isLoading, error, isAuthorized, currentUserId,
-    estudioId, superAdminCount, updateMemberRole, removeMember, refetch,
-  } = useStudioMembers();
+    members, isLoading, error, currentUserId,
+    superAdminCount, updateMemberRole, removeMember, refetch,
+  } = useStudioMembers(estudioId);
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
@@ -138,13 +136,13 @@ export default function Team() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
-            {!isLoading && isAuthorized && (
+            {!isLoading && (
               <p className="text-sm text-muted-foreground mt-1">
                 {members.length} {members.length === 1 ? "membro" : "membros"}
               </p>
             )}
           </div>
-          {!isLoading && isAuthorized && (
+          {!isLoading && activeStudio?.role === "super_admin" && (
             <Button onClick={() => setInviteDialogOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Convidar Membro
@@ -170,17 +168,17 @@ export default function Team() {
           </Card>
         )}
 
-        {/* Error / Not authorized */}
-        {!isLoading && (error || !isAuthorized) && (
+        {/* Error */}
+        {!isLoading && error && (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">{error || "Você não tem permissão para acessar esta página."}</p>
+              <p className="text-muted-foreground">{error}</p>
             </CardContent>
           </Card>
         )}
 
         {/* Empty state */}
-        {!isLoading && isAuthorized && members.length === 0 && (
+        {!isLoading && !error && members.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center space-y-3">
               <Users className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -190,7 +188,7 @@ export default function Team() {
         )}
 
         {/* Members list */}
-        {!isLoading && isAuthorized && members.length > 0 && (
+        {!isLoading && !error && members.length > 0 && (
           <Card>
             <CardContent className="p-0">
               {isMobile ? (

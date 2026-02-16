@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Menu, Loader2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudioSidebar } from "./StudioSidebar";
-import { useStudioMembership } from "@/hooks/useStudioMembership";
+import { useActiveStudio } from "@/hooks/useActiveStudio";
 
 interface StudioDashboardLayoutProps {
   children: ReactNode;
@@ -11,13 +11,13 @@ interface StudioDashboardLayoutProps {
 
 export function StudioDashboardLayout({ children }: StudioDashboardLayoutProps) {
   const navigate = useNavigate();
-  const { data: membership, isLoading } = useStudioMembership();
+  const { studios, activeStudio, setActiveStudio, isLoading } = useActiveStudio();
 
   useEffect(() => {
-    if (!isLoading && !membership) {
+    if (!isLoading && studios.length === 0) {
       navigate("/studio/manage/new");
     }
-  }, [isLoading, membership, navigate]);
+  }, [isLoading, studios.length, navigate]);
 
   if (isLoading) {
     return (
@@ -27,7 +27,7 @@ export function StudioDashboardLayout({ children }: StudioDashboardLayoutProps) 
     );
   }
 
-  if (!membership) {
+  if (!activeStudio) {
     return null;
   }
 
@@ -45,7 +45,11 @@ export function StudioDashboardLayout({ children }: StudioDashboardLayoutProps) 
         />
 
         <div className="relative z-10 flex w-full min-w-0">
-          <StudioSidebar membership={membership} />
+          <StudioSidebar
+            membership={activeStudio}
+            studios={studios}
+            onStudioChange={setActiveStudio}
+          />
 
           <div className="flex-1 min-w-0 flex flex-col">
             <header className="md:hidden h-14 flex items-center border-b border-border px-4 bg-secondary">

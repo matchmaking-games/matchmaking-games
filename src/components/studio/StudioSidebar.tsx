@@ -1,53 +1,57 @@
-import { Link, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Briefcase, Building2, UserPlus, ChevronDown, Settings, CreditCard, Mail, ExternalLink, LogOut, ChevronLeft } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { LayoutDashboard, Briefcase, Building2, UserPlus, ChevronDown, Settings, CreditCard, Mail, ExternalLink, LogOut, ChevronLeft, Check } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { StudioMembership } from "@/hooks/useStudioMembership";
-const navItems = [{
-  title: "Dashboard",
-  url: "/studio/manage/dashboard",
-  icon: LayoutDashboard
-}, {
-  title: "Vagas",
-  url: "/studio/manage/jobs",
-  icon: Briefcase
-}, {
-  title: "Perfil do Estúdio",
-  url: "/studio/manage/profile",
-  icon: Building2
-}, {
-  title: "Equipe",
-  url: "/studio/manage/team",
-  icon: UserPlus
-}];
+
+const navItems = [
+  { title: "Dashboard", url: "/studio/manage/dashboard", icon: LayoutDashboard },
+  { title: "Vagas", url: "/studio/manage/jobs", icon: Briefcase },
+  { title: "Perfil do Estúdio", url: "/studio/manage/profile", icon: Building2 },
+  { title: "Equipe", url: "/studio/manage/team", icon: UserPlus },
+];
+
 const getInitials = (name: string) => {
   return name.split(" ").map(word => word[0]).slice(0, 2).join("").toUpperCase();
 };
+
 interface StudioSidebarProps {
   membership: StudioMembership;
+  studios: StudioMembership[];
+  onStudioChange: (studioId: string) => void;
 }
-export function StudioSidebar({
-  membership
-}: StudioSidebarProps) {
+
+export function StudioSidebar({ membership, studios, onStudioChange }: StudioSidebarProps) {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  const studioParam = searchParams.get("studio");
+  const buildUrl = (path: string) => {
+    return studioParam ? `${path}?studio=${studioParam}` : path;
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    toast({
-      title: "Até logo!",
-      description: "Você saiu com sucesso."
-    });
+    toast({ title: "Até logo!", description: "Você saiu com sucesso." });
     navigate("/login");
   };
-  return <Sidebar className="border-r border-sidebar-border">
+
+  const handleStudioSwitch = (studioId: string) => {
+    if (studioId !== membership.estudio.id) {
+      onStudioChange(studioId);
+    }
+  };
+
+  return (
+    <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <Link to="/" className="flex items-center">
           <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
@@ -67,19 +71,25 @@ export function StudioSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Separator entre "Voltar ao perfil" e o resto do menu */}
               <div className="px-3 py-2">
                 <Separator className="bg-sidebar-border" />
               </div>
 
-              {navItems.map(item => <SidebarMenuItem key={item.title}>
+              {navItems.map(item => (
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end={item.url === "/studio/manage/dashboard"} className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground">
+                    <NavLink
+                      to={buildUrl(item.url)}
+                      end={item.url === "/studio/manage/dashboard"}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                    >
                       <item.icon className="h-[22px] w-[22px]" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>)}
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -102,7 +112,40 @@ export function StudioSidebar({
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" side="top" className="w-56">
+          <DropdownMenuContent align="end" side="top" className="w-64">
+            {/* Studio switcher - only show if multiple studios */}
+            {studios.length > 1 && (
+              <>
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Trocar estúdio</p>
+                </div>
+                {studios.map((studio) => (
+                  <DropdownMenuItem
+                    key={studio.id}
+                    onClick={() => handleStudioSwitch(studio.estudio.id)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={studio.estudio.logo_url || undefined} />
+                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                          {getInitials(studio.estudio.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1 truncate text-sm">{studio.estudio.nome}</span>
+                      {studio.role === "super_admin" && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Admin</Badge>
+                      )}
+                      {studio.estudio.id === membership.estudio.id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             <DropdownMenuItem disabled>
               <Settings className="mr-2 h-4 w-4" />
               Configurações
@@ -138,5 +181,6 @@ export function StudioSidebar({
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarFooter>
-    </Sidebar>;
+    </Sidebar>
+  );
 }

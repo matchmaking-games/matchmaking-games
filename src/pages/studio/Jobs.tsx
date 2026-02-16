@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } f
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useStudioJobs, type StudioVaga } from "@/hooks/useStudioJobs";
+import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { JobsTable } from "@/components/studio/JobsTable";
 import { JobsMobileCard } from "@/components/studio/JobsMobileCard";
 import { JobsDeleteDialog } from "@/components/studio/JobsDeleteDialog";
@@ -22,7 +23,8 @@ export default function StudioJobs() {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { vagas, isLoading, error, isAuthorized, refetch, toggleAtiva, deleteVaga } = useStudioJobs();
+  const { activeStudio } = useActiveStudio();
+  const { vagas, isLoading, error, refetch, toggleAtiva, deleteVaga } = useStudioJobs(activeStudio?.estudio.id ?? null);
 
   const [activeTab, setActiveTab] = useState<TabValue>("todas");
   const [isToggling, setIsToggling] = useState(false);
@@ -218,33 +220,20 @@ export default function StudioJobs() {
     );
   }
 
-  // Access denied state
-  if (!isAuthorized) {
-    return (
-      <StudioDashboardLayout>
-        <div className="flex flex-col items-center justify-center py-16">
-          <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Acesso negado</h2>
-          <p className="text-muted-foreground mb-4 text-center max-w-md">{error}</p>
-          <Button onClick={() => navigate("/dashboard")}>Voltar ao Dashboard</Button>
-        </div>
-      </StudioDashboardLayout>
-    );
-  }
-
-  // Error state
-  if (error && isAuthorized) {
+  // Error state (replaces old access denied + error)
+  if (error) {
     return (
       <StudioDashboardLayout>
         <div className="flex flex-col items-center justify-center py-16">
           <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Erro ao carregar vagas</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4 text-center max-w-md">{error}</p>
           <Button onClick={() => refetch()}>Tentar novamente</Button>
         </div>
       </StudioDashboardLayout>
     );
   }
+
 
   return (
     <StudioDashboardLayout>
