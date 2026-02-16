@@ -1,9 +1,9 @@
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
-import { useStudioMembership } from "@/hooks/useStudioMembership";
+import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function StudioDashboard() {
-  const { data: membership } = useStudioMembership();
+  const { activeStudio } = useActiveStudio();
 
   return (
     <StudioDashboardLayout>
@@ -14,7 +14,7 @@ export default function StudioDashboard() {
               Dashboard
             </h1>
             <p className="text-xl text-muted-foreground mb-6">
-              Bem-vindo ao painel do {membership?.estudio.nome}
+              Bem-vindo ao painel do {activeStudio?.estudio.nome}
             </p>
             <p className="text-muted-foreground">
               Gerencie suas vagas, equipe e perfil do estúdio através do menu lateral.

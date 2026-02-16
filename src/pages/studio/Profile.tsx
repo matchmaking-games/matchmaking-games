@@ -21,7 +21,7 @@ import {
 import { SpecialtiesInput } from "@/components/studio/SpecialtiesInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useStudioMembership } from "@/hooks/useStudioMembership";
+import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Database } from "@/integrations/supabase/types";
@@ -81,8 +81,8 @@ export default function StudioProfile() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: membership, isLoading: loadingMembership } =
-    useStudioMembership();
+  const { activeStudio: membership, isLoading: loadingMembership } =
+    useActiveStudio();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
