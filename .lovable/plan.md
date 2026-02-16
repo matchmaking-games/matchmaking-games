@@ -1,105 +1,106 @@
 
-# Pagina de Detalhes do Projeto (/p/:slug/project/:projectSlug)
+# Pagina de Gerenciamento de Equipe do Estudio
 
 ## Resumo
 
-Criar a pagina completa de detalhes de um projeto individual, acessivel publicamente. Inclui criacao de um hook dedicado `useProjectDetail` para buscar dados do projeto com joins (habilidades, estudios colaboradores, dono do projeto), e a implementacao completa do componente `ProjectDetail.tsx` substituindo o placeholder atual.
+Criar a pagina `/studio/manage/team` para super admins visualizarem, alterarem permissoes e removerem membros do estudio. Seguindo o padrao existente do projeto (useState/useEffect, sem React Query).
 
 ## Arquivos a criar/modificar
 
-### 1. Criar `src/hooks/useProjectDetail.ts` (novo arquivo)
+### 1. Criar `src/hooks/useStudioMembers.ts`
 
-Hook dedicado que recebe `userSlug` e `projectSlug` como parametros.
+Hook seguindo o padrao de `useStudioJobs`:
 
-**Query Supabase:**
-1. Buscar usuario pelo `userSlug` na tabela `users` para obter o `user_id` (campos: id, nome_completo, titulo_profissional, avatar_url, slug)
-2. Buscar projeto na tabela `projetos` filtrando por `user_id` e por `slug = projectSlug` (com fallback para `id = projectSlug` caso slug seja null)
-3. Join com `projeto_habilidades` -> `habilidades` para pegar skills (id, nome, categoria, icone_url)
-4. Join com `projeto_estudios` -> `estudios` para pegar estudios colaboradores (id, nome, slug, logo_url)
-5. Retornar objeto tipado com projeto + owner + skills + estudios
+**Effect 1 - Verificar permissoes:**
+- Buscar sessao via `supabase.auth.getSession()`
+- Buscar membership do usuario em `estudio_membros` (role e estudio_id)
+- Validar que role === `super_admin`
+- Setar `isAuthorized`, `estudioId`, `membershipChecked`
 
-**Tipos exportados:**
+**Effect 2 - Buscar membros (quando autorizado):**
+- Query PostgREST com join:
+  ```typescript
+  supabase
+    .from("estudio_membros")
+    .select(`
+      id, role, adicionado_em, user_id,
+      user:users!user_id (
+        id, nome_completo, email, avatar_url
+      )
+    `)
+    .eq("estudio_id", estudioId)
+    .eq("ativo", true)
+    .order("adicionado_em", { ascending: false })
+  ```
+
+**Interface `StudioMember`:**
 ```
-ProjectDetailData {
-  project: { todos os campos do projeto }
-  owner: { id, nome_completo, titulo_profissional, avatar_url, slug }
-  skills: { id, nome, categoria, icone_url }[]
-  studios: { id, nome, slug, logo_url }[]
-}
+id, role, adicionado_em, user_id,
+user: { id, nome_completo, email, avatar_url }
 ```
 
-**Usar `useQuery` do TanStack** com queryKey `["project-detail", userSlug, projectSlug]` e staleTime de 5 minutos.
+**Funcoes exportadas:**
+- `members`, `isLoading`, `error`, `isAuthorized`
+- `refetch()` - recarrega a lista
+- `updateMemberRole(memberId, newRole)` - update role via Supabase, chama refetch
+- `removeMember(memberId)` - update ativo=false via Supabase, chama refetch
+- `superAdminCount` - calculado com useMemo (quantos membros tem role super_admin)
 
-### 2. Reescrever `src/pages/ProjectDetail.tsx`
+### 2. Criar `src/pages/studio/Team.tsx`
 
-Substituir o placeholder atual pela pagina completa. Estrutura da pagina:
+Pagina usando `StudioDashboardLayout` (mesmo padrao de StudioJobs).
 
-**Importacoes:** Header, Card, Badge, Button, Avatar, Skeleton, AspectRatio, Separator, useProjectDetail, formatters, lucide icons (ChevronLeft, Play, Code, Video, ExternalLink, Calendar, Briefcase), Link e useParams do react-router-dom.
+**Layout geral:**
+- Container `max-w-4xl mx-auto`
+- Titulo "Equipe" com `font-display text-2xl font-bold`
+- Subtitulo com contagem de membros
 
-**Loading state:** Skeleton similar ao JobDetail - hero skeleton + content skeletons.
+**Loading:** 3 Skeletons empilhados
 
-**Error/404 state:** Card centralizado com mensagem "Projeto nao encontrado" e botao "Voltar ao perfil" linkando para `/p/:slug`.
+**Error/Nao autorizado:** Card com mensagem de erro
 
-**SEO:** useEffect para atualizar `document.title` com o nome do projeto.
+**Desktop (Table):**
+- Colunas: Avatar+Nome, Email, Permissao (Badge), Adicionado em, Acoes
+- Avatar com fallback de iniciais (getInitials)
+- Badge de role: `super_admin` com `bg-green-500/10 text-green-500`, `member` com `bg-muted text-muted-foreground`
+- Data formatada com `date-fns` locale ptBR (`dd/MM/yyyy`)
+- Acoes: botao ghost Shield (alterar role) + botao ghost Trash2 vermelho (remover)
+- Esconder acoes para o proprio usuario logado
 
-**Layout da pagina (de cima para baixo):**
+**Mobile (Cards):**
+- Usar `useIsMobile` para alternar
+- Stack vertical de cards com avatar, nome, email, badge, botoes
 
-**a) Back button:**
-- Botao ghost "Voltar ao perfil" com ChevronLeft, linkando para `/p/${userSlug}`
+**Dialog "Alterar Permissao":**
+- Select com opcoes "Super Admin" e "Membro"
+- Validacao: se `superAdminCount <= 1` e membro selecionado e super_admin, nao permitir demover
+- Toast de sucesso/erro
 
-**b) Hero - Imagem de capa:**
-- Se `imagem_capa_url` existir: imagem full-width com AspectRatio 16/9, rounded-lg, overflow-hidden
-- Se nao existir: div com gradiente sutil e inicial do titulo centralizada (similar ao FeaturedProjectCard)
+**AlertDialog "Remover Membro":**
+- Texto: "Tem certeza que deseja remover [Nome] da equipe?"
+- Validacao: nao permitir remover ultimo super_admin
+- Toast de sucesso/erro
 
-**c) Titulo + Badges + Owner (abaixo da imagem):**
-- Titulo: `text-3xl md:text-4xl font-display font-bold`
-- Linha de badges: Badge de tipo (com cores do ProjectsSection) + Badge de status (amarelo para em_andamento, verde para concluido)
-- Owner card inline: flex row com Avatar pequeno (w-8 h-8) + nome + titulo profissional, clicavel para `/p/${owner.slug}`, com hover sutil
+**Empty state:** Icone Users + "Nenhum membro encontrado"
 
-**d) Layout 2 colunas (desktop) / 1 coluna (mobile):**
+### 3. Modificar `src/App.tsx`
 
-Coluna principal (flex-[2]):
+Adicionar rota protegida:
+```
+<Route path="/studio/manage/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+```
+Importar `Team` de `src/pages/studio/Team`.
 
-- **Secao "Sobre o Projeto":** descricao em `whitespace-pre-wrap text-muted-foreground`, dentro de um Card
-- **Video embed (condicional):** Se `video_url` contem "youtube.com" ou "youtu.be", extrair video ID e renderizar iframe embed responsivo com AspectRatio 16/9. Se contem "vimeo.com", embed do Vimeo. Caso contrario, nao fazer embed (sera mostrado como link na secao de links)
-- **Secao "Habilidades Utilizadas" (condicional):** Grid/flex-wrap de badges com nome da habilidade. Usar cores por categoria (similar ao perfil publico). Mostrar icone_url se existir (img pequena ao lado do nome no badge)
+## Seguranca
 
-Sidebar (flex-1, order-first no mobile):
+- Hook valida no client que usuario e super_admin antes de mostrar acoes
+- RLS policies existentes no banco protegem SELECT e UPDATE
+- Validacao de ultimo super_admin feita no client como UX guard (banco tambem protege)
+- Nao mostrar botoes de acao para o proprio usuario (evita auto-remocao)
 
-- **Card "Detalhes":** Lista key-value com:
-  - Papel (se existir): icone Briefcase + valor
-  - Periodo: icone Calendar + data formatada usando formatDateRange ou logica similar (inicio - fim, ou "Inicio - Ate o momento" se status em_andamento e sem fim)
-  - Tipo: badge com label formatado (formatTipoProjeto)
-  - Status: badge com cor (amarelo/verde)
+## O que NAO muda
 
-- **Card "Links" (condicional - so se algum link existir):**
-  - Botao primario para demo_url: icone Play + "Jogar / Ver Demo"
-  - Botao secondary para codigo_url: icone Code + "Ver Codigo"
-  - Botao secondary para video_url: icone Video + "Assistir Video" (link direto, complementar ao embed)
-  - Todos com target="_blank"
-  - Botoes em largura total (`w-full`) empilhados
-
-- **Card "Estudios Colaboradores" (condicional):**
-  - Lista de estudios com Avatar (logo) + nome
-  - Cada item clicavel para `/studio/${studio.slug}` (se slug existir)
-  - Hover sutil
-
-### 3. Rota no `src/App.tsx`
-
-Ja existe a rota `/p/:slug/project/:projectSlug` apontando para ProjectDetail. Nao precisa alterar.
-
-## Funcao helper para YouTube embed
-
-Criar funcao utilitaria dentro do ProjectDetail (ou em formatters.ts) para extrair YouTube video ID:
-- Input: URL string
-- Detectar padroes: `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/embed/ID`
-- Retornar ID ou null
-
-## Detalhes de design
-
-- Manter identidade visual consistente com JobDetail e perfil publico
-- Cores de badge de tipo: reusar o mapeamento `typeColors` do ProjectsSection
-- Badge de status: `em_andamento` -> `bg-yellow-500/10 text-yellow-500`, `concluido` -> `bg-green-500/10 text-green-500`
-- Cards com `shadow-sm` ou `shadow-none` consistente com o resto
-- Transicoes suaves em hovers
-- Font display para titulos, font sans para corpo
+- Sidebar ja tem link "Equipe" apontando para `/studio/manage/team`
+- Nao implementa convite de novos membros
+- Nao mostra membros inativos
+- Nao deleta registros, apenas marca ativo=false
