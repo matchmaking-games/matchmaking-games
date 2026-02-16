@@ -1,101 +1,146 @@
 
-# Funcionalidade de Convite de Membros para o Estudio
+
+# Navegacao entre Multiplos Estudios
 
 ## Resumo
 
-Adicionar um Dialog de convite de novos membros na pagina `/studio/manage/team`. O super admin informa email e permissao, e o sistema cria um registro na tabela `estudio_convites`. Sem envio de email (MVP).
+Permitir que usuarios membros de multiplos estudios alternem entre eles no dashboard do estudio, usando query parameter `?studio=id` para manter contexto. Requer refatorar `useStudioMembership` para retornar lista, criar hook `useActiveStudio`, atualizar sidebar com selector e propagar estudioId para hooks dependentes.
 
-## Arquivos a modificar/criar
+## Arquivos a criar/modificar
 
-### 1. Modificar `src/hooks/useStudioMembers.ts`
+### 1. Reescrever `src/hooks/useStudioMembership.ts`
 
-Expor `estudioId` no retorno do hook para que o componente de convite possa usa-lo.
-
-- Adicionar `estudioId: string | null` na interface `UseStudioMembersReturn`
-- Adicionar `estudioId` no objeto de retorno (linha 201)
-
-### 2. Criar `src/components/studio/InviteMemberDialog.tsx`
-
-Componente Dialog controlado com formulario de convite.
-
-**Props:**
-```text
-open: boolean
-onOpenChange: (open: boolean) => void
-estudioId: string
-currentUserId: string
-onSuccess: () => void
-```
-
-**Estado interno (useState):**
-- `email: string` (campo de input)
-- `role: UserRole` (select, default "member")
-- `isSubmitting: boolean`
-- `emailError: string | null` (erro de validacao inline)
-
-**Validacao no submit (sem Zod externo, validacao manual simples):**
-1. Validar email com regex basico ou `z.string().email()` do Zod (ja esta no projeto)
-2. Buscar na tabela `users` se existe usuario com esse email
-3. Se existir, verificar na tabela `estudio_membros` se ja e membro ativo do estudio
-4. Se ja for membro, setar `emailError` com "Este email ja e membro do estudio"
-5. Verificar tambem se ja existe convite pendente (nao aceito e nao expirado) para evitar duplicatas
-
-**Insert no banco:**
-```text
-supabase.from("estudio_convites").insert({
-  estudio_id: estudioId,
-  email_convidado: email.trim().toLowerCase(),
-  role: role,
-  convidado_por: currentUserId,
-})
-```
-
-**UI do Dialog:**
-- Titulo: "Convidar Novo Membro"
-- Descricao: "Um convite sera criado e ficara valido por 7 dias."
-- Campo Email: Input type="email" com placeholder "exemplo@email.com", Label com asterisco
-- Campo Permissao: Select com "Membro" (default) e "Super Admin"
-- Footer: Botao "Cancelar" (outline) + Botao "Enviar Convite" (primary)
-- Loading state no botao durante submit
-- Limpar form ao fechar/abrir
-
-### 3. Modificar `src/pages/studio/Team.tsx`
-
-Adicionar botao "Convidar Membro" e o Dialog.
+Converter de TanStack Query para padrao useState/useEffect do projeto. Retornar array ao inves de objeto unico.
 
 **Mudancas:**
-- Importar `UserPlus` do lucide-react
-- Importar `InviteMemberDialog`
-- Adicionar estado `inviteDialogOpen`
-- Extrair `estudioId` do hook (apos modificacao)
-- No header da pagina, ao lado do titulo, adicionar botao:
-  ```text
-  <Button onClick={() => setInviteDialogOpen(true)}>
-    <UserPlus className="mr-2 h-4 w-4" />
-    Convidar Membro
-  </Button>
-  ```
-  Visivel apenas quando `isAuthorized && !isLoading`
-- Renderizar `InviteMemberDialog` passando `estudioId`, `currentUserId` e `refetch` como `onSuccess`
+- Remover import de `useQuery` e `@tanstack/react-query`
+- Usar `useState` e `useEffect`
+- Remover `.limit(1).maybeSingle()`, usar query sem limit
+- Adicionar `.order('adicionado_em', { ascending: false })`
+- Retornar `{ studios: StudioMembership[], isLoading: boolean }`
+- Interface `StudioMembership` ganha campo `id` (id do registro estudio_membros)
 
-## Detalhes de implementacao
+```text
+Interface atualizada:
+  StudioMembership {
+    id: string           // id do registro em estudio_membros
+    estudio: { id, nome, slug, logo_url }
+    role: "super_admin" | "member"
+    ativo: boolean
+  }
 
-**Verificacao de email duplicado (2 queries sequenciais):**
-1. Buscar usuario pelo email na tabela `users` com `.maybeSingle()`
-2. Se encontrar, verificar em `estudio_membros` se `user_id` + `estudio_id` + `ativo = true`
-3. Se ja for membro, mostrar erro
+Retorno:
+  { studios: StudioMembership[], isLoading: boolean }
+```
 
-**Verificacao de convite pendente:**
-- Buscar em `estudio_convites` por `email_convidado` + `estudio_id` + `aceito = false`
-- Se existir convite nao expirado, mostrar erro "Ja existe um convite pendente para este email"
+### 2. Criar `src/hooks/useActiveStudio.ts` (novo)
 
-**Reset do form:** Ao abrir o dialog (onOpenChange para true) ou ao fechar, limpar email, role para "member", e emailError
+Hook que gerencia qual estudio esta ativo baseado no query param `?studio=`.
 
-**Toast de sucesso:** Usar `useToast` com titulo "Convite enviado" e descricao "Convite enviado para [email]!"
+**Logica:**
+- Usa `useSearchParams` para ler/escrever `?studio=`
+- Usa `useStudioMembership` para ter a lista de estudios
+- `activeStudio` = estudio cujo `estudio.id` bate com o param, ou primeiro da lista como fallback
+- `setActiveStudio(id)` atualiza o searchParam preservando outros params existentes
+- Retorna `{ studios, activeStudio, setActiveStudio, isLoading }`
+
+### 3. Modificar `src/components/studio/StudioDashboardLayout.tsx`
+
+Trocar `useStudioMembership` por `useActiveStudio`.
+
+**Mudancas:**
+- Substituir `const { data: membership, isLoading } = useStudioMembership()` por `const { activeStudio, isLoading } = useActiveStudio()`
+- Condicao de redirect: `if (!isLoading && !activeStudio)` -> navega para `/studio/manage/new`
+- Passar `activeStudio` (que e um `StudioMembership`) para `StudioSidebar` como `membership`
+
+### 4. Modificar `src/components/studio/StudioSidebar.tsx`
+
+Adicionar selector de estudio no footer e preservar query param nos links de navegacao.
+
+**Mudancas na interface:**
+- Props passam a incluir `studios: StudioMembership[]`, `activeStudio: StudioMembership`, `onStudioChange: (id: string) => void`
+- Ou, mais simples: sidebar usa `useActiveStudio` internamente
+
+**Mudancas no footer:**
+- Se `studios.length > 1`: substituir o dropdown atual por um que inclui secao de troca de estudio no topo do menu, seguida de separador e os itens existentes (Configuracoes, Faturas, Suporte, etc)
+- Se `studios.length === 1`: manter dropdown atual sem alteracao (sem selector)
+- Cada estudio no dropdown mostra: Avatar/logo + nome + badge "Admin" se super_admin
+- Item ativo fica destacado (checkmark ou bg diferente)
+
+**Mudancas nos links de navegacao:**
+- Os navItems devem preservar o query param `?studio=` ao navegar
+- Criar helper inline ou usar `useSearchParams` para construir URLs com o param
+- Exemplo: `/studio/manage/jobs?studio=abc123`
+
+### 5. Modificar `src/hooks/useStudioMembers.ts`
+
+Aceitar `estudioId` como parametro ao inves de buscar internamente.
+
+**Mudancas:**
+- Adicionar parametro `estudioId: string | null` na funcao
+- Remover Effect 1 (checkMembership) que busca estudioId internamente
+- Manter apenas o Effect 2 (fetchMembers) que depende do `estudioId` recebido
+- Remover estados `isAuthorized` e `membershipChecked` (a autorizacao sera verificada pelo layout/activeStudio)
+- Manter `currentUserId` buscando da sessao no effect de fetch
+
+### 6. Modificar `src/hooks/useStudioJobs.ts`
+
+Mesma refatoracao do useStudioMembers.
+
+**Mudancas:**
+- Adicionar parametro `estudioId: string | null`
+- Remover Effect 1 de checkMembership
+- Usar estudioId recebido diretamente no fetchVagas
+
+### 7. Modificar `src/pages/studio/Team.tsx`
+
+Usar `useActiveStudio` para obter estudioId e passar para `useStudioMembers`.
+
+**Mudancas:**
+- Importar `useActiveStudio`
+- Obter `activeStudio` do hook
+- Passar `activeStudio?.estudio.id` para `useStudioMembers(estudioId)`
+- Ajustar condicoes de loading/error de acordo
+
+### 8. Modificar `src/pages/studio/Jobs.tsx`
+
+Usar `useActiveStudio` para obter estudioId e passar para `useStudioJobs`.
+
+**Mudancas:**
+- Importar `useActiveStudio`
+- Obter `activeStudio` do hook
+- Passar `activeStudio?.estudio.id` para `useStudioJobs(estudioId)`
+
+### 9. Modificar `src/pages/studio/Dashboard.tsx`
+
+Trocar `useStudioMembership` por `useActiveStudio`.
+
+**Mudancas:**
+- Substituir `const { data: membership } = useStudioMembership()` por `const { activeStudio } = useActiveStudio()`
+- Usar `activeStudio?.estudio.nome` no texto de boas-vindas
+
+### 10. Modificar `src/pages/studio/Profile.tsx`
+
+Trocar `useStudioMembership` por `useActiveStudio`.
+
+**Mudancas:**
+- Substituir `const { data: membership, isLoading: loadingMembership } = useStudioMembership()` por `const { activeStudio, isLoading: loadingMembership } = useActiveStudio()`
+- Todas as referencias a `membership?.estudio.id` viram `activeStudio?.estudio.id`
+- Todas as referencias a `membership` viram `activeStudio`
+
+## Comportamento esperado
+
+1. Usuario acessa `/studio/manage/dashboard` sem `?studio=` -> sistema usa primeiro estudio da lista
+2. Usuario clica em outro estudio no selector -> URL atualiza para `?studio=novo_id`
+3. Navegacao entre paginas preserva o `?studio=` param
+4. Hooks de dados (jobs, members) reexecutam quando estudioId muda (via useEffect dependency)
+5. Se usuario tem apenas 1 estudio, nao mostra selector (mantem dropdown original)
 
 ## O que NAO muda
 
-- Nao envia email (MVP)
-- Nao mostra lista de convites pendentes (pode ser feature futura)
-- Nao cria pagina de aceitar convite (task 513)
-- Nao gera token manualmente (banco faz via DEFAULT)
+- Nao usa localStorage para persistir estudio ativo
+- Nao cria novas tabelas ou migracoes
+- Nao altera RLS policies
+- Nao altera rotas no App.tsx
+- Funcionalidade de convite permanece igual
+
