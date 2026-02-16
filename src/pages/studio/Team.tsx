@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Shield, Trash2 } from "lucide-react";
+import { Users, Shield, Trash2, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
@@ -24,6 +24,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { InviteMemberDialog } from "@/components/studio/InviteMemberDialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -47,7 +48,7 @@ function RoleBadge({ role }: { role: UserRole }) {
 export default function Team() {
   const {
     members, isLoading, error, isAuthorized, currentUserId,
-    superAdminCount, updateMemberRole, removeMember,
+    estudioId, superAdminCount, updateMemberRole, removeMember, refetch,
   } = useStudioMembers();
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -57,6 +58,7 @@ export default function Team() {
   const [selectedMember, setSelectedMember] = useState<StudioMember | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole>("member");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
   const openRoleDialog = (member: StudioMember) => {
     setSelectedMember(member);
@@ -133,12 +135,20 @@ export default function Team() {
   return (
     <StudioDashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
+            {!isLoading && isAuthorized && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {members.length} {members.length === 1 ? "membro" : "membros"}
+              </p>
+            )}
+          </div>
           {!isLoading && isAuthorized && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {members.length} {members.length === 1 ? "membro" : "membros"}
-            </p>
+            <Button onClick={() => setInviteDialogOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Convidar Membro
+            </Button>
           )}
         </div>
 
@@ -288,6 +298,16 @@ export default function Team() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {estudioId && currentUserId && (
+        <InviteMemberDialog
+          open={inviteDialogOpen}
+          onOpenChange={setInviteDialogOpen}
+          estudioId={estudioId}
+          currentUserId={currentUserId}
+          onSuccess={refetch}
+        />
+      )}
     </StudioDashboardLayout>
   );
 }
