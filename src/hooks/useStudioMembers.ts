@@ -24,6 +24,7 @@ interface UseStudioMembersReturn {
   isAuthorized: boolean;
   currentUserId: string | null;
   superAdminCount: number;
+  estudioId: string | null;
   refetch: () => Promise<void>;
   updateMemberRole: (memberId: string, newRole: UserRole) => Promise<void>;
   removeMember: (memberId: string) => Promise<void>;
@@ -197,6 +198,7 @@ export function useStudioMembers(): UseStudioMembersReturn {
     error,
     isAuthorized,
     currentUserId,
+    estudioId,
     superAdminCount,
     refetch: fetchMembers,
     updateMemberRole,
