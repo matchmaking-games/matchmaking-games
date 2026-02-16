@@ -1,106 +1,101 @@
 
-# Pagina de Gerenciamento de Equipe do Estudio
+# Funcionalidade de Convite de Membros para o Estudio
 
 ## Resumo
 
-Criar a pagina `/studio/manage/team` para super admins visualizarem, alterarem permissoes e removerem membros do estudio. Seguindo o padrao existente do projeto (useState/useEffect, sem React Query).
+Adicionar um Dialog de convite de novos membros na pagina `/studio/manage/team`. O super admin informa email e permissao, e o sistema cria um registro na tabela `estudio_convites`. Sem envio de email (MVP).
 
-## Arquivos a criar/modificar
+## Arquivos a modificar/criar
 
-### 1. Criar `src/hooks/useStudioMembers.ts`
+### 1. Modificar `src/hooks/useStudioMembers.ts`
 
-Hook seguindo o padrao de `useStudioJobs`:
+Expor `estudioId` no retorno do hook para que o componente de convite possa usa-lo.
 
-**Effect 1 - Verificar permissoes:**
-- Buscar sessao via `supabase.auth.getSession()`
-- Buscar membership do usuario em `estudio_membros` (role e estudio_id)
-- Validar que role === `super_admin`
-- Setar `isAuthorized`, `estudioId`, `membershipChecked`
+- Adicionar `estudioId: string | null` na interface `UseStudioMembersReturn`
+- Adicionar `estudioId` no objeto de retorno (linha 201)
 
-**Effect 2 - Buscar membros (quando autorizado):**
-- Query PostgREST com join:
-  ```typescript
-  supabase
-    .from("estudio_membros")
-    .select(`
-      id, role, adicionado_em, user_id,
-      user:users!user_id (
-        id, nome_completo, email, avatar_url
-      )
-    `)
-    .eq("estudio_id", estudioId)
-    .eq("ativo", true)
-    .order("adicionado_em", { ascending: false })
+### 2. Criar `src/components/studio/InviteMemberDialog.tsx`
+
+Componente Dialog controlado com formulario de convite.
+
+**Props:**
+```text
+open: boolean
+onOpenChange: (open: boolean) => void
+estudioId: string
+currentUserId: string
+onSuccess: () => void
+```
+
+**Estado interno (useState):**
+- `email: string` (campo de input)
+- `role: UserRole` (select, default "member")
+- `isSubmitting: boolean`
+- `emailError: string | null` (erro de validacao inline)
+
+**Validacao no submit (sem Zod externo, validacao manual simples):**
+1. Validar email com regex basico ou `z.string().email()` do Zod (ja esta no projeto)
+2. Buscar na tabela `users` se existe usuario com esse email
+3. Se existir, verificar na tabela `estudio_membros` se ja e membro ativo do estudio
+4. Se ja for membro, setar `emailError` com "Este email ja e membro do estudio"
+5. Verificar tambem se ja existe convite pendente (nao aceito e nao expirado) para evitar duplicatas
+
+**Insert no banco:**
+```text
+supabase.from("estudio_convites").insert({
+  estudio_id: estudioId,
+  email_convidado: email.trim().toLowerCase(),
+  role: role,
+  convidado_por: currentUserId,
+})
+```
+
+**UI do Dialog:**
+- Titulo: "Convidar Novo Membro"
+- Descricao: "Um convite sera criado e ficara valido por 7 dias."
+- Campo Email: Input type="email" com placeholder "exemplo@email.com", Label com asterisco
+- Campo Permissao: Select com "Membro" (default) e "Super Admin"
+- Footer: Botao "Cancelar" (outline) + Botao "Enviar Convite" (primary)
+- Loading state no botao durante submit
+- Limpar form ao fechar/abrir
+
+### 3. Modificar `src/pages/studio/Team.tsx`
+
+Adicionar botao "Convidar Membro" e o Dialog.
+
+**Mudancas:**
+- Importar `UserPlus` do lucide-react
+- Importar `InviteMemberDialog`
+- Adicionar estado `inviteDialogOpen`
+- Extrair `estudioId` do hook (apos modificacao)
+- No header da pagina, ao lado do titulo, adicionar botao:
+  ```text
+  <Button onClick={() => setInviteDialogOpen(true)}>
+    <UserPlus className="mr-2 h-4 w-4" />
+    Convidar Membro
+  </Button>
   ```
+  Visivel apenas quando `isAuthorized && !isLoading`
+- Renderizar `InviteMemberDialog` passando `estudioId`, `currentUserId` e `refetch` como `onSuccess`
 
-**Interface `StudioMember`:**
-```
-id, role, adicionado_em, user_id,
-user: { id, nome_completo, email, avatar_url }
-```
+## Detalhes de implementacao
 
-**Funcoes exportadas:**
-- `members`, `isLoading`, `error`, `isAuthorized`
-- `refetch()` - recarrega a lista
-- `updateMemberRole(memberId, newRole)` - update role via Supabase, chama refetch
-- `removeMember(memberId)` - update ativo=false via Supabase, chama refetch
-- `superAdminCount` - calculado com useMemo (quantos membros tem role super_admin)
+**Verificacao de email duplicado (2 queries sequenciais):**
+1. Buscar usuario pelo email na tabela `users` com `.maybeSingle()`
+2. Se encontrar, verificar em `estudio_membros` se `user_id` + `estudio_id` + `ativo = true`
+3. Se ja for membro, mostrar erro
 
-### 2. Criar `src/pages/studio/Team.tsx`
+**Verificacao de convite pendente:**
+- Buscar em `estudio_convites` por `email_convidado` + `estudio_id` + `aceito = false`
+- Se existir convite nao expirado, mostrar erro "Ja existe um convite pendente para este email"
 
-Pagina usando `StudioDashboardLayout` (mesmo padrao de StudioJobs).
+**Reset do form:** Ao abrir o dialog (onOpenChange para true) ou ao fechar, limpar email, role para "member", e emailError
 
-**Layout geral:**
-- Container `max-w-4xl mx-auto`
-- Titulo "Equipe" com `font-display text-2xl font-bold`
-- Subtitulo com contagem de membros
-
-**Loading:** 3 Skeletons empilhados
-
-**Error/Nao autorizado:** Card com mensagem de erro
-
-**Desktop (Table):**
-- Colunas: Avatar+Nome, Email, Permissao (Badge), Adicionado em, Acoes
-- Avatar com fallback de iniciais (getInitials)
-- Badge de role: `super_admin` com `bg-green-500/10 text-green-500`, `member` com `bg-muted text-muted-foreground`
-- Data formatada com `date-fns` locale ptBR (`dd/MM/yyyy`)
-- Acoes: botao ghost Shield (alterar role) + botao ghost Trash2 vermelho (remover)
-- Esconder acoes para o proprio usuario logado
-
-**Mobile (Cards):**
-- Usar `useIsMobile` para alternar
-- Stack vertical de cards com avatar, nome, email, badge, botoes
-
-**Dialog "Alterar Permissao":**
-- Select com opcoes "Super Admin" e "Membro"
-- Validacao: se `superAdminCount <= 1` e membro selecionado e super_admin, nao permitir demover
-- Toast de sucesso/erro
-
-**AlertDialog "Remover Membro":**
-- Texto: "Tem certeza que deseja remover [Nome] da equipe?"
-- Validacao: nao permitir remover ultimo super_admin
-- Toast de sucesso/erro
-
-**Empty state:** Icone Users + "Nenhum membro encontrado"
-
-### 3. Modificar `src/App.tsx`
-
-Adicionar rota protegida:
-```
-<Route path="/studio/manage/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-```
-Importar `Team` de `src/pages/studio/Team`.
-
-## Seguranca
-
-- Hook valida no client que usuario e super_admin antes de mostrar acoes
-- RLS policies existentes no banco protegem SELECT e UPDATE
-- Validacao de ultimo super_admin feita no client como UX guard (banco tambem protege)
-- Nao mostrar botoes de acao para o proprio usuario (evita auto-remocao)
+**Toast de sucesso:** Usar `useToast` com titulo "Convite enviado" e descricao "Convite enviado para [email]!"
 
 ## O que NAO muda
 
-- Sidebar ja tem link "Equipe" apontando para `/studio/manage/team`
-- Nao implementa convite de novos membros
-- Nao mostra membros inativos
-- Nao deleta registros, apenas marca ativo=false
+- Nao envia email (MVP)
+- Nao mostra lista de convites pendentes (pode ser feature futura)
+- Nao cria pagina de aceitar convite (task 513)
+- Nao gera token manualmente (banco faz via DEFAULT)
