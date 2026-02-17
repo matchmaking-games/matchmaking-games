@@ -22,12 +22,30 @@ const AuthCallback = () => {
         return;
       }
       
-      // Recuperar slug do localStorage
+      // Recuperar dados do localStorage
       const pendingSlug = localStorage.getItem("pending_slug");
+      const pendingRedirect = localStorage.getItem("pending_redirect");
       localStorage.removeItem("pending_slug");
+      localStorage.removeItem("pending_redirect");
       
-      // Redirecionar para onboarding
-      navigate(pendingSlug ? `/onboarding?slug=${pendingSlug}` : "/onboarding");
+      // Verificar se perfil já existe
+      const { data: profile } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      
+      if (profile) {
+        // Perfil existe: ir para redirect ou dashboard
+        navigate(pendingRedirect || "/dashboard");
+      } else {
+        // Sem perfil: ir para onboarding
+        const params = new URLSearchParams();
+        if (pendingSlug) params.set("slug", pendingSlug);
+        if (pendingRedirect) params.set("redirect", pendingRedirect);
+        const qs = params.toString();
+        navigate(qs ? `/onboarding?${qs}` : "/onboarding");
+      }
     };
 
     handleCallback();

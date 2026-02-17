@@ -26,8 +26,10 @@ const Signup = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
   const slug = searchParams.get("slug");
+  const redirect = searchParams.get("redirect");
+  const emailParam = searchParams.get("email");
   
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -46,9 +48,13 @@ const Signup = () => {
           .maybeSingle();
         
         if (profile) {
-          navigate('/dashboard', { replace: true });
+          navigate(redirect || '/dashboard', { replace: true });
         } else {
-          navigate(slug ? `/onboarding?slug=${slug}` : '/onboarding', { replace: true });
+          const onboardingParams = new URLSearchParams();
+          if (slug) onboardingParams.set("slug", slug);
+          if (redirect) onboardingParams.set("redirect", redirect);
+          const qs = onboardingParams.toString();
+          navigate(qs ? `/onboarding?${qs}` : '/onboarding', { replace: true });
         }
       } else {
         setCheckingAuth(false);
@@ -84,10 +90,8 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = async () => {
-    // Salvar slug no localStorage antes do redirect OAuth
-    if (slug) {
-      localStorage.setItem("pending_slug", slug);
-    }
+    if (slug) localStorage.setItem("pending_slug", slug);
+    if (redirect) localStorage.setItem("pending_redirect", redirect);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -103,10 +107,8 @@ const Signup = () => {
   };
 
   const handleLinkedInSignup = async () => {
-    // Salvar slug no localStorage antes do redirect OAuth
-    if (slug) {
-      localStorage.setItem("pending_slug", slug);
-    }
+    if (slug) localStorage.setItem("pending_slug", slug);
+    if (redirect) localStorage.setItem("pending_redirect", redirect);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "linkedin_oidc",
@@ -159,8 +161,11 @@ const Signup = () => {
       return;
     }
     
-    // Sucesso: redirecionar para onboarding
-    navigate(slug ? `/onboarding?slug=${slug}` : "/onboarding");
+    const onboardingParams = new URLSearchParams();
+    if (slug) onboardingParams.set("slug", slug);
+    if (redirect) onboardingParams.set("redirect", redirect);
+    const qs = onboardingParams.toString();
+    navigate(qs ? `/onboarding?${qs}` : "/onboarding");
   };
 
   return (
@@ -328,7 +333,7 @@ const Signup = () => {
           {/* Footer Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Já tem conta?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
+            <Link to={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"} className="text-primary hover:underline font-medium">
               Entrar
             </Link>
           </p>
