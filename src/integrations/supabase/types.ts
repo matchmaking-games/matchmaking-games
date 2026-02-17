@@ -1137,6 +1137,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_studio_invite: { Args: { invite_token: string }; Returns: Json }
       check_slug_availability: {
         Args: { slug_to_check: string }
         Returns: boolean
@@ -1146,6 +1147,7 @@ export type Database = {
         Returns: boolean
       }
       expirar_vagas_antigas: { Args: never; Returns: number }
+      get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
     }
     Enums: {
       categoria_habilidade: "engine" | "linguagem" | "ferramenta" | "soft_skill"

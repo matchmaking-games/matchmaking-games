@@ -11,6 +11,7 @@ import matchmakingLogo from "@/assets/matchmaking-logo.png";
 const Login = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const redirect = new URLSearchParams(window.location.search).get("redirect");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -30,9 +31,9 @@ const Login = () => {
           .maybeSingle();
         
         if (profile) {
-          navigate('/dashboard', { replace: true });
+          navigate(redirect || '/dashboard', { replace: true });
         } else {
-          navigate('/onboarding', { replace: true });
+          navigate(redirect ? `/onboarding?redirect=${encodeURIComponent(redirect)}` : '/onboarding', { replace: true });
         }
       } else {
         setCheckingAuth(false);
@@ -67,6 +68,7 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
+    if (redirect) localStorage.setItem("pending_redirect", redirect);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -84,6 +86,7 @@ const Login = () => {
   const handleLinkedInLogin = async () => {
     setIsLoading(true);
     setError(null);
+    if (redirect) localStorage.setItem("pending_redirect", redirect);
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "linkedin_oidc",
@@ -114,7 +117,7 @@ const Login = () => {
       return;
     }
 
-    navigate("/dashboard");
+    navigate(redirect || "/dashboard");
   };
 
   return (
@@ -282,7 +285,7 @@ const Login = () => {
           {/* Footer Link */}
           <p className="text-center text-sm text-muted-foreground mt-6">
             Não tem conta?{" "}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
+            <Link to={redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : "/signup"} className="text-primary hover:underline font-medium">
               Criar conta
             </Link>
           </p>

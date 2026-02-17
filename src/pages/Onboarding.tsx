@@ -170,8 +170,8 @@ const Onboarding = () => {
       return;
     }
 
-    // Success - redirect to dashboard
-    navigate("/dashboard");
+    const redirectParam = searchParams.get("redirect");
+    navigate(redirectParam || "/dashboard");
   };
   const renderUsernameStatusIcon = () => {
     if (!username || username.length < 3) return null;

@@ -27,6 +27,7 @@ import JobForm from "./pages/studio/JobForm";
 import Team from "./pages/studio/Team";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -104,6 +105,7 @@ const App = () => (
           <Route path="/p/:slug" element={<PublicProfile />} />
           <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
           <Route path="/studio/:slug" element={<StudioPublicProfile />} />
+          <Route path="/invite/:token" element={<AcceptInvite />} />
           <Route
             path="/studio/manage/new"
             element={
