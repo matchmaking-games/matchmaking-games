@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { UserPlus } from "lucide-react";
+import { CheckCircle, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -34,6 +35,9 @@ export function InviteMemberDialog({
   const [role, setRole] = useState<UserRole>("member");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [inviteCreated, setInviteCreated] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -42,11 +46,33 @@ export function InviteMemberDialog({
       setRole("member");
       setEmailError(null);
       setIsSubmitting(false);
+      setInviteCreated(false);
+      setInviteLink("");
+      setCopiedLink(false);
     }
   }, [open]);
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedLink(true);
+      toast({ title: "Link copiado para área de transferência!" });
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      toast({
+        title: "Erro ao copiar link",
+        description: "Tente selecionar e copiar manualmente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    if (inviteCreated) onSuccess();
+    onOpenChange(false);
+  };
+
   const handleSubmit = async () => {
-    // Validate email
     const parsed = emailSchema.safeParse(email.trim());
     if (!parsed.success) {
       setEmailError("Email inválido");
@@ -95,23 +121,25 @@ export function InviteMemberDialog({
         return;
       }
 
-      // Create invite
-      const { error } = await supabase.from("estudio_convites").insert({
-        estudio_id: estudioId,
-        email_convidado: normalizedEmail,
-        role: role,
-        convidado_por: currentUserId,
-      });
+      // Create invite and get token back
+      const { data: newInvite, error } = await supabase
+        .from("estudio_convites")
+        .insert({
+          estudio_id: estudioId,
+          email_convidado: normalizedEmail,
+          role: role,
+          convidado_por: currentUserId,
+        })
+        .select("token")
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Convite enviado",
-        description: `Convite enviado para ${normalizedEmail}!`,
-      });
+      const link = `${window.location.origin}/invite/${newInvite.token}`;
+      setInviteLink(link);
+      setInviteCreated(true);
 
-      onSuccess();
-      onOpenChange(false);
+      toast({ title: "Convite criado com sucesso!" });
     } catch (err) {
       toast({
         title: "Erro ao enviar convite",
@@ -124,58 +152,125 @@ export function InviteMemberDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Convidar Novo Membro</DialogTitle>
-          <DialogDescription>
-            Um convite será criado e ficará válido por 7 dias. A pessoa convidada precisará acessar o link de convite para aceitar.
-          </DialogDescription>
-        </DialogHeader>
+        {inviteCreated ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                Convite Criado!
+              </DialogTitle>
+              <DialogDescription>
+                O convite foi criado com sucesso
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="invite-email">
-              Email <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="invite-email"
-              type="email"
-              placeholder="exemplo@email.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (emailError) setEmailError(null);
-              }}
-              disabled={isSubmitting}
-            />
-            {emailError && (
-              <p className="text-sm text-destructive">{emailError}</p>
-            )}
-          </div>
+            <div className="space-y-4">
+              {/* Invite info */}
+              <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Email convidado:</span>
+                  <span className="text-sm font-medium text-foreground">{email}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Permissão:</span>
+                  <Badge variant={role === "super_admin" ? "default" : "secondary"}>
+                    {role === "super_admin" ? "Super Admin" : "Membro"}
+                  </Badge>
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="invite-role">Permissão</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole)} disabled={isSubmitting}>
-              <SelectTrigger id="invite-role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">Membro</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              {/* Copyable link */}
+              <div className="space-y-2">
+                <Label>Link do convite:</Label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={inviteLink}
+                    className="text-xs"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={handleCopyLink}
+                  >
+                    {copiedLink ? (
+                      <Check className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || !email.trim()}>
-            {isSubmitting ? "Enviando..." : "Enviar Convite"}
-          </Button>
-        </DialogFooter>
+                <p className="text-xs text-muted-foreground">
+                  💡 Você pode compartilhar este link diretamente com a pessoa convidada via WhatsApp, email ou qualquer outro meio. O link expira em 7 dias.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button onClick={handleClose} className="w-full sm:w-auto">
+                Fechar
+              </Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Convidar Novo Membro</DialogTitle>
+              <DialogDescription>
+                Um convite será criado e ficará válido por 7 dias. A pessoa convidada precisará acessar o link de convite para aceitar.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">
+                  Email <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="exemplo@email.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
+                  disabled={isSubmitting}
+                />
+                {emailError && (
+                  <p className="text-sm text-destructive">{emailError}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="invite-role">Permissão</Label>
+                <Select value={role} onValueChange={(v) => setRole(v as UserRole)} disabled={isSubmitting}>
+                  <SelectTrigger id="invite-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Membro</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || !email.trim()}>
+                {isSubmitting ? "Enviando..." : "Enviar Convite"}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
