@@ -14,6 +14,7 @@ export interface StudioMember {
     nome_completo: string;
     email: string;
     avatar_url: string | null;
+    slug: string | null;
   };
 }
 
@@ -55,7 +56,7 @@ export function useStudioMembers(estudioId: string | null): UseStudioMembersRetu
         .select(`
           id, role, adicionado_em, user_id,
           user:users!user_id (
-            id, nome_completo, email, avatar_url
+            id, nome_completo, email, avatar_url, slug
           )
         `)
         .eq("estudio_id", estudioId)
