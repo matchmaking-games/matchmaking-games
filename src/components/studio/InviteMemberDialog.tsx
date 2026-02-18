@@ -38,6 +38,7 @@ export function InviteMemberDialog({
   const [inviteCreated, setInviteCreated] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -49,6 +50,7 @@ export function InviteMemberDialog({
       setInviteCreated(false);
       setInviteLink("");
       setCopiedLink(false);
+      setEmailSent(false);
     }
   }, [open]);
 
@@ -130,7 +132,7 @@ export function InviteMemberDialog({
           role: role,
           convidado_por: currentUserId,
         })
-        .select("token")
+        .select("id, token")
         .single();
 
       if (error) throw error;
@@ -139,7 +141,31 @@ export function InviteMemberDialog({
       setInviteLink(link);
       setInviteCreated(true);
 
-      toast({ title: "Convite criado com sucesso!" });
+      // Try sending email (non-blocking)
+      try {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke("send-invite-email", {
+          body: { inviteId: newInvite.id },
+        });
+
+        if (emailError || !emailData?.success) {
+          console.error("Erro ao enviar email de convite:", { error: emailError, data: emailData });
+          setEmailSent(false);
+          toast({
+            title: "Convite criado! Compartilhe o link manualmente.",
+            variant: "default",
+          });
+        } else {
+          setEmailSent(true);
+          toast({ title: `Email enviado para ${normalizedEmail}!` });
+        }
+      } catch (emailErr) {
+        console.error("Erro ao enviar email de convite:", emailErr);
+        setEmailSent(false);
+        toast({
+          title: "Convite criado! Compartilhe o link manualmente.",
+          variant: "default",
+        });
+      }
     } catch (err) {
       toast({
         title: "Erro ao enviar convite",
@@ -162,7 +188,9 @@ export function InviteMemberDialog({
                 Convite Criado!
               </DialogTitle>
               <DialogDescription>
-                O convite foi criado com sucesso
+                {emailSent
+                  ? "Email enviado com sucesso! Ou compartilhe o link abaixo:"
+                  : "Compartilhe este link com a pessoa convidada:"}
               </DialogDescription>
             </DialogHeader>
 
