@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Shield, Trash2, UserPlus } from "lucide-react";
+import { Users, Shield, Trash2, UserPlus, MoreVertical, User, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
@@ -22,8 +22,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { InviteMemberDialog } from "@/components/studio/InviteMemberDialog";
 import type { Database } from "@/integrations/supabase/types";
@@ -69,6 +71,30 @@ export default function Team() {
     setRemoveDialogOpen(true);
   };
 
+  const handleRoleClick = (member: StudioMember) => {
+    if (member.role === "super_admin" && superAdminCount <= 1) {
+      if (member.user_id === currentUserId) {
+        toast({ title: "Ação não permitida", description: "Você não pode remover sua própria permissão de Super Admin.", variant: "destructive" });
+      } else {
+        toast({ title: "Ação não permitida", description: "O estúdio precisa ter pelo menos um Super Admin.", variant: "destructive" });
+      }
+      return;
+    }
+    openRoleDialog(member);
+  };
+
+  const handleRemoveClick = (member: StudioMember) => {
+    if (member.user_id === currentUserId) {
+      toast({ title: "Ação não permitida", description: "Você não pode remover a si mesmo. Peça para outro Super Admin fazer isso.", variant: "destructive" });
+      return;
+    }
+    if (member.role === "super_admin" && superAdminCount <= 1) {
+      toast({ title: "Ação não permitida", description: "Não é possível remover. O estúdio precisa ter pelo menos um Super Admin.", variant: "destructive" });
+      return;
+    }
+    openRemoveDialog(member);
+  };
+
   const handleUpdateRole = async () => {
     if (!selectedMember) return;
     setIsProcessing(true);
@@ -76,13 +102,13 @@ export default function Team() {
       await updateMemberRole(selectedMember.id, selectedRole);
       toast({
         title: "Permissão atualizada",
-        description: `${selectedMember.user.nome_completo} agora é ${selectedRole === "super_admin" ? "Super Admin" : "Membro"}.`,
+        description: `Permissão de ${selectedMember.user.nome_completo} alterada para ${selectedRole === "super_admin" ? "Super Admin" : "Membro"}.`,
       });
       setRoleDialogOpen(false);
     } catch (err) {
       toast({
-        title: "Erro ao atualizar permissão",
-        description: err instanceof Error ? err.message : "Erro desconhecido",
+        title: "Erro ao alterar permissão",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -97,13 +123,13 @@ export default function Team() {
       await removeMember(selectedMember.id);
       toast({
         title: "Membro removido",
-        description: `${selectedMember.user.nome_completo} foi removido da equipe.`,
+        description: `${selectedMember.user.nome_completo} foi removido do estúdio.`,
       });
       setRemoveDialogOpen(false);
     } catch (err) {
       toast({
         title: "Erro ao remover membro",
-        description: err instanceof Error ? err.message : "Erro desconhecido",
+        description: err instanceof Error ? err.message : "Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -116,19 +142,36 @@ export default function Team() {
     return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
   };
 
-  const renderActions = (member: StudioMember) => {
-    if (member.user_id === currentUserId) return null;
-    return (
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={() => openRoleDialog(member)} title="Alterar permissão">
-          <Shield className="h-4 w-4" />
+  const renderActions = (member: StudioMember) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreVertical className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => openRemoveDialog(member)} title="Remover membro" className="text-destructive hover:text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          disabled={!member.user.slug}
+          onClick={() => member.user.slug && window.open(`/p/${member.user.slug}`, '_blank')}
+        >
+          <User className="mr-2 h-4 w-4" />
+          Ver Perfil Público
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleRoleClick(member)}>
+          <Shield className="mr-2 h-4 w-4" />
+          Alterar Permissão
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => handleRemoveClick(member)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Remover do Estúdio
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <StudioDashboardLayout>
@@ -204,12 +247,12 @@ export default function Team() {
                           <p className="font-medium text-sm text-foreground truncate">{member.user.nome_completo}</p>
                           <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
                         </div>
-                        <RoleBadge role={member.role} />
+                        <div className="flex items-center gap-2">
+                          <RoleBadge role={member.role} />
+                          {renderActions(member)}
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Adicionado em {formatDate(member.adicionado_em)}</span>
-                        {renderActions(member)}
-                      </div>
+                      <span className="text-xs text-muted-foreground">Adicionado em {formatDate(member.adicionado_em)}</span>
                     </div>
                   ))}
                 </div>
@@ -256,24 +299,46 @@ export default function Team() {
           <DialogHeader>
             <DialogTitle>Alterar Permissão</DialogTitle>
             <DialogDescription>
-              Alterar permissão de {selectedMember?.user.nome_completo}
+              Altere a permissão deste membro do estúdio.
             </DialogDescription>
           </DialogHeader>
-          <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as UserRole)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
-              <SelectItem value="member">Membro</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground">Membro:</span>{" "}
+                {selectedMember?.user.nome_completo}
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground">Permissão atual:</span>
+                {selectedMember && <RoleBadge role={selectedMember.role} />}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label>Nova permissão:</Label>
+              <RadioGroup value={selectedRole} onValueChange={(v) => setSelectedRole(v as UserRole)}>
+                <div className="flex items-start space-x-3 rounded-md border border-border p-3">
+                  <RadioGroupItem value="member" id="role-member" className="mt-0.5" />
+                  <div className="space-y-1">
+                    <Label htmlFor="role-member" className="font-medium cursor-pointer">Membro</Label>
+                    <p className="text-xs text-muted-foreground">Pode editar perfil do estúdio e gerenciar vagas</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3 rounded-md border border-border p-3">
+                  <RadioGroupItem value="super_admin" id="role-super-admin" className="mt-0.5" />
+                  <div className="space-y-1">
+                    <Label htmlFor="role-super-admin" className="font-medium cursor-pointer">Super Admin</Label>
+                    <p className="text-xs text-muted-foreground">Controle total, incluindo gerenciar equipe</p>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRoleDialogOpen(false)} disabled={isProcessing}>
               Cancelar
             </Button>
             <Button onClick={handleUpdateRole} disabled={isProcessing || selectedRole === selectedMember?.role}>
-              {isProcessing ? "Salvando..." : "Salvar"}
+              {isProcessing ? "Alterando..." : "Alterar Permissão"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -283,15 +348,18 @@ export default function Team() {
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover membro</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Remover Membro
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover {selectedMember?.user.nome_completo} da equipe? Esta ação pode ser revertida por um administrador.
+              Tem certeza que deseja remover <strong>{selectedMember?.user.nome_completo}</strong> do estúdio? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isProcessing}>Cancelar</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={handleRemove} disabled={isProcessing}>
-              {isProcessing ? "Removendo..." : "Remover"}
+              {isProcessing ? "Removendo..." : "Remover Membro"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
