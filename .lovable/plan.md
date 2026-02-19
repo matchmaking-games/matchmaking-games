@@ -1,31 +1,89 @@
 
 
-# Captura de Links de Fatura do Stripe
+# Pagina de Faturas do Estudio
 
 ## Resumo
 
-Duas alteracoes cirurgicas em Edge Functions existentes para capturar URLs de fatura (invoice) do Stripe quando um pagamento e concluido.
+Criar a pagina de faturas em `/studio/manage/billing` com hook dedicado, registrar a rota no App.tsx, e habilitar o item no menu lateral do estudio.
 
-## Alteracao 1: `supabase/functions/create-checkout-session/index.ts`
+## Arquivos a criar
 
-Adicionar um unico parametro ao `URLSearchParams` na funcao `createStripeCheckoutSession`: `'invoice_creation[enabled]': 'true'`. Isso instrui o Stripe a gerar automaticamente uma fatura para o pagamento one-time.
+### 1. `src/hooks/usePagamentos.ts`
 
-Local exato: dentro do objeto `URLSearchParams` (por volta da linha 25-40), adicionar a nova entrada junto aos demais parametros.
+Hook que busca pagamentos do estudio atual. Segue o padrao do `useStudioMembers`:
+- Recebe `estudioId: string | null` como parametro
+- Usa `useState` + `useCallback` + `useEffect` (mesmo padrao dos hooks existentes)
+- Query: `supabase.from("pagamentos").select("*, vaga:vagas!vaga_id(titulo)").eq("estudio_id", estudioId).order("criado_em", { ascending: false })`
+- O JOIN com vagas usa `!vaga_id` para trazer o titulo da vaga associada
+- Retorna `{ pagamentos, isLoading, error, refetch }`
+- Interface `Pagamento` com todos os campos relevantes: `id`, `amount`, `currency`, `status`, `criado_em`, `stripe_session_id`, `invoice_url`, `invoice_pdf_url`, e `vaga: { titulo: string } | null`
 
-## Alteracao 2: `supabase/functions/verify-payment/index.ts`
+### 2. `src/pages/studio/Billing.tsx`
 
-Tres mudancas pontuais:
+Pagina que usa `StudioDashboardLayout` (mesmo wrapper de Team.tsx, Dashboard.tsx, etc):
 
-1. **URL da chamada Stripe**: Na funcao `retrieveStripeSession`, alterar o endpoint de `/v1/checkout/sessions/${sessionId}` para `/v1/checkout/sessions/${sessionId}?expand[]=invoice`.
+**Estrutura:**
+- Importa `StudioDashboardLayout`, `useActiveStudio`, `usePagamentos`, componentes shadcn
+- Header: titulo "Faturas" com icone `CreditCard`, subtitulo "Historico de pagamentos do estudio"
+- Lista de pagamentos em cards (mesmo estilo visual do projeto)
 
-2. **Tipo de retorno**: Adicionar `invoice` como campo opcional no tipo de retorno da funcao, com a estrutura `{ hosted_invoice_url: string | null; invoice_pdf: string | null } | null`.
+**Cada card de pagamento exibe:**
+- Titulo da vaga (ou "Vaga removida" em `text-muted-foreground` se `vaga` for null)
+- Data formatada com `format(new Date(criado_em), "dd/MM/yyyy", { locale: ptBR })`
+- Valor: `(amount / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })`
+- Badge de status: "Pago" (verde) para `completed`, "Aguardando" (amarelo) para `pending`, "--" (cinza) para outros
+- Botoes de acao: "Ver fatura" se `invoice_url` existir, "Baixar PDF" se `invoice_pdf_url` existir, texto "Fatura nao disponivel para este pagamento." se ambos forem null
 
-3. **Update do pagamento**: No bloco onde `supabaseAdmin` atualiza o registro de pagamento para `completed` (por volta da linha 175-185), adicionar dois campos ao `.update()`: `invoice_url: session.invoice?.hosted_invoice_url ?? null` e `invoice_pdf_url: session.invoice?.invoice_pdf ?? null`.
+**Estados:**
+- Loading: 3 skeleton cards (Skeleton com altura e largura consistentes)
+- Vazio: mensagem centralizada "Nenhuma fatura encontrada. Suas faturas aparecerão aqui apos a publicacao de vagas em destaque."
+- Erro: mensagem com botao "Tentar novamente" que chama `refetch()`
+
+**Layout responsivo:**
+- Desktop: cards em lista vertical com layout horizontal (info a esquerda, acoes a direita)
+- Mobile: cards empilhados com info e acoes em coluna
+
+## Arquivos a modificar
+
+### 3. `src/components/studio/StudioSidebar.tsx`
+
+Adicionar item "Faturas" ao array `navItems` (linha 43-48):
+
+```typescript
+const navItems = [
+  { title: "Dashboard", url: "/studio/manage/dashboard", icon: LayoutDashboard },
+  { title: "Minhas vagas", url: "/studio/manage/jobs", icon: Briefcase },
+  { title: "Perfil do estudio", url: "/studio/manage/profile", icon: Building2 },
+  { title: "Minha equipe", url: "/studio/manage/team", icon: UserPlus },
+  { title: "Faturas", url: "/studio/manage/billing", icon: CreditCard },
+];
+```
+
+Tambem remover o item "Faturas" desabilitado do dropdown do footer (linhas 191-194), ja que agora esta no menu principal.
+
+### 4. `src/App.tsx`
+
+Adicionar import do componente `Billing` e registrar rota protegida:
+
+```typescript
+import Billing from "./pages/studio/Billing";
+
+// Dentro das Routes, junto com as outras rotas /studio/manage/*:
+<Route
+  path="/studio/manage/billing"
+  element={
+    <ProtectedRoute>
+      <Billing />
+    </ProtectedRoute>
+  }
+/>
+```
 
 ## O que NAO muda
 
-- Nenhum componente frontend
-- Nenhuma migracao SQL (colunas ja existem)
-- Logica de autenticacao, validacao, precos, URLs de redirect
-- Nenhuma outra Edge Function
-
+- Nenhuma outra pagina existente
+- Nenhuma Edge Function
+- Nenhuma tabela ou migracao SQL
+- Layout StudioDashboardLayout (apenas usado, nao modificado)
+- Logica de autenticacao
+- Nenhum outro item do menu alem de "Faturas"
