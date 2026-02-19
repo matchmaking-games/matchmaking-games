@@ -579,6 +579,8 @@ export type Database = {
           currency: string | null
           estudio_id: string
           id: string
+          invoice_pdf_url: string | null
+          invoice_url: string | null
           status: string | null
           stripe_payment_id: string | null
           stripe_session_id: string
@@ -591,6 +593,8 @@ export type Database = {
           currency?: string | null
           estudio_id: string
           id?: string
+          invoice_pdf_url?: string | null
+          invoice_url?: string | null
           status?: string | null
           stripe_payment_id?: string | null
           stripe_session_id: string
@@ -603,6 +607,8 @@ export type Database = {
           currency?: string | null
           estudio_id?: string
           id?: string
+          invoice_pdf_url?: string | null
+          invoice_url?: string | null
           status?: string | null
           stripe_payment_id?: string | null
           stripe_session_id?: string
