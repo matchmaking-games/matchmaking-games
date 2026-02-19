@@ -32,6 +32,7 @@ async function createStripeCheckoutSession(params: {
     'line_items[0][price_data][product_data][description]': `Destaque para: ${titulo}`,
     'line_items[0][price_data][unit_amount]': PRECO_DESTAQUE_CENTAVOS,
     'line_items[0][quantity]': '1',
+    'invoice_creation[enabled]': 'true',
     'metadata[vaga_id]': vagaId,
     'metadata[estudio_id]': estudioId,
     'success_url': `${siteUrl}/studio/jobs?payment=success&session_id={CHECKOUT_SESSION_ID}`,

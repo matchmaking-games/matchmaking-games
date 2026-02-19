@@ -16,8 +16,9 @@ async function retrieveStripeSession(sessionId: string, stripeSecretKey: string)
   payment_status: string;
   payment_intent: string | null;
   metadata: { vaga_id?: string; estudio_id?: string };
+  invoice: { hosted_invoice_url: string | null; invoice_pdf: string | null } | null;
 }> {
-  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
+  const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}?expand[]=invoice`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${stripeSecretKey}`,
@@ -262,6 +263,8 @@ Deno.serve(async (req) => {
           status: "completed",
           stripe_payment_id: session.payment_intent as string,
           atualizado_em: new Date().toISOString(),
+          invoice_url: session.invoice?.hosted_invoice_url ?? null,
+          invoice_pdf_url: session.invoice?.invoice_pdf ?? null,
         })
         .eq("id", pagamento.id);
 
