@@ -45,6 +45,7 @@ const navItems = [
   { title: "Minhas vagas", url: "/studio/manage/jobs", icon: Briefcase },
   { title: "Perfil do estúdio", url: "/studio/manage/profile", icon: Building2 },
   { title: "Minha equipe", url: "/studio/manage/team", icon: UserPlus },
+  { title: "Faturas", url: "/studio/manage/billing", icon: CreditCard },
 ];
 
 const getInitials = (name: string) => {
@@ -188,10 +189,6 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
               Configurações
             </DropdownMenuItem>
 
-            <DropdownMenuItem disabled>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Faturas
-            </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
