@@ -25,6 +25,7 @@ import StudioProfile from "./pages/studio/Profile";
 import StudioJobs from "./pages/studio/Jobs";
 import JobForm from "./pages/studio/JobForm";
 import Team from "./pages/studio/Team";
+import Billing from "./pages/studio/Billing";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
 import AcceptInvite from "./pages/AcceptInvite";
@@ -159,6 +160,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Team />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/manage/billing"
+            element={
+              <ProtectedRoute>
+                <Billing />
               </ProtectedRoute>
             }
           />
