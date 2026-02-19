@@ -139,11 +139,6 @@ export function DashboardSidebar() {
                 Configurações
               </DropdownMenuItem>
 
-              <DropdownMenuItem disabled>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Faturas
-              </DropdownMenuItem>
-
               <DropdownMenuItem asChild>
                 <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
                   <Mail className="mr-2 h-4 w-4" />
