@@ -10,7 +10,7 @@ import AuthCallback from "./pages/AuthCallback";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import ProfilePortfolio from "./pages/ProfilePortfolio";
+import ProfileLinks from "./pages/ProfileLinks";
 import Skills from "./pages/Skills";
 import Experience from "./pages/Experience";
 import Education from "./pages/Education";
@@ -62,12 +62,12 @@ const App = () => (
             }
           />
           <Route
-            path="/dashboard/profile/portfolio"
-            element={
-              <ProtectedRoute>
-                <ProfilePortfolio />
-              </ProtectedRoute>
-            }
+          path="/dashboard/profile/links"
+          element={
+            <ProtectedRoute>
+              <ProfileLinks />
+            </ProtectedRoute>
+          }
           />
           <Route
             path="/dashboard/profile/skills"

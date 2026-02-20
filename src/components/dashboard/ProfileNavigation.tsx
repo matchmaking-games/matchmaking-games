@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const navItems = [
   { label: "Perfil", to: "/dashboard/profile", value: "perfil" },
-  { label: "Links", to: "/dashboard/profile/portfolio", value: "portfolio" },
+  { label: "Links", to: "/dashboard/profile/links", value: "links" },
   { label: "Projetos", to: "/dashboard/profile/projects", value: "projetos" },
   { label: "Habilidades", to: "/dashboard/profile/skills", value: "habilidades" },
   { label: "Experiência", to: "/dashboard/profile/experience", value: "experiencia" },
@@ -20,7 +20,7 @@ export function ProfileNavigation() {
 
   const getActiveTab = () => {
     if (currentPath === "/dashboard/profile") return "perfil";
-    if (currentPath.includes("/portfolio")) return "portfolio";
+    if (currentPath.includes("/links")) return "links";
     if (currentPath.includes("/projects")) return "projetos";
     if (currentPath.includes("/skills")) return "habilidades";
     if (currentPath.includes("/experience")) return "experiencia";
