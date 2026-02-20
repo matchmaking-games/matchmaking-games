@@ -1,89 +1,130 @@
 
+## Criar `src/hooks/useImportLimit.ts`
 
-# Pagina de Faturas do Estudio
+### Contexto e padrão identificado
 
-## Resumo
+Após analisar os hooks existentes (`useAuth.ts`, `usePagamentos.ts`, `useSkills.ts`, `useProjects.ts`), o padrão do projeto é:
 
-Criar a pagina de faturas em `/studio/manage/billing` com hook dedicado, registrar a rota no App.tsx, e habilitar o item no menu lateral do estudio.
+- `useState` + `useEffect` nativos (sem React Query)
+- `supabase.auth.getSession()` para obter o usuário autenticado
+- `userId` em estado local como dependência do `useEffect` de busca
+- Erros tratados com `console.error` e fallback silencioso quando necessário
 
-## Arquivos a criar
+O hook `useCurrentUser.ts` é a exceção — usa React Query — mas a memória do projeto registra que o padrão obrigatório é `useState`/`useEffect`. O hook de `usePagamentos.ts` é o mais próximo do que será implementado: simples, com `isLoading`, estado central e tratamento de erro.
 
-### 1. `src/hooks/usePagamentos.ts`
+---
 
-Hook que busca pagamentos do estudio atual. Segue o padrao do `useStudioMembers`:
-- Recebe `estudioId: string | null` como parametro
-- Usa `useState` + `useCallback` + `useEffect` (mesmo padrao dos hooks existentes)
-- Query: `supabase.from("pagamentos").select("*, vaga:vagas!vaga_id(titulo)").eq("estudio_id", estudioId).order("criado_em", { ascending: false })`
-- O JOIN com vagas usa `!vaga_id` para trazer o titulo da vaga associada
-- Retorna `{ pagamentos, isLoading, error, refetch }`
-- Interface `Pagamento` com todos os campos relevantes: `id`, `amount`, `currency`, `status`, `criado_em`, `stripe_session_id`, `invoice_url`, `invoice_pdf_url`, e `vaga: { titulo: string } | null`
+### O que será criado
 
-### 2. `src/pages/studio/Billing.tsx`
+**Único arquivo:** `src/hooks/useImportLimit.ts`
 
-Pagina que usa `StudioDashboardLayout` (mesmo wrapper de Team.tsx, Dashboard.tsx, etc):
+---
 
-**Estrutura:**
-- Importa `StudioDashboardLayout`, `useActiveStudio`, `usePagamentos`, componentes shadcn
-- Header: titulo "Faturas" com icone `CreditCard`, subtitulo "Historico de pagamentos do estudio"
-- Lista de pagamentos em cards (mesmo estilo visual do projeto)
+### Lógica do hook
 
-**Cada card de pagamento exibe:**
-- Titulo da vaga (ou "Vaga removida" em `text-muted-foreground` se `vaga` for null)
-- Data formatada com `format(new Date(criado_em), "dd/MM/yyyy", { locale: ptBR })`
-- Valor: `(amount / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })`
-- Badge de status: "Pago" (verde) para `completed`, "Aguardando" (amarelo) para `pending`, "--" (cinza) para outros
-- Botoes de acao: "Ver fatura" se `invoice_url` existir, "Baixar PDF" se `invoice_pdf_url` existir, texto "Fatura nao disponivel para este pagamento." se ambos forem null
-
-**Estados:**
-- Loading: 3 skeleton cards (Skeleton com altura e largura consistentes)
-- Vazio: mensagem centralizada "Nenhuma fatura encontrada. Suas faturas aparecerão aqui apos a publicacao de vagas em destaque."
-- Erro: mensagem com botao "Tentar novamente" que chama `refetch()`
-
-**Layout responsivo:**
-- Desktop: cards em lista vertical com layout horizontal (info a esquerda, acoes a direita)
-- Mobile: cards empilhados com info e acoes em coluna
-
-## Arquivos a modificar
-
-### 3. `src/components/studio/StudioSidebar.tsx`
-
-Adicionar item "Faturas" ao array `navItems` (linha 43-48):
-
-```typescript
-const navItems = [
-  { title: "Dashboard", url: "/studio/manage/dashboard", icon: LayoutDashboard },
-  { title: "Minhas vagas", url: "/studio/manage/jobs", icon: Briefcase },
-  { title: "Perfil do estudio", url: "/studio/manage/profile", icon: Building2 },
-  { title: "Minha equipe", url: "/studio/manage/team", icon: UserPlus },
-  { title: "Faturas", url: "/studio/manage/billing", icon: CreditCard },
-];
+```
+LIMIT = 3 importações por 30 dias corridos
 ```
 
-Tambem remover o item "Faturas" desabilitado do dropdown do footer (linhas 191-194), ja que agora esta no menu principal.
+**Estados internos:**
+- `remainingImports: number` — começa em `3` (valor otimista para não bloquear durante o carregamento)
+- `isLoading: boolean` — começa em `true`
+- `userId: string | null` — obtido via `supabase.auth.getSession()`
 
-### 4. `src/App.tsx`
+**Fluxo:**
 
-Adicionar import do componente `Billing` e registrar rota protegida:
-
-```typescript
-import Billing from "./pages/studio/Billing";
-
-// Dentro das Routes, junto com as outras rotas /studio/manage/*:
-<Route
-  path="/studio/manage/billing"
-  element={
-    <ProtectedRoute>
-      <Billing />
-    </ProtectedRoute>
-  }
-/>
+```
+1. useEffect #1: busca a sessão → seta userId
+2. useEffect #2: quando userId muda → chama supabase.rpc('count_recent_imports', { p_user_id: userId })
+   - Em sucesso: remainingImports = Math.max(0, 3 - data)
+   - Em erro: console.error + remainingImports permanece 3 (falha silenciosa, canImport = true)
+   - Em ambos: isLoading = false
 ```
 
-## O que NAO muda
+**Retorno do hook:**
 
-- Nenhuma outra pagina existente
-- Nenhuma Edge Function
-- Nenhuma tabela ou migracao SQL
-- Layout StudioDashboardLayout (apenas usado, nao modificado)
-- Logica de autenticacao
-- Nenhum outro item do menu alem de "Faturas"
+| Propriedade | Tipo | Descrição |
+|---|---|---|
+| `remainingImports` | `number` | Quantas importações restam (0–3) |
+| `canImport` | `boolean` | `remainingImports > 0` |
+| `isLoading` | `boolean` | `true` enquanto a query está em andamento |
+
+---
+
+### Comportamento de falha silenciosa
+
+Se a chamada RPC falhar (erro de rede, timeout, etc.), o hook:
+- Loga o erro com `console.error`
+- Mantém `remainingImports = 3` e `canImport = true`
+- Seta `isLoading = false` normalmente
+
+Isso garante que nenhum usuário seja bloqueado indevidamente por instabilidade de rede.
+
+---
+
+### Implementação técnica
+
+```typescript
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+const IMPORT_LIMIT = 3;
+
+export function useImportLimit() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [remainingImports, setRemainingImports] = useState(IMPORT_LIMIT);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Passo 1: obtém o usuário da sessão
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUserId(session?.user?.id ?? null);
+      if (!session) setIsLoading(false); // sem usuário, não há nada a carregar
+    };
+    getUser();
+  }, []);
+
+  // Passo 2: consulta o limite quando userId estiver disponível
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchImportCount = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.rpc("count_recent_imports", {
+          p_user_id: userId,
+        });
+
+        if (error) throw error;
+
+        const count = typeof data === "number" ? data : 0;
+        setRemainingImports(Math.max(0, IMPORT_LIMIT - count));
+      } catch (err) {
+        console.error("useImportLimit: erro ao buscar contagem de importações:", err);
+        // Falha silenciosa — não bloqueia o usuário
+        setRemainingImports(IMPORT_LIMIT);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchImportCount();
+  }, [userId]);
+
+  return {
+    remainingImports,
+    canImport: remainingImports > 0,
+    isLoading,
+  };
+}
+```
+
+---
+
+### O que NÃO será alterado
+
+- Nenhuma página existente
+- Nenhum outro hook
+- Nenhum componente visual
+- Nenhuma rota ou layout
