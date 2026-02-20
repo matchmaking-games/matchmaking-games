@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { MapPin, Users, Globe, Calendar } from "lucide-react";
+import { SocialIcon } from "@/components/SocialIcon";
 import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -83,16 +84,62 @@ export default function StudioPublicProfile() {
         </Card>
 
         {/* About Card */}
-        {studio.sobre && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-display text-xl font-semibold">Sobre o Estúdio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-foreground whitespace-pre-line leading-relaxed">{studio.sobre}</p>
-            </CardContent>
-          </Card>
-        )}
+        {(() => {
+          const socialLinks = [
+            { key: "website", url: studio.website, isLucide: true },
+            { key: "linkedin", url: studio.linkedin_url },
+            { key: "github", url: studio.github_url },
+            { key: "twitter", url: studio.twitter_url },
+            { key: "instagram", url: studio.instagram_url },
+            { key: "facebook", url: studio.facebook_url },
+            { key: "youtube", url: studio.youtube_url },
+            { key: "twitch", url: studio.twitch_url },
+            { key: "telegram", url: studio.telegram_url },
+            { key: "artstation", url: studio.artstation_url },
+            { key: "behance", url: studio.behance_url },
+            { key: "dribbble", url: studio.dribbble_url },
+            { key: "itch", url: studio.itch_url },
+            { key: "pinterest", url: studio.pinterest_url },
+          ].filter((l) => l.url);
+
+          const hasSobre = !!studio.sobre;
+          const hasSocial = socialLinks.length > 0;
+
+          if (!hasSobre && !hasSocial) return null;
+
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-xl font-semibold">Sobre o Estúdio</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {hasSobre && (
+                  <p className="text-foreground whitespace-pre-line leading-relaxed">{studio.sobre}</p>
+                )}
+                {hasSocial && (
+                  <div className="flex flex-wrap gap-1 pt-2">
+                    {socialLinks.map(({ key, url, isLucide }) => (
+                      <a
+                        key={key}
+                        href={url!.startsWith("http") ? url! : `https://${url!}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={key}
+                      >
+                        {isLucide ? (
+                          <Globe className="w-5 h-5" />
+                        ) : (
+                          <SocialIcon network={key} size={20} />
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Jobs Card */}
         <Card>

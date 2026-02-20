@@ -13,7 +13,7 @@ interface PublicStudioData {
 async function fetchPublicStudio(slug: string): Promise<PublicStudioData> {
   const { data: studio, error: studioError } = await supabase
     .from("estudios")
-    .select("id, nome, slug, logo_url, sobre, cidade, estado, tamanho, website, fundado_em, especialidades")
+    .select("id, nome, slug, logo_url, sobre, cidade, estado, tamanho, website, fundado_em, especialidades, linkedin_url, github_url, twitter_url, instagram_url, facebook_url, youtube_url, twitch_url, telegram_url, artstation_url, behance_url, dribbble_url, itch_url, pinterest_url")
     .eq("slug", slug)
     .maybeSingle();
 
