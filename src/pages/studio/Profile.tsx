@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Loader2, Camera, Check, X, AlertTriangle } from "lucide-react";
 import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,11 +46,6 @@ const studioProfileSchema = z.object({
     .min(3, "Mínimo 3 caracteres")
     .max(30, "Máximo 30 caracteres")
     .regex(slugRegex, "Use apenas letras minúsculas, números e hífen"),
-  descricao: z
-    .string()
-    .max(500, "Máximo 500 caracteres")
-    .optional()
-    .or(z.literal("")),
   sobre: z
     .string()
     .max(5000, "Máximo 5000 caracteres")
@@ -64,7 +60,6 @@ const studioProfileSchema = z.object({
     .enum(["micro", "pequeno", "medio", "grande"])
     .nullable()
     .optional(),
-  website: z.string().url("URL inválida").optional().or(z.literal("")),
   especialidades: z.array(z.string()).optional(),
   fundado_em: z.string().optional().or(z.literal("")),
 });
@@ -96,12 +91,10 @@ export default function StudioProfile() {
   const [slug, setSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
-  const [descricao, setDescricao] = useState("");
   const [sobre, setSobre] = useState("");
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [tamanho, setTamanho] = useState<TamanhoEstudio | null>(null);
-  const [website, setWebsite] = useState("");
   const [especialidades, setEspecialidades] = useState<string[]>([]);
   const [fundadoEm, setFundadoEm] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -218,7 +211,6 @@ export default function StudioProfile() {
         setSlug(data.slug || "");
         setOriginalSlug(data.slug || "");
         if (data.slug) setSlugStatus("available");
-        setDescricao((data as any).descricao || "");
         setSobre(data.sobre || "");
         
         // Use estado and cidade directly from database
@@ -231,7 +223,6 @@ export default function StudioProfile() {
         }
         
         setTamanho(data.tamanho);
-        setWebsite(data.website || "");
         setEspecialidades(data.especialidades || []);
         // Convert YYYY-MM-DD to YYYY-MM for MonthYearPicker
         setFundadoEm(data.fundado_em ? data.fundado_em.substring(0, 7) : "");
@@ -334,11 +325,9 @@ export default function StudioProfile() {
     const formData = {
       nome,
       slug,
-      descricao,
       sobre,
       localizacao,
       tamanho: tamanho || null,
-      website,
       especialidades,
       fundado_em: fundadoEm,
     };
@@ -363,12 +352,10 @@ export default function StudioProfile() {
       .update({
         nome,
         slug,
-        // descricao field removed - column doesn't exist in estudios table
         sobre: sobre || null,
         estado: estado || null,
         cidade: cidade || null,
         tamanho: tamanho || null,
-        website: website || null,
         especialidades: especialidades.length > 0 ? especialidades : null,
         fundado_em: fundadoEm || null,
         logo_url: logoUrl,
@@ -410,7 +397,7 @@ export default function StudioProfile() {
         <Card>
           <CardContent className="pt-6">
             {/* Header inside Card */}
-            <div className="mb-8">
+            <div className="mb-4">
               <h1 className="font-display text-3xl font-bold text-foreground">
                 Perfil do Estúdio
               </h1>
@@ -418,6 +405,8 @@ export default function StudioProfile() {
                 Gerencie as informações públicas do seu estúdio
               </p>
             </div>
+
+            <StudioProfileNavigation />
 
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Logo Upload Section */}
@@ -594,28 +583,6 @@ export default function StudioProfile() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="descricao">Descrição curta</Label>
-                    <span className="text-xs text-muted-foreground">
-                      {descricao.length}/500
-                    </span>
-                  </div>
-                  <Textarea
-                    id="descricao"
-                    value={descricao}
-                    onChange={(e) => setDescricao(e.target.value)}
-                    placeholder="Breve descrição do estúdio que aparece em cards e listagens"
-                    maxLength={500}
-                    rows={3}
-                  />
-                  {validationErrors.descricao && (
-                    <p className="text-sm text-destructive">
-                      {validationErrors.descricao}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
                     <Label htmlFor="sobre">Sobre</Label>
                     <span className="text-xs text-muted-foreground">
                       {sobre.length}/5000
@@ -639,25 +606,8 @@ export default function StudioProfile() {
 
               <Separator />
 
-              {/* Links Section */}
+              {/* Specialties Section */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    placeholder="https://seuestudio.com"
-                    className="h-11"
-                  />
-                  {validationErrors.website && (
-                    <p className="text-sm text-destructive">
-                      {validationErrors.website}
-                    </p>
-                  )}
-                </div>
-
                 <div className="space-y-2">
                   <Label>Especialidades</Label>
                   <SpecialtiesInput
