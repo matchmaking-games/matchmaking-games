@@ -1,130 +1,109 @@
+## Criar Edge Function `process-linkedin-pdf`
 
-## Criar `src/hooks/useImportLimit.ts`
+### Arquivos
 
-### Contexto e padrão identificado
-
-Após analisar os hooks existentes (`useAuth.ts`, `usePagamentos.ts`, `useSkills.ts`, `useProjects.ts`), o padrão do projeto é:
-
-- `useState` + `useEffect` nativos (sem React Query)
-- `supabase.auth.getSession()` para obter o usuário autenticado
-- `userId` em estado local como dependência do `useEffect` de busca
-- Erros tratados com `console.error` e fallback silencioso quando necessário
-
-O hook `useCurrentUser.ts` é a exceção — usa React Query — mas a memória do projeto registra que o padrão obrigatório é `useState`/`useEffect`. O hook de `usePagamentos.ts` é o mais próximo do que será implementado: simples, com `isLoading`, estado central e tratamento de erro.
+- **Criar:** `supabase/functions/process-linkedin-pdf/index.ts`
+- **Modificar:** `supabase/config.toml` -- adicionar `[functions.process-linkedin-pdf]` com `verify_jwt = false`
 
 ---
 
-### O que será criado
+### Fluxo da funcao
 
-**Único arquivo:** `src/hooks/useImportLimit.ts`
+```text
+Request (FormData com PDF)
+  |
+  v
+1. Validar auth header -> extrair user via getUser()
+  |
+  v
+2. Rate limit check -> supabase.rpc('count_recent_imports') >= 3 ? 429
+  |
+  v
+3. Extrair PDF do FormData -> validar tipo e tamanho (max 10MB)
+  |
+  v
+4. Extrair texto do PDF via pdf-parse (npm:pdf-parse/lib/pdf-parse.js)
+  |
+  v
+5. Separar texto em secoes (experiences, education, skills)
+  |
+  v
+6. Chamar Lovable AI Gateway (google/gemini-2.5-flash) com o prompt definido
+  |  - Se JSON invalido na resposta: retry 1x
+  |
+  v
+7. Registrar em import_history usando o MESMO cliente autenticado do passo 1
+  |
+  v
+8. Retornar JSON estruturado com extracted_data + raw_text
+```
 
 ---
 
-### Lógica do hook
+### Correcao aplicada: passo 7
 
-```
-LIMIT = 3 importações por 30 dias corridos
-```
+Usar o **mesmo cliente Supabase autenticado** (criado no passo 1 com o token do header Authorization) para inserir em `import_history`. A tabela ja possui a RLS policy `"Users can insert own import history"` com `WITH CHECK (auth.uid() = user_id)`, que permite o INSERT diretamente.
 
-**Estados internos:**
-- `remainingImports: number` — começa em `3` (valor otimista para não bloquear durante o carregamento)
-- `isLoading: boolean` — começa em `true`
-- `userId: string | null` — obtido via `supabase.auth.getSession()`
-
-**Fluxo:**
-
-```
-1. useEffect #1: busca a sessão → seta userId
-2. useEffect #2: quando userId muda → chama supabase.rpc('count_recent_imports', { p_user_id: userId })
-   - Em sucesso: remainingImports = Math.max(0, 3 - data)
-   - Em erro: console.error + remainingImports permanece 3 (falha silenciosa, canImport = true)
-   - Em ambos: isLoading = false
-```
-
-**Retorno do hook:**
-
-| Propriedade | Tipo | Descrição |
-|---|---|---|
-| `remainingImports` | `number` | Quantas importações restam (0–3) |
-| `canImport` | `boolean` | `remainingImports > 0` |
-| `isLoading` | `boolean` | `true` enquanto a query está em andamento |
+Nao sera criado nenhum cliente `service_role`. Toda a funcao opera com um unico cliente autenticado, seguindo o principio de menor privilegio.
 
 ---
 
-### Comportamento de falha silenciosa
+### Detalhes tecnicos
 
-Se a chamada RPC falhar (erro de rede, timeout, etc.), o hook:
-- Loga o erro com `console.error`
-- Mantém `remainingImports = 3` e `canImport = true`
-- Seta `isLoading = false` normalmente
+**Extracao de texto do PDF**
 
-Isso garante que nenhum usuário seja bloqueado indevidamente por instabilidade de rede.
+Usar `import pdf from "npm:pdf-parse/lib/pdf-parse.js"` (importacao direta do subpath, sem depender de `fs.readFileSync`).
+
+**Chamada de IA**
+
+Lovable AI Gateway em `https://ai.gateway.lovable.dev/v1/chat/completions` com `LOVABLE_API_KEY`. Modelo: `google/gemini-2.5-flash`, temperature: 0.1. Chamada sincrona (sem streaming). Retry 1x se `JSON.parse` falhar.
+
+**Separacao de secoes**
+
+Funcao auxiliar `splitSections(text)` que busca por titulos em PT e EN:
+
+- "Experiencia" / "Experience"
+- "Formacao academica" / "Education"
+- "Principais competencias" / "Skills" / "Top Skills"
+
+**CORS**
+
+Mesmo padrao das outras edge functions do projeto.
+
+**Auth**
+
+`verify_jwt = false` no config.toml, validacao manual via `supabase.auth.getUser()`.
 
 ---
 
-### Implementação técnica
+### Estrutura da resposta de sucesso
 
-```typescript
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+```text
+{
+  "success": true,
+  "data": {
+    "extracted_data": { "basic_info": {}, "experiences": [], "education": [], "skills": [] },
+    "raw_text": {
+      "full": "texto completo",
+      "sections": { "experiences": "...", "education": "...", "skills": "..." }
+    }
+  }
+}
+```
 
-const IMPORT_LIMIT = 3;
+### Estrutura da resposta de erro
 
-export function useImportLimit() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [remainingImports, setRemainingImports] = useState(IMPORT_LIMIT);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Passo 1: obtém o usuário da sessão
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUserId(session?.user?.id ?? null);
-      if (!session) setIsLoading(false); // sem usuário, não há nada a carregar
-    };
-    getUser();
-  }, []);
-
-  // Passo 2: consulta o limite quando userId estiver disponível
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchImportCount = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase.rpc("count_recent_imports", {
-          p_user_id: userId,
-        });
-
-        if (error) throw error;
-
-        const count = typeof data === "number" ? data : 0;
-        setRemainingImports(Math.max(0, IMPORT_LIMIT - count));
-      } catch (err) {
-        console.error("useImportLimit: erro ao buscar contagem de importações:", err);
-        // Falha silenciosa — não bloqueia o usuário
-        setRemainingImports(IMPORT_LIMIT);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchImportCount();
-  }, [userId]);
-
-  return {
-    remainingImports,
-    canImport: remainingImports > 0,
-    isLoading,
-  };
+```text
+{
+  "success": false,
+  "error": "descricao do erro"
 }
 ```
 
 ---
 
-### O que NÃO será alterado
+### O que NAO sera alterado
 
-- Nenhuma página existente
-- Nenhum outro hook
-- Nenhum componente visual
-- Nenhuma rota ou layout
+- Nenhuma pagina, componente ou hook
+- Nenhuma outra edge function
+- Nenhuma tabela do banco de dados
