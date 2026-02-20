@@ -28,6 +28,7 @@ import Team from "./pages/studio/Team";
 import Billing from "./pages/studio/Billing";
 import StudioProfileLinks from "./pages/studio/StudioProfileLinks";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Settings from "./pages/Settings";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
@@ -177,6 +178,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <StudioProfileLinks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

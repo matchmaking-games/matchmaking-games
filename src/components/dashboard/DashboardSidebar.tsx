@@ -6,7 +6,6 @@ import {
   Building2,
   ChevronDown,
   Settings,
-  CreditCard,
   Mail,
   ExternalLink,
   LogOut,
@@ -134,9 +133,11 @@ export function DashboardSidebar() {
                 </>
               )}
 
-              <DropdownMenuItem disabled>
-                <Settings className="mr-2 h-4 w-4" />
-                Configurações
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/settings" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações
+                </Link>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
