@@ -24,6 +24,18 @@ export interface PublicUserData {
   linkedin_url: string | null;
   github_url: string | null;
   portfolio_url: string | null;
+  twitter_url: string | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  youtube_url: string | null;
+  twitch_url: string | null;
+  telegram_url: string | null;
+  artstation_url: string | null;
+  behance_url: string | null;
+  dribbble_url: string | null;
+  itch_url: string | null;
+  pinterest_url: string | null;
+  steam_url: string | null;
   email: string;
   telefone: string | null;
   mostrar_email: boolean | null;
@@ -126,7 +138,10 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       id, nome_completo, titulo_profissional,
       bio_curta, sobre, estado, cidade, avatar_url, banner_url,
       disponivel_para_trabalho, website, linkedin_url, github_url,
-      portfolio_url, email, telefone, mostrar_email, mostrar_telefone, slug, pronomes
+      portfolio_url, twitter_url, instagram_url, facebook_url, youtube_url,
+      twitch_url, telegram_url, artstation_url, behance_url, dribbble_url,
+      itch_url, pinterest_url, steam_url,
+      email, telefone, mostrar_email, mostrar_telefone, slug, pronomes
     `)
     .eq("slug", slug)
     .single();
