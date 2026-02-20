@@ -184,11 +184,6 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
               </>
             )}
 
-            <DropdownMenuItem disabled>
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações
-            </DropdownMenuItem>
-
             <DropdownMenuItem asChild>
               <a href="/studio/manage/billing" className="cursor-pointer">
                 <CreditCard className="mr-2 h-4 w-4" />
