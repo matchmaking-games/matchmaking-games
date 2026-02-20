@@ -511,6 +511,77 @@ export type Database = {
         }
         Relationships: []
       }
+      import_backups: {
+        Row: {
+          backup_data: Json
+          created_at: string
+          expires_at: string
+          id: string
+          import_history_id: string | null
+          user_id: string
+        }
+        Insert: {
+          backup_data: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          import_history_id?: string | null
+          user_id: string
+        }
+        Update: {
+          backup_data?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          import_history_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_backups_import_history_id_fkey"
+            columns: ["import_history_id"]
+            isOneToOne: false
+            referencedRelation: "import_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_history: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          imported_at: string
+          items_imported: Json | null
+          processing_time_ms: number | null
+          source_type: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          imported_at?: string
+          items_imported?: Json | null
+          processing_time_ms?: number | null
+          source_type?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          imported_at?: string
+          items_imported?: Json | null
+          processing_time_ms?: number | null
+          source_type?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       jogos: {
         Row: {
           criado_em: string | null
@@ -1230,6 +1301,8 @@ export type Database = {
         Args: { slug_to_check: string }
         Returns: boolean
       }
+      count_recent_imports: { Args: { p_user_id: string }; Returns: number }
+      delete_expired_backups: { Args: never; Returns: undefined }
       expirar_vagas_antigas: { Args: never; Returns: number }
       get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
     }
