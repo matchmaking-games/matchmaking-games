@@ -302,52 +302,94 @@ export type Database = {
       }
       estudios: {
         Row: {
+          artstation_url: string | null
           atualizado_em: string | null
+          behance_url: string | null
           cidade: string | null
           criado_em: string | null
           criado_por: string
+          dribbble_url: string | null
           especialidades: string[] | null
           estado: string | null
+          facebook_url: string | null
           fundado_em: string | null
+          github_url: string | null
           id: string
+          instagram_url: string | null
+          itch_url: string | null
+          linkedin_url: string | null
           logo_url: string | null
           nome: string
+          pinterest_url: string | null
           slug: string
           sobre: string | null
+          steam_url: string | null
           tamanho: Database["public"]["Enums"]["tamanho_estudio"] | null
+          telegram_url: string | null
+          twitch_url: string | null
+          twitter_url: string | null
           website: string | null
+          youtube_url: string | null
         }
         Insert: {
+          artstation_url?: string | null
           atualizado_em?: string | null
+          behance_url?: string | null
           cidade?: string | null
           criado_em?: string | null
           criado_por: string
+          dribbble_url?: string | null
           especialidades?: string[] | null
           estado?: string | null
+          facebook_url?: string | null
           fundado_em?: string | null
+          github_url?: string | null
           id?: string
+          instagram_url?: string | null
+          itch_url?: string | null
+          linkedin_url?: string | null
           logo_url?: string | null
           nome: string
+          pinterest_url?: string | null
           slug: string
           sobre?: string | null
+          steam_url?: string | null
           tamanho?: Database["public"]["Enums"]["tamanho_estudio"] | null
+          telegram_url?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          artstation_url?: string | null
           atualizado_em?: string | null
+          behance_url?: string | null
           cidade?: string | null
           criado_em?: string | null
           criado_por?: string
+          dribbble_url?: string | null
           especialidades?: string[] | null
           estado?: string | null
+          facebook_url?: string | null
           fundado_em?: string | null
+          github_url?: string | null
           id?: string
+          instagram_url?: string | null
+          itch_url?: string | null
+          linkedin_url?: string | null
           logo_url?: string | null
           nome?: string
+          pinterest_url?: string | null
           slug?: string
           sobre?: string | null
+          steam_url?: string | null
           tamanho?: Database["public"]["Enums"]["tamanho_estudio"] | null
+          telegram_url?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Relationships: [
           {
@@ -849,85 +891,121 @@ export type Database = {
       }
       users: {
         Row: {
+          artstation_url: string | null
           atualizado_em: string | null
           avatar_url: string | null
           banner_url: string | null
+          behance_url: string | null
           bio_curta: string | null
           cidade: string | null
           criado_em: string | null
           disponivel_para_trabalho: boolean | null
+          dribbble_url: string | null
           email: string
           estado: string | null
+          facebook_url: string | null
           github_url: string | null
           id: string
+          instagram_url: string | null
+          itch_url: string | null
           linkedin_url: string | null
           mostrar_email: boolean | null
           mostrar_telefone: boolean | null
           nome_completo: string
+          pinterest_url: string | null
           portfolio_url: string | null
           pronomes: string | null
           slug: string
           sobre: string | null
+          steam_url: string | null
           telefone: string | null
+          telegram_url: string | null
           tipo_trabalho_preferido:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional: string | null
+          twitch_url: string | null
+          twitter_url: string | null
           website: string | null
+          youtube_url: string | null
         }
         Insert: {
+          artstation_url?: string | null
           atualizado_em?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          behance_url?: string | null
           bio_curta?: string | null
           cidade?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
+          dribbble_url?: string | null
           email: string
           estado?: string | null
+          facebook_url?: string | null
           github_url?: string | null
           id?: string
+          instagram_url?: string | null
+          itch_url?: string | null
           linkedin_url?: string | null
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo: string
+          pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
           slug: string
           sobre?: string | null
+          steam_url?: string | null
           telefone?: string | null
+          telegram_url?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          artstation_url?: string | null
           atualizado_em?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          behance_url?: string | null
           bio_curta?: string | null
           cidade?: string | null
           criado_em?: string | null
           disponivel_para_trabalho?: boolean | null
+          dribbble_url?: string | null
           email?: string
           estado?: string | null
+          facebook_url?: string | null
           github_url?: string | null
           id?: string
+          instagram_url?: string | null
+          itch_url?: string | null
           linkedin_url?: string | null
           mostrar_email?: boolean | null
           mostrar_telefone?: boolean | null
           nome_completo?: string
+          pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
           slug?: string
           sobre?: string | null
+          steam_url?: string | null
           telefone?: string | null
+          telegram_url?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }
