@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import pdf from "npm:pdf-parse/lib/pdf-parse.js";
+// @deno-types="npm:@types/pdf-parse"
+import pdf from "npm:pdf-parse";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,19 +27,11 @@ function splitSections(text: string): Sections {
   const markers: { key: keyof Sections; patterns: RegExp[] }[] = [
     {
       key: "experiences",
-      patterns: [
-        /^Experiência$/im,
-        /^Experience$/im,
-      ],
+      patterns: [/^Experiência$/im, /^Experience$/im],
     },
     {
       key: "education",
-      patterns: [
-        /^Formação acadêmica$/im,
-        /^Formação Acadêmica$/im,
-        /^Formacao academica$/im,
-        /^Education$/im,
-      ],
+      patterns: [/^Formação acadêmica$/im, /^Formação Acadêmica$/im, /^Formacao academica$/im, /^Education$/im],
     },
     {
       key: "skills",
@@ -169,25 +162,26 @@ Deno.serve(async (req) => {
     // 1. Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Não autorizado" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
     if (userError || !user) {
       logStep("Auth failed", { error: userError?.message });
-      return new Response(
-        JSON.stringify({ success: false, error: "Token inválido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Token inválido" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     userId = user.id;
@@ -203,35 +197,35 @@ Deno.serve(async (req) => {
       // Fail-open: allow if RPC fails
     } else if (importCount >= 3) {
       logStep("Rate limit exceeded", { count: importCount });
-      return new Response(
-        JSON.stringify({ success: false, error: "Rate limit exceeded" }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Rate limit exceeded" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // 3. Extract PDF from FormData
     const formData = await req.formData();
-    const file = formData.get("file");
+    const file = formData.get("pdf"); // campo "pdf" conforme enviado pelo frontend
 
     if (!file || !(file instanceof File)) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Arquivo PDF é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Arquivo PDF é obrigatório" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (file.type !== "application/pdf") {
-      return new Response(
-        JSON.stringify({ success: false, error: "Apenas arquivos PDF são aceitos" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Apenas arquivos PDF são aceitos" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Arquivo excede o limite de 10MB" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Arquivo excede o limite de 10MB" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("PDF received", { name: file.name, size: file.size });
@@ -299,7 +293,7 @@ Deno.serve(async (req) => {
           },
         },
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -320,9 +314,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
