@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff, Check, X, AlertTriangle } from "lucide-react";
 import { ImportSection } from "@/components/ImportSection";
 import { ImportConfirmModal } from "@/components/ImportConfirmModal";
+import { ImportReviewDrawer } from "@/components/ImportReviewDrawer";
 import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
@@ -96,6 +97,8 @@ export default function Profile() {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [reviewData, setReviewData] = useState<any | null>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const { uploadPdf, isProcessing, progress, error: importError, errorRef } = useImportLinkedIn();
 
   const debouncedSlug = useDebounce(slug, 500);
@@ -362,11 +365,8 @@ export default function Profile() {
                     if (!file) return;
                     const result = await uploadPdf(file);
                     if (result) {
-                      console.log("LinkedIn import data:", result);
-                      toast({
-                        title: "Currículo processado com sucesso!",
-                        description: "A tela de revisão será implementada em breve.",
-                      });
+                      setReviewData(result);
+                      setIsReviewOpen(true);
                     } else {
                       toast({
                         title: "Erro na importação",
@@ -375,6 +375,18 @@ export default function Profile() {
                       });
                     }
                   }}
+                />
+
+                <ImportReviewDrawer
+                  open={isReviewOpen}
+                  onClose={() => { setIsReviewOpen(false); setReviewData(null); }}
+                  onSave={(data) => {
+                    toast({ title: "Salvando dados...", description: "A lógica de salvar será implementada na próxima task." });
+                    setIsReviewOpen(false);
+                    setReviewData(null);
+                  }}
+                  extractedData={reviewData?.extracted_data}
+                  rawSectionText={reviewData?.raw_text?.sections?.experiences || ""}
                 />
 
                 {/* Form Fields */}
