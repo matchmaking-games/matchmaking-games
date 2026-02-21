@@ -23,21 +23,15 @@ function splitSections(text: string): Sections {
   const markers: { key: keyof Sections; patterns: RegExp[] }[] = [
     {
       key: "experiences",
-      patterns: [/^Experiência$/im, /^Experience$/im],
+      patterns: [/Experiência/i, /Experience/i],
     },
     {
       key: "education",
-      patterns: [/^Formação acadêmica$/im, /^Formação Acadêmica$/im, /^Formacao academica$/im, /^Education$/im],
+      patterns: [/Formação acadêmica/i, /Formacao academica/i, /Education/i],
     },
     {
       key: "skills",
-      patterns: [
-        /^Principais competências$/im,
-        /^Principais Competências$/im,
-        /^Principais competencias$/im,
-        /^Top Skills$/im,
-        /^Skills$/im,
-      ],
+      patterns: [/Principais competências/i, /Principais competencias/i, /Top Skills/i, /Skills/i],
     },
   ];
 
@@ -256,6 +250,7 @@ Deno.serve(async (req) => {
       education: sections.education.length,
       skills: sections.skills.length,
     });
+
     return new Response(
       JSON.stringify({
         success: true,
