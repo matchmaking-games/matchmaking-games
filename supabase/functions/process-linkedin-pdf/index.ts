@@ -5,6 +5,11 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[PROCESS-LINKEDIN-PDF] ${step}${d}`);
 };
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 // --- Section splitter ---
 
@@ -196,10 +201,10 @@ Deno.serve(async (req) => {
     const { text, filename } = await req.json();
 
     if (!text || typeof text !== "string") {
-      return new Response(
-        JSON.stringify({ success: false, error: "Texto do PDF é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ success: false, error: "Texto do PDF é obrigatório" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Text received", { length: text.length, filename });
