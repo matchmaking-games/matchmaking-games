@@ -1,49 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const logStep = (step: string, details?: unknown) => {
   const d = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[PROCESS-LINKEDIN-PDF] ${step}${d}`);
 };
 
-// --- PDF text extractor (native, no dependencies) ---
-// LinkedIn PDFs are text-based (not scanned), so we can extract
-// text by parsing the raw PDF stream for text operators.
-
-async function extractTextFromPDF(buffer: Uint8Array): Promise<string> {
-  const loadingTask = pdfjsLib.getDocument({ data: buffer });
-  const pdf = await loadingTask.promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items.map((item: any) => ("str" in item ? item.str : "")).join(" ");
-    pages.push(pageText);
-  }
-  return pages.join("\n");
-}
-
-function decodePDFString(str: string): string {
-  // Handle PDF escape sequences
-  return str
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\r")
-    .replace(/\\t/g, "\t")
-    .replace(/\\\(/g, "(")
-    .replace(/\\\)/g, ")")
-    .replace(/\\\\/g, "\\")
-    .replace(/\\(\d{3})/g, (_match, octal) => {
-      return String.fromCharCode(parseInt(octal, 8));
-    });
-}
 
 // --- Section splitter ---
 
@@ -231,39 +192,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 3. Extract PDF from FormData
-    const formData = await req.formData();
-    const file = formData.get("pdf");
+    // 3. Read text from JSON body
+    const { text, filename } = await req.json();
 
-    if (!file || !(file instanceof File)) {
-      return new Response(JSON.stringify({ success: false, error: "Arquivo PDF é obrigatório" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!text || typeof text !== "string") {
+      return new Response(
+        JSON.stringify({ success: false, error: "Texto do PDF é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    if (file.type !== "application/pdf") {
-      return new Response(JSON.stringify({ success: false, error: "Apenas arquivos PDF são aceitos" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    logStep("Text received", { length: text.length, filename });
 
-    if (file.size > MAX_FILE_SIZE) {
-      return new Response(JSON.stringify({ success: false, error: "Arquivo excede o limite de 10MB" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    logStep("PDF received", { name: file.name, size: file.size });
-
-    // 4. Extract text natively (no external library)
-    const arrayBuffer = await file.arrayBuffer();
-    const pdfBuffer = new Uint8Array(arrayBuffer);
-    const fullText = await extractTextFromPDF(pdfBuffer);
-
-    logStep("Text extracted", { length: fullText.length });
+    const fullText = text;
 
     if (!fullText || fullText.trim().length < 100) {
       throw new Error(
@@ -271,15 +212,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 5. Split sections
-    const sections = splitSections(fullText);
-    logStep("Sections split", {
-      experiences: sections.experiences.length,
-      education: sections.education.length,
-      skills: sections.skills.length,
-    });
-
-    // 6. Call AI
+    // 4. Call AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
@@ -318,7 +251,6 @@ Deno.serve(async (req) => {
           extracted_data: extractedData,
           raw_text: {
             full: fullText,
-            sections,
           },
         },
       }),
