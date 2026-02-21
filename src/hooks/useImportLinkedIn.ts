@@ -112,7 +112,21 @@ export function useImportLinkedIn() {
       }
 
       const json = await response.json();
-      return json.data as ImportResult;
+      const result = json.data as ImportResult;
+
+      // Create backup before returning
+      const userId = session.user.id;
+      setProgress("Criando backup dos dados atuais...");
+      try {
+        await createBackup(userId);
+      } catch {
+        const msg = "Falha ao criar backup. Seus dados não foram alterados.";
+        setError(msg);
+        errorRef.current = msg;
+        return null;
+      }
+
+      return result;
     } catch {
       const msg = "Erro ao processar PDF. Verifique sua conexão e tente novamente.";
       setError(msg);
@@ -122,6 +136,40 @@ export function useImportLinkedIn() {
       setIsProcessing(false);
       setProgress("");
     }
+  };
+
+  const createBackup = async (userId: string): Promise<boolean> => {
+    const [expRes, eduRes, skillsRes] = await Promise.all([
+      supabase.from('experiencia').select('*').eq('user_id', userId),
+      supabase.from('educacao').select('*').eq('user_id', userId),
+      supabase.from('user_habilidades').select('*').eq('user_id', userId),
+    ]);
+
+    const experiences = expRes.data ?? [];
+    const education = eduRes.data ?? [];
+    const skills = skillsRes.data ?? [];
+
+    const backupData = {
+      experiences,
+      education,
+      skills,
+      metadata: {
+        backed_up_at: new Date().toISOString(),
+        total_items: experiences.length + education.length + skills.length,
+      },
+    };
+
+    const { error: insertError } = await supabase.from('import_backups').insert({
+      user_id: userId,
+      backup_data: backupData as any,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+
+    if (insertError) {
+      throw new Error("Falha ao criar backup. Importação abortada por segurança.");
+    }
+
+    return true;
   };
 
   return { uploadPdf, isProcessing, progress, error, errorRef };
