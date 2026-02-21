@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
@@ -10,9 +10,11 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
 interface ImportSectionProps {
   onFileSelected: (file: File) => void;
+  isProcessing?: boolean;
+  progress?: string;
 }
 
-export function ImportSection({ onFileSelected }: ImportSectionProps) {
+export function ImportSection({ onFileSelected, isProcessing, progress }: ImportSectionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { remainingImports, canImport, isLoading } = useImportLimit();
 
@@ -62,22 +64,31 @@ export function ImportSection({ onFileSelected }: ImportSectionProps) {
         aria-label="Selecionar PDF do LinkedIn"
       />
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={!canImport}
-        onClick={() => inputRef.current?.click()}
-      >
-        <Upload className="h-4 w-4 mr-2" />
-        Importar do LinkedIn
-      </Button>
+      {isProcessing ? (
+        <div className="flex items-center gap-2 h-9 px-3">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span className="text-sm text-muted-foreground">{progress}</span>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!canImport}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Importar do LinkedIn
+        </Button>
+      )}
 
       <span
         className={`text-xs ${
-          canImport
-            ? "text-muted-foreground"
-            : "text-destructive"
+          isProcessing
+            ? "opacity-50 pointer-events-none text-muted-foreground"
+            : canImport
+              ? "text-muted-foreground"
+              : "text-destructive"
         }`}
       >
         {canImport
