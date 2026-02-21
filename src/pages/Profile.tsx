@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff, Check, X, AlertTriangle } from "lucide-react";
+import { ImportSection } from "@/components/ImportSection";
+import { ImportConfirmModal } from "@/components/ImportConfirmModal";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
@@ -91,6 +93,8 @@ export default function Profile() {
   const [mostrarEmail, setMostrarEmail] = useState(false);
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const debouncedSlug = useDebounce(slug, 500);
   const { estados, municipios, loadingEstados, loadingMunicipios, fetchMunicipios } = useIBGELocations();
@@ -314,15 +318,48 @@ export default function Profile() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Avatar Section */}
-                <div className="flex flex-col items-center gap-4 pb-6 border-b border-border">
+                {/* Profile Header */}
+                <div className="flex flex-col items-center md:flex-row md:items-start gap-6 pb-6 border-b border-border">
                   <AvatarUpload
                     userId={userId || ""}
                     currentAvatarUrl={avatarUrl}
                     nomeCompleto={nomeCompleto}
                     onAvatarUpdated={setAvatarUrl}
                   />
+                  <div className="flex flex-col items-center md:items-start gap-1 flex-1">
+                    <h2 className="font-display text-2xl font-bold text-foreground">
+                      {nomeCompleto || "Seu nome"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      matchmaking.games/{slug || "seu-username"}
+                    </p>
+                    <div className="mt-2">
+                      <ImportSection
+                        onFileSelected={(file) => {
+                          setSelectedPdfFile(file);
+                          setIsImportModalOpen(true);
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                <ImportConfirmModal
+                  open={isImportModalOpen}
+                  pdfFile={selectedPdfFile}
+                  onClose={() => {
+                    setIsImportModalOpen(false);
+                    setSelectedPdfFile(null);
+                  }}
+                  onConfirm={() => {
+                    setIsImportModalOpen(false);
+                    setSelectedPdfFile(null);
+                    toast({
+                      title: "Arquivo recebido!",
+                      description: "Em breve você verá a tela de revisão.",
+                    });
+                  }}
+                />
 
                 {/* Form Fields */}
                 <div className="grid gap-6 md:grid-cols-2">

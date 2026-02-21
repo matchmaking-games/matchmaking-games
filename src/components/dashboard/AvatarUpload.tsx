@@ -128,7 +128,7 @@ export function AvatarUpload({
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 mb-8">
+    <div className="flex flex-col items-center gap-3">
       <div className="relative">
         <Avatar className="h-24 w-24 border border-border">
           <AvatarImage src={avatarUrl || undefined} alt={nomeCompleto} />
