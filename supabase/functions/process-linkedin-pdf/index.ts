@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import pdfParse from "https://esm.sh/pdf-parse@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,10 +17,11 @@ const logStep = (step: string, details?: unknown) => {
 // LinkedIn PDFs are text-based (not scanned), so we can extract
 // text by parsing the raw PDF stream for text operators.
 
-async function extractTextFromPDF(buffer: Uint8Array): Promise<string> {
-  const result = await pdfParse(buffer);
-  return result.text;
-}
+function extractTextFromPDF(buffer: Uint8Array): string {
+  const decoder = new TextDecoder("latin1");
+  const raw = decoder.decode(buffer);
+
+  const lines: string[] = [];
 
   // Extract text from BT...ET blocks (PDF text objects)
   const btEtRegex = /BT([\s\S]*?)ET/g;
@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
     // 4. Extract text natively (no external library)
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = new Uint8Array(arrayBuffer);
-    const fullText = await extractTextFromPDF(pdfBuffer);
+    const fullText = extractTextFromPDF(pdfBuffer);
 
     logStep("Text extracted", { length: fullText.length });
 
