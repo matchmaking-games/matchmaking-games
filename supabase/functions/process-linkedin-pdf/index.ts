@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import pdfParse from "https://esm.sh/pdf-parse@1.1.1";
+import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,8 +19,16 @@ const logStep = (step: string, details?: unknown) => {
 // text by parsing the raw PDF stream for text operators.
 
 async function extractTextFromPDF(buffer: Uint8Array): Promise<string> {
-  const result = await (pdfParse as any)(buffer);
-  return result.text as string;
+  const loadingTask = pdfjsLib.getDocument({ data: buffer });
+  const pdf = await loadingTask.promise;
+  const pages: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map((item: any) => ("str" in item ? item.str : "")).join(" ");
+    pages.push(pageText);
+  }
+  return pages.join("\n");
 }
 
 function decodePDFString(str: string): string {
