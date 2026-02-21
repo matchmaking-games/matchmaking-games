@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff, Check, X, AlertTriangle } from "lucide-react";
 import { ImportSection } from "@/components/ImportSection";
 import { ImportConfirmModal } from "@/components/ImportConfirmModal";
+import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
@@ -95,6 +96,7 @@ export default function Profile() {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const { uploadPdf, isProcessing, progress, error: importError, errorRef } = useImportLinkedIn();
 
   const debouncedSlug = useDebounce(slug, 500);
   const { estados, municipios, loadingEstados, loadingMunicipios, fetchMunicipios } = useIBGELocations();
@@ -339,6 +341,8 @@ export default function Profile() {
                           setSelectedPdfFile(file);
                           setIsImportModalOpen(true);
                         }}
+                        isProcessing={isProcessing}
+                        progress={progress}
                       />
                     </div>
                   </div>
@@ -351,13 +355,25 @@ export default function Profile() {
                     setIsImportModalOpen(false);
                     setSelectedPdfFile(null);
                   }}
-                  onConfirm={() => {
+                  onConfirm={async () => {
                     setIsImportModalOpen(false);
+                    const file = selectedPdfFile;
                     setSelectedPdfFile(null);
-                    toast({
-                      title: "Arquivo recebido!",
-                      description: "Em breve você verá a tela de revisão.",
-                    });
+                    if (!file) return;
+                    const result = await uploadPdf(file);
+                    if (result) {
+                      console.log("LinkedIn import data:", result);
+                      toast({
+                        title: "Currículo processado com sucesso!",
+                        description: "A tela de revisão será implementada em breve.",
+                      });
+                    } else {
+                      toast({
+                        title: "Erro na importação",
+                        description: errorRef.current || "Erro desconhecido.",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                 />
 
