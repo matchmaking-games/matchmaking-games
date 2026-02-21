@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     }
 
     logStep("Text received", { length: text.length, filename });
-    logStep("Text preview", { text: fullText.slice(0, 500) });
+    logStep("Text preview", { text: text.slice(0, 500) });
 
     const fullText = text;
 
