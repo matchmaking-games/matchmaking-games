@@ -250,7 +250,11 @@ Deno.serve(async (req) => {
     logStep("Done", { processingTime });
 
     const sections = splitSections(fullText);
-
+    logStep("Sections split", {
+      experiences: sections.experiences.length,
+      education: sections.education.length,
+      skills: sections.skills.length,
+    });
     return new Response(
       JSON.stringify({
         success: true,
