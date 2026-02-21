@@ -113,9 +113,8 @@ export function useImportLinkedIn() {
 
       const json = await response.json();
       return json.data as ImportResult;
-    } catch (err) {
-      console.error("IMPORT ERROR:", err);
-      const msg = "Erro ao processar PDF...";
+    } catch {
+      const msg = "Erro ao processar PDF. Verifique sua conexão e tente novamente.";
       setError(msg);
       errorRef.current = msg;
       return null;
