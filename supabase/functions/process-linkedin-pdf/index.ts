@@ -249,6 +249,8 @@ Deno.serve(async (req) => {
     // 8. Return success
     logStep("Done", { processingTime });
 
+    const sections = splitSections(fullText);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -256,6 +258,7 @@ Deno.serve(async (req) => {
           extracted_data: extractedData,
           raw_text: {
             full: fullText,
+            sections: sections,
           },
         },
       }),
