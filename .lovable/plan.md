@@ -1,86 +1,58 @@
-
-
-## Plano de Implementacao - TASK-808
+## Plano: Simplificar Edge Function para receber texto em vez de PDF
 
 ### Resumo
 
-Criar o hook `useImportLinkedIn` que processa o PDF via Edge Function, conecta-lo na pagina de perfil substituindo o toast placeholder, e exibir estados de loading progressivo no `ImportSection`.
+A Edge Function `process-linkedin-pdf` sera simplificada para receber texto pre-extraido via JSON em vez de um arquivo PDF via FormData. Isso resolve o problema de incompatibilidade de bibliotecas PDF no Deno.
 
 ---
 
-### 1. Criar `src/hooks/useImportLinkedIn.ts`
+### Alteracoes no arquivo `supabase/functions/process-linkedin-pdf/index.ts`
 
-**Estados expostos:**
-- `isProcessing: boolean`
-- `progress: string` (mensagem atual do loading)
-- `error: string | null`
+**Remover:**
 
-**Funcao exposta:**
-- `uploadPdf(file: File): Promise<{ extracted_data: Record<string, unknown>; raw_text: Record<string, unknown> } | null>`
+- Linha 2: import do `pdfjs-dist`
+- Linha 10: constante `MAX_FILE_SIZE`
+- Linhas 17-32: funcao `extractTextFromPDF` inteira
+- Linhas 34-46: funcao `decodePDFString` inteira
+  &nbsp;
 
-**Fluxo interno de `uploadPdf`:**
-1. Seta `isProcessing = true`, `error = null`, `progress = "Enviando PDF..."`
-2. Obtem token via `supabase.auth.getSession()` -- se nao tiver sessao, seta erro e retorna null
-3. Monta `FormData` com campo `"pdf"` contendo o arquivo
-4. Atualiza `progress = "Analisando curriculo com IA... isso pode levar ate 30 segundos"`
-5. Faz `Promise.race` entre o `fetch` e um `setTimeout` de 35s que rejeita com mensagem `"TIMEOUT"`
-6. URL: `` `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-linkedin-pdf` ``
-7. Headers: `Authorization: Bearer {token}`, sem `Content-Type` (o browser seta automaticamente para FormData)
-8. Trata resposta por status HTTP:
-   - 429 -> erro: "Voce atingiu o limite de 3 importacoes este mes..."
-   - 400 -> erro: "PDF invalido ou corrompido..."
-   - 500 -> erro: "Erro no processamento com IA..."
-   - Outro nao-ok -> erro: "Erro inesperado..."
-   - 200 -> parseia JSON, retorna `response.data`
-9. Catch: se mensagem contem "TIMEOUT" -> erro especifico de timeout; senao -> erro generico de conexao
-10. Finally: `isProcessing = false`, `progress = ""`
+**Substituir bloco de leitura do body (linhas 234-266):**
 
-**Retorno:** `{ uploadPdf, isProcessing, progress, error }`
+O trecho atual que usa `req.formData()`, valida tipo/tamanho e chama `extractTextFromPDF` sera substituido por:
 
----
+```typescript
+// 3. Read text from JSON body
+const { text, filename } = await req.json();
 
-### 2. Modificar `src/pages/Profile.tsx`
+if (!text || typeof text !== "string") {
+  return new Response(
+    JSON.stringify({ success: false, error: "Texto do PDF é obrigatório" }),
+    { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 
-**Mudancas:**
-- Importar `useImportLinkedIn`
-- Instanciar `const { uploadPdf, isProcessing, progress, error } = useImportLinkedIn()`
-- Alterar o `onConfirm` do `ImportConfirmModal`:
-  1. Fechar modal imediatamente (`setIsImportModalOpen(false)`)
-  2. Chamar `uploadPdf(selectedPdfFile)` de forma async
-  3. Se retornar dados: toast de sucesso "Curriculo processado com sucesso!" + `console.log` dos dados
-  4. Se retornar null (erro): toast de erro usando `error` do hook
-  5. Limpar `selectedPdfFile` apos chamar
-- Passar `isProcessing` e `progress` como props para `ImportSection`
+logStep("Text received", { length: text.length, filename });
+
+const fullText = text;
+```
 
 ---
-
-### 3. Modificar `src/components/ImportSection.tsx`
-
-**Novas props adicionadas a interface:**
-- `isProcessing?: boolean`
-- `progress?: string`
-
-**Mudancas no render:**
-- Quando `isProcessing === true`:
-  - Substituir o botao por: icone `Loader2` com `animate-spin` + texto do `progress` abaixo
-  - O link "Ver historico" fica com `opacity-50 pointer-events-none`
-- Quando `isProcessing === false`: manter comportamento atual sem mudancas
-
-O estado de loading ocupa o mesmo espaco vertical que o botao para evitar salto visual.
-
----
-
-### Arquivos tocados
-
-| Arquivo | Acao |
-|---|---|
-| `src/hooks/useImportLinkedIn.ts` | Criar |
-| `src/pages/Profile.tsx` | Editar (conectar hook, alterar onConfirm) |
-| `src/components/ImportSection.tsx` | Editar (adicionar props de loading, render condicional) |
 
 ### O que NAO muda
 
-- `useImportLimit` (intacto)
-- `ImportConfirmModal` (intacto)
-- Formularios de edicao de perfil
-- Nenhuma biblioteca nova instalada
+- CORS headers
+- Autenticacao (bloco 1)
+- Rate limit (bloco 2)
+- `buildPrompt`, `callAI`, `logStep`
+- Interface Sections e funcao splitSections
+- Chamada a splitSections e log associado
+- Resposta de sucesso com raw_text.sections
+- Registro em `import_history` (blocos 7 e catch)
+- Tratamento de erros
+
+### Arquivo tocado
+
+
+| Arquivo                                            | Acao   |
+| -------------------------------------------------- | ------ |
+| `supabase/functions/process-linkedin-pdf/index.ts` | Editar |
