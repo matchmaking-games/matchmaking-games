@@ -65,6 +65,13 @@ function ExperienceReviewCard({
   onUpdate: (updated: ReviewExperience) => void;
 }) {
   const [descSource, setDescSource] = useState<"ai" | "raw">("ai");
+  const [aiDescription] = useState(experience.description);
+  const [startDateDisplay, setStartDateDisplay] = useState(
+    formatBrazilianDate(experience.start_date)
+  );
+  const [endDateDisplay, setEndDateDisplay] = useState(
+    formatBrazilianDate(experience.end_date)
+  );
 
   const handleChange = (field: keyof ReviewExperience, value: string) => {
     if (field === "start_date" || field === "end_date") {
@@ -79,6 +86,8 @@ function ExperienceReviewCard({
     setDescSource(value as "ai" | "raw");
     if (value === "raw") {
       onUpdate({ ...experience, description: rawSectionText });
+    } else {
+      onUpdate({ ...experience, description: aiDescription });
     }
   };
 
@@ -112,16 +121,22 @@ function ExperienceReviewCard({
             <Label className="text-xs text-muted-foreground">Data de início</Label>
             <Input
               placeholder="MM/YYYY"
-              defaultValue={formatBrazilianDate(experience.start_date)}
-              onBlur={(e) => handleChange("start_date", e.target.value)}
+              value={startDateDisplay}
+              onChange={(e) => {
+                setStartDateDisplay(e.target.value);
+                handleChange("start_date", e.target.value);
+              }}
             />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Data de término</Label>
             <Input
               placeholder="MM/YYYY"
-              defaultValue={formatBrazilianDate(experience.end_date)}
-              onBlur={(e) => handleChange("end_date", e.target.value)}
+              value={endDateDisplay}
+              onChange={(e) => {
+                setEndDateDisplay(e.target.value);
+                handleChange("end_date", e.target.value);
+              }}
             />
           </div>
         </div>
