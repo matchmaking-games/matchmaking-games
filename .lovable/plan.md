@@ -1,149 +1,84 @@
-## Plano: TASK-810 - Tela de revisao da importacao
 
-### Resumo
 
-Criar o componente `ImportReviewDrawer` que abre apos o processamento bem-sucedido do PDF, permitindo ao usuario revisar e editar experiencias, formacoes e skills extraidas antes de confirmar. Conectar o drawer na pagina de perfil substituindo o toast/console.log atual.
+## Plano: Corrigir 3 bugs no ImportReviewDrawer
+
+### Bug 1 — Texto original do PDF sempre vazio
+
+**Arquivo:** `supabase/functions/process-linkedin-pdf/index.ts`
+
+Antes do bloco de retorno (linha 252), adicionar a chamada `const sections = splitSections(fullText);` e incluir `sections` no retorno:
+
+```text
+raw_text: {
+  full: fullText,
+  sections: sections,
+},
+```
+
+A funcao `splitSections` ja existe no arquivo (linhas 17-56) e retorna `{ experiences, education, skills }`.
 
 ---
 
-### Estrutura de dados do Gemini (referencia)
+### Bug 2 — Descricao da IA perdida ao voltar do "Texto original"
 
-Os dados chegam em `extracted_data` com esta estrutura:
+**Arquivo:** `src/components/ImportReviewDrawer.tsx`
+
+No `ExperienceReviewCard` (linha 67), adicionar estado interno para preservar a descricao original da IA:
 
 ```text
-{
-  basic_info: { name, email, phone, linkedin_url, location, bio },
-  experiences: [{ company, role, start_date (YYYY-MM), end_date (YYYY-MM|null), location, description }],
-  education: [{ institution, degree, field, start_year (YYYY), end_year (YYYY|null) }],
-  skills: ["string"]
-}
+const [aiDescription] = useState(experience.description);
+```
+
+Atualizar `handleDescSourceChange` (linhas 78-83) para restaurar `aiDescription` ao voltar para "ai":
+
+```text
+const handleDescSourceChange = (value: string) => {
+  setDescSource(value as "ai" | "raw");
+  if (value === "raw") {
+    onUpdate({ ...experience, description: rawSectionText });
+  } else {
+    onUpdate({ ...experience, description: aiDescription });
+  }
+};
 ```
 
 ---
 
-### Arquivo 1: `src/components/ImportReviewDrawer.tsx` (criar)
+### Bug 3 — Campos de data nao propagam alteracoes
 
-**Tipos**
+**Arquivo:** `src/components/ImportReviewDrawer.tsx`
 
-- `ReviewExperience`: `{ company, role, start_date, end_date, location, description }`
-- `ReviewEducation`: `{ institution, degree, field, start_year, end_year }`
-- `ReviewedData`: `{ experiences: ReviewExperience[], education: ReviewEducation[], skills: string[] }`
-
-**Componente principal: `ImportReviewDrawer**`
-
-Props:
-
-- `open: boolean`
-- `onClose: () => void`
-- `onSave: (data: ReviewedData) => void`
-- `extractedData: { experiences, education, skills }`
-- `rawFullText: string`
-
-Estado interno: copia editavel de `extractedData` via `useState`, inicializado com `useEffect` quando `extractedData` muda.
-
-Layout usando `Sheet` do shadcn com `side="right"`:
-
-- Classe custom no `SheetContent`: `sm:max-w-3xl w-full h-full overflow-y-auto`
-- Header: `SheetHeader` com titulo "Revisao da Importacao" e `SheetDescription`
-- Tres cards de resumo lado a lado (grid-cols-3 em desktop, grid-cols-1 em mobile): "X Experiencias", "Y Formacoes", "Z Skills" usando `Card`
-- Secao "Experiencias Profissionais" com icone `Briefcase`: lista de `ExperienceReviewCard`
-- Secao "Formacao Academica" com icone `GraduationCap`: lista de `EducationReviewCard`
-- Secao "Skills" com icone `Wrench`: badges editaveis + input para adicionar
-- Footer fixo (sticky bottom): botoes "Cancelar" (outline) e "Confirmar e Salvar" (default, com icone `Check`)
-
-**Subcomponente: `ExperienceReviewCard**`
-
-Props: `experience`, `rawSectionText`, `onUpdate`
-
-Card com campos editaveis:
-
-- "Empresa" e "Cargo": `Input`
-- "Data de inicio" e "Data de termino": `Input` com placeholder "MM/YYYY", usando `formatBrazilianDate` para exibir e `parseToIsoDate` para converter de volta
-- "Localizacao": `Input`
-- "Descricao": `RadioGroup` com duas opcoes ("Usar dados extraidos pela IA" / "Usar texto original do PDF") + `Textarea` com 6 linhas. Ao selecionar "texto original", preenche o textarea com `rawFullText`. Estado do radio e do texto sao independentes apos a selecao inicial.
-
-Cada mudanca chama `onUpdate` com o objeto atualizado.
-
-**Subcomponente: `EducationReviewCard**`
-
-Props: `education`, `onUpdate`
-
-Card com campos editaveis:
-
-- "Instituicao": `Input`
-- "Grau": `Input` (ex: Graduacao, Pos-graduacao)
-- "Curso/Area": `Input`
-- "Ano de inicio" e "Ano de termino": `Input` com placeholder "YYYY"
-
-Sem campo de descricao, sem radio button.
-
-**Secao de Skills**
-
-Dentro do drawer principal (nao e subcomponente separado):
-
-- Skills exibidas como `Badge` com botao X para remover
-- `Input` com placeholder "Adicionar skill..." e botao "+" para adicionar
-- Adicionar ao pressionar Enter ou clicar no botao
-- Estado gerenciado no array `skills` do estado principal
-
----
-
-### Arquivo 2: `src/pages/Profile.tsx` (modificar)
-
-**Novos estados (apos linha 98)**
-
-- `reviewData: ImportResult | null` (inicialmente `null`)
-- `isReviewOpen: boolean` (inicialmente `false`)
-
-**Substituir bloco do toast de sucesso (linhas 364-369)**
-
-Onde hoje tem:
+No `ExperienceReviewCard`, adicionar dois estados internos para os valores de exibicao das datas (apos linha 67):
 
 ```text
-console.log("LinkedIn import data:", result);
-toast({ title: "Curriculo processado com sucesso!", ... });
+const [startDateDisplay, setStartDateDisplay] = useState(
+  formatBrazilianDate(experience.start_date)
+);
+const [endDateDisplay, setEndDateDisplay] = useState(
+  formatBrazilianDate(experience.end_date)
+);
 ```
 
-Substituir por:
+Substituir os inputs de data (linhas 113-126) de `defaultValue` + `onBlur` para `value` + `onChange`:
 
-```text
-setReviewData(result);
-setIsReviewOpen(true);
-```
+- Data de inicio: `value={startDateDisplay}`, `onChange` que atualiza `startDateDisplay` e chama `handleChange`
+- Data de termino: `value={endDateDisplay}`, `onChange` que atualiza `endDateDisplay` e chama `handleChange`
 
-**Renderizar o drawer (apos o `ImportConfirmModal`, linha 378)**
-
-```text
-<ImportReviewDrawer
-  open={isReviewOpen}
-  onClose={() => { setIsReviewOpen(false); setReviewData(null); }}
-  onSave={(data) => {
-    toast({ title: "Salvando dados...", description: "A logica de salvar sera implementada na proxima task." });
-    setIsReviewOpen(false);
-    setReviewData(null);
-  }}
-  extractedData={reviewData?.extracted_data}
-  rawSectionText={reviewData?.raw_text?.sections?.experiences || ""}
-/>
-```
-
-**Imports adicionais**
-
-- `ImportReviewDrawer` de `@/components/ImportReviewDrawer`
+Remover os `onBlur` desses dois inputs.
 
 ---
 
 ### O que NAO muda
 
-- Hook `useImportLinkedIn` (nenhuma alteracao)
-- Nenhum outro componente ou pagina
-- Nenhuma biblioteca nova instalada
-- Logica de salvar no banco (proxima task)
+- `EducationReviewCard`
+- Secao de Skills
+- `Profile.tsx`
+- Nenhuma biblioteca nova
 
 ### Arquivos tocados
 
+| Arquivo | Acao |
+|---|---|
+| `supabase/functions/process-linkedin-pdf/index.ts` | Editar (adicionar sections no retorno) |
+| `src/components/ImportReviewDrawer.tsx` | Editar (bugs 2 e 3) |
 
-| Arquivo                                 | Acao      |
-| --------------------------------------- | --------- |
-| `src/components/ImportReviewDrawer.tsx` | Criar     |
-| `src/pages/Profile.tsx`                 | Modificar |
