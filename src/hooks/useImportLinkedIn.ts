@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from "pdfjs-dist";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
 
@@ -22,12 +22,10 @@ export function useImportLinkedIn() {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item: any) => ('str' in item ? item.str : ''))
-        .join(' ');
+      const pageText = content.items.map((item: any) => ("str" in item ? item.str : "")).join(" ");
       pages.push(pageText);
     }
-    return pages.join('\n');
+    return pages.join("\n");
   };
 
   const uploadPdf = async (file: File): Promise<ImportResult | null> => {
@@ -41,7 +39,8 @@ export function useImportLinkedIn() {
       const fullText = await extractTextFromPDF(file);
 
       if (fullText.trim().length < 100) {
-        const msg = "Não foi possível extrair texto do PDF. Certifique-se de usar o PDF gerado diretamente pelo LinkedIn.";
+        const msg =
+          "Não foi possível extrair texto do PDF. Certifique-se de usar o PDF gerado diretamente pelo LinkedIn.";
         setError(msg);
         errorRef.current = msg;
         return null;
@@ -51,7 +50,9 @@ export function useImportLinkedIn() {
       setProgress("Analisando currículo com IA... isso pode levar até 30 segundos");
 
       // 3. Get session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.access_token) {
         const msg = "Sessão expirada. Faça login novamente.";
         setError(msg);
@@ -65,18 +66,15 @@ export function useImportLinkedIn() {
 
       let response: Response;
       try {
-        response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-linkedin-pdf`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: fullText, filename: file.name }),
-            signal: controller.signal,
-          }
-        );
+        response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-linkedin-pdf`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: fullText, filename: file.name }),
+          signal: controller.signal,
+        });
       } catch (fetchErr: unknown) {
         clearTimeout(timeoutId);
         if (fetchErr instanceof DOMException && fetchErr.name === "AbortError") {
@@ -115,8 +113,9 @@ export function useImportLinkedIn() {
 
       const json = await response.json();
       return json.data as ImportResult;
-    } catch {
-      const msg = "Erro ao processar PDF. Verifique sua conexão e tente novamente.";
+    } catch (err) {
+      console.error("IMPORT ERROR:", err);
+      const msg = "Erro ao processar PDF...";
       setError(msg);
       errorRef.current = msg;
       return null;
