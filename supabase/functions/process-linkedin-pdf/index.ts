@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import pdf from "https://esm.sh/pdf-parse@1.1.1?target=deno";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +12,66 @@ const logStep = (step: string, details?: unknown) => {
   const d = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[PROCESS-LINKEDIN-PDF] ${step}${d}`);
 };
+
+// --- PDF text extractor (native, no dependencies) ---
+// LinkedIn PDFs are text-based (not scanned), so we can extract
+// text by parsing the raw PDF stream for text operators.
+
+function extractTextFromPDF(buffer: Uint8Array): string {
+  const decoder = new TextDecoder("latin1");
+  const raw = decoder.decode(buffer);
+
+  const lines: string[] = [];
+
+  // Extract text from BT...ET blocks (PDF text objects)
+  const btEtRegex = /BT([\s\S]*?)ET/g;
+  let btMatch;
+
+  while ((btMatch = btEtRegex.exec(raw)) !== null) {
+    const block = btMatch[1];
+
+    // Match Tj, TJ, ' and " operators
+    // Tj: (text)Tj
+    // TJ: [(text)]TJ
+    const tjRegex = /\(([^)]*)\)\s*(?:Tj|'|")/g;
+    const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
+
+    let match;
+
+    while ((match = tjRegex.exec(block)) !== null) {
+      const text = decodePDFString(match[1]);
+      if (text.trim()) lines.push(text);
+    }
+
+    while ((match = tjArrayRegex.exec(block)) !== null) {
+      const inner = match[1];
+      const parts: string[] = [];
+      const partRegex = /\(([^)]*)\)/g;
+      let part;
+      while ((part = partRegex.exec(inner)) !== null) {
+        const text = decodePDFString(part[1]);
+        if (text.trim()) parts.push(text);
+      }
+      if (parts.length > 0) lines.push(parts.join(""));
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function decodePDFString(str: string): string {
+  // Handle PDF escape sequences
+  return str
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\(/g, "(")
+    .replace(/\\)/g, ")")
+    .replace(/\\\\/g, "\\")
+    .replace(/\\(\d{3})/g, (_match, octal) => {
+      return String.fromCharCode(parseInt(octal, 8));
+    });
+}
 
 // --- Section splitter ---
 
@@ -44,7 +103,6 @@ function splitSections(text: string): Sections {
     },
   ];
 
-  // Find positions of each section
   const positions: { key: keyof Sections; index: number }[] = [];
 
   for (const marker of markers) {
@@ -52,12 +110,11 @@ function splitSections(text: string): Sections {
       const match = pattern.exec(text);
       if (match) {
         positions.push({ key: marker.key, index: match.index });
-        break; // use first match per key
+        break;
       }
     }
   }
 
-  // Sort by position
   positions.sort((a, b) => a.index - b.index);
 
   const result: Sections = { experiences: "", education: "", skills: "" };
@@ -175,6 +232,7 @@ Deno.serve(async (req) => {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
+
     if (userError || !user) {
       logStep("Auth failed", { error: userError?.message });
       return new Response(JSON.stringify({ success: false, error: "Token inválido" }), {
@@ -193,7 +251,6 @@ Deno.serve(async (req) => {
 
     if (rpcError) {
       logStep("RPC error (non-blocking)", { error: rpcError.message });
-      // Fail-open: allow if RPC fails
     } else if (importCount >= 3) {
       logStep("Rate limit exceeded", { count: importCount });
       return new Response(JSON.stringify({ success: false, error: "Rate limit exceeded" }), {
@@ -204,7 +261,7 @@ Deno.serve(async (req) => {
 
     // 3. Extract PDF from FormData
     const formData = await req.formData();
-    const file = formData.get("pdf"); // campo "pdf" conforme enviado pelo frontend
+    const file = formData.get("pdf");
 
     if (!file || !(file instanceof File)) {
       return new Response(JSON.stringify({ success: false, error: "Arquivo PDF é obrigatório" }), {
@@ -229,17 +286,18 @@ Deno.serve(async (req) => {
 
     logStep("PDF received", { name: file.name, size: file.size });
 
-    // 4. Extract text
+    // 4. Extract text natively (no external library)
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = new Uint8Array(arrayBuffer);
-    const pdfData = await pdf(pdfBuffer);
-    const fullText = pdfData.text;
-
-    if (!fullText || fullText.trim().length === 0) {
-      throw new Error("Não foi possível extrair texto do PDF");
-    }
+    const fullText = extractTextFromPDF(pdfBuffer);
 
     logStep("Text extracted", { length: fullText.length });
+
+    if (!fullText || fullText.trim().length < 100) {
+      throw new Error(
+        "Não foi possível extrair texto suficiente do PDF. Verifique se o arquivo é o PDF gerado pelo LinkedIn.",
+      );
+    }
 
     // 5. Split sections
     const sections = splitSections(fullText);
@@ -298,7 +356,6 @@ Deno.serve(async (req) => {
     const errorMessage = err instanceof Error ? err.message : String(err);
     logStep("ERROR", { message: errorMessage });
 
-    // Record error in import_history
     if (supabase && userId) {
       const { error: insertError } = await supabase.from("import_history").insert({
         user_id: userId,
