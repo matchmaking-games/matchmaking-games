@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import pdfParse from "https://esm.sh/pdf-parse@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,46 +18,9 @@ const logStep = (step: string, details?: unknown) => {
 // LinkedIn PDFs are text-based (not scanned), so we can extract
 // text by parsing the raw PDF stream for text operators.
 
-function extractTextFromPDF(buffer: Uint8Array): string {
-  const decoder = new TextDecoder("latin1");
-  const raw = decoder.decode(buffer);
-
-  const lines: string[] = [];
-
-  // Extract text from BT...ET blocks (PDF text objects)
-  const btEtRegex = /BT([\s\S]*?)ET/g;
-  let btMatch;
-
-  while ((btMatch = btEtRegex.exec(raw)) !== null) {
-    const block = btMatch[1];
-
-    // Match Tj, TJ, ' and " operators
-    // Tj: (text)Tj
-    // TJ: [(text)]TJ
-    const tjRegex = /\(([^)]*)\)\s*(?:Tj|'|")/g;
-    const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g;
-
-    let match;
-
-    while ((match = tjRegex.exec(block)) !== null) {
-      const text = decodePDFString(match[1]);
-      if (text.trim()) lines.push(text);
-    }
-
-    while ((match = tjArrayRegex.exec(block)) !== null) {
-      const inner = match[1];
-      const parts: string[] = [];
-      const partRegex = /\(([^)]*)\)/g;
-      let part;
-      while ((part = partRegex.exec(inner)) !== null) {
-        const text = decodePDFString(part[1]);
-        if (text.trim()) parts.push(text);
-      }
-      if (parts.length > 0) lines.push(parts.join(""));
-    }
-  }
-
-  return lines.join("\n");
+async function extractTextFromPDF(buffer: Uint8Array): Promise<string> {
+  const result = await (pdfParse as any)(buffer);
+  return result.text as string;
 }
 
 function decodePDFString(str: string): string {
@@ -289,7 +253,7 @@ Deno.serve(async (req) => {
     // 4. Extract text natively (no external library)
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = new Uint8Array(arrayBuffer);
-    const fullText = extractTextFromPDF(pdfBuffer);
+    const fullText = await extractTextFromPDF(pdfBuffer);
 
     logStep("Text extracted", { length: fullText.length });
 
