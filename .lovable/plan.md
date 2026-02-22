@@ -1,185 +1,171 @@
-## Plano: Atualizar campos do drawer de revisao com novos enums
+
+
+## Plano: TASK-811 — Salvar dados da importacao no banco de dados
 
 ### Resumo
 
-Atualizar os enums `tipo_emprego`, `tipo_educacao` e `modalidade_trabalho` em 4 arquivos: o drawer de revisao, o modal de experiencia, o modal de educacao e o formulario de vagas. Adicionar campo "Modalidade" ao ExperienceReviewCard. Remover campo `area` do EducationReviewCard.
+Criar o hook `useImportSave` com a logica de deletar dados antigos e inserir dados revisados no banco. Conectar ao botao "Confirmar e Salvar" no ImportReviewDrawer. O edge function ja registra o historico de importacao com status "success", entao o hook nao precisa atualizar a tabela `import_history`.
 
 ---
 
-### Arquivo 1: `src/components/ImportReviewDrawer.tsx`
+### Arquivo 1: `src/hooks/useImportSave.ts` (criar)
 
-**Tipos atualizados:**
+**Assinatura do hook:**
 
 ```text
-export interface ReviewExperience {
-  empresa: string;
-  titulo_cargo: string;
-  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral";
-  modalidade: "presencial" | "hibrido" | "remoto";
-  inicio: string;
-  fim: string | null;
-  descricao: string;
-}
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { ReviewedData } from "@/components/ImportReviewDrawer";
 
-export interface ReviewEducation {
-  instituicao: string;
-  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao" | "ensino_medio" | "mestrado" | "doutorado" | "mba";
-  titulo: string;
-  inicio: string;
-  fim: string | null;
+export function useImportSave() {
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const saveImportData = async (data: ReviewedData): Promise<void> => { ... };
+
+  return { saveImportData, isSaving, saveError };
 }
 ```
 
-Remover `area` do `ReviewEducation`.
+**Sequencia de operacoes dentro de `saveImportData`:**
 
-**Constantes de opcoes atualizadas:**
+Passo 1 -- Verificar autenticacao:
+- Chamar `supabase.auth.getUser()`
+- Se `user` nao existir, lancar erro "Usuario nao autenticado"
+
+Passo 2 -- Deletar experiencias existentes:
+- `await supabase.from("experiencia").delete().eq("user_id", user.id)`
+- Verificar `error`, lancar excecao se existir
+
+Passo 3 -- Deletar formacoes existentes:
+- `await supabase.from("educacao").delete().eq("user_id", user.id)`
+- Verificar `error`, lancar excecao se existir
+
+Passo 4 -- Inserir novas experiencias (se array nao estiver vazio):
+- Mapear cada item do array `data.experiences` para o formato da tabela:
 
 ```text
-TIPO_EMPREGO_OPTIONS: adicionar { value: "tempo_integral", label: "Tempo integral" }
-
-TIPO_EDUCACAO_OPTIONS: adicionar 4 novos:
-  { value: "ensino_medio", label: "Ensino médio" }
-  { value: "mestrado", label: "Mestrado" }
-  { value: "doutorado", label: "Doutorado" }
-  { value: "mba", label: "MBA" }
-
-Nova constante MODALIDADE_OPTIONS:
-  { value: "presencial", label: "Presencial" }
-  { value: "hibrido", label: "Híbrido" }
-  { value: "remoto", label: "Remoto" }
+{
+  user_id: user.id,
+  empresa: exp.empresa,
+  titulo_cargo: exp.titulo_cargo,
+  tipo_emprego: exp.tipo_emprego,
+  remoto: exp.modalidade,           // campo "modalidade" no estado -> coluna "remoto" no banco
+  inicio: exp.inicio,
+  fim: exp.fim || null,
+  atualmente_trabalhando: !exp.fim, // true se fim for null/vazio
+  descricao: exp.descricao || "",
+  ordem: index,                     // indice no array
+}
 ```
 
-**Mapeamento no handleFileSelect:**
+- `await supabase.from("experiencia").insert(mappedArray)`
+- Verificar `error`, lancar excecao se existir
 
-Experiencias: adicionar `modalidade: "presencial" as const` ao mapeamento.
+Passo 5 -- Inserir novas formacoes (se array nao estiver vazio):
+- Mapear cada item do array `data.education` para o formato da tabela:
 
-Formacoes: remover `area: edu.field || ""` do mapeamento.
+```text
+{
+  user_id: user.id,
+  instituicao: edu.instituicao,
+  tipo: edu.tipo,
+  titulo: edu.titulo,
+  area: null,                       // removido do fluxo de revisao
+  inicio: edu.inicio,
+  fim: edu.fim || null,
+  concluido: !!edu.fim,             // true se fim tiver valor
+  ordem: index,
+}
+```
 
-**ExperienceReviewCard:**
+- `await supabase.from("educacao").insert(mappedArray)`
+- Verificar `error`, lancar excecao se existir
 
-Adicionar novo Select de "Modalidade" logo apos o Select de "Tipo de contrato", usando `MODALIDADE_OPTIONS`. Colocar ambos os Selects em um grid de 2 colunas para aproveitar espaco.
+**Nota sobre import_history:** O edge function `process-linkedin-pdf` ja insere o registro com status "success" apos o processamento. Nao e necessario atualizar a tabela `import_history` no hook de salvamento. O parametro `importHistoryId` mencionado no prompt sera omitido da assinatura pois nao e necessario.
 
-**EducationReviewCard:**
-
-Remover o Input de "Area" completamente. Ajustar o grid: "Titulo / Nome do curso" passa a ocupar largura total (nao mais em grid de 2 colunas com Area).
+**Tratamento de erro:**
+- Toda a sequencia envolvida em try/catch
+- No catch: atualizar `saveError` com a mensagem, re-lancar a excecao
+- No finally: setar `isSaving = false`
 
 ---
 
-### Arquivo 2: `src/components/experience/ExperienceModal.tsx`
+### Arquivo 2: `src/components/ImportReviewDrawer.tsx` (editar)
 
-**Schema Zod (linha 24):**
+**Alteracoes:**
 
-Alterar de:
-
+1. Importar o hook:
 ```text
-tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio"], {
+import { useImportSave } from "@/hooks/useImportSave";
 ```
 
-Para:
-
+2. Dentro do componente, desestruturar:
 ```text
-tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"], {
+const { saveImportData, isSaving } = useImportSave();
 ```
 
-**Schema Zod (linha 30):**
-
-Alterar de:
+3. Substituir a funcao `handleSave` (linha 395-397):
 
 ```text
-remoto: z.boolean().default(false),
+const handleSave = async () => {
+  try {
+    await saveImportData({ experiences, education });
+    toast({
+      title: "Importacao concluida!",
+      description: "Suas experiencias e formacoes foram atualizadas.",
+    });
+    handleClose();
+  } catch {
+    toast({
+      title: "Erro ao salvar os dados",
+      description: "Tente novamente.",
+      variant: "destructive",
+    });
+  }
+};
 ```
 
-Para:
-
+4. Atualizar o `handleOpenChange` para bloquear fechamento durante salvamento (adicionar `isSaving` na verificacao, mesma logica que `isProcessing`):
 ```text
-remoto: z.enum(["presencial", "hibrido", "remoto"]).default("presencial"),
+if (isProcessing || isSaving) return;
 ```
 
-**Refines (linhas 36-60):**
+5. Atualizar o botao "Confirmar e Salvar" no footer do review (linha 636-639):
+- Adicionar `disabled={isSaving}`
+- Quando `isSaving`, mostrar icone `Loader2` com `animate-spin` e texto "Salvando..."
+- Quando nao, mostrar icone `Check` e texto "Confirmar e Salvar"
 
-Atualizar as condicoes de `!data.remoto` (boolean) para `data.remoto !== "remoto"` — exigir estado e cidade quando modalidade nao for "remoto".
-
-**Default values (linha 134):**
-
-Alterar `remoto: false` para `remoto: "presencial"`.
-
-**Options array (linhas 91-96):**
-
-Adicionar `{ value: "tempo_integral", label: "Tempo integral" }` ao array `tipoEmpregoOptions`.
-
-**UI do campo remoto:**
-
-O checkbox de "Trabalho remoto" precisa ser substituido por um Select com as opcoes de modalidade. Isso requer localizar o Checkbox de remoto no JSX e trocar por um Select. (Essa alteracao de UI no ExperienceModal e necessaria para manter consistencia, mas o prompt diz "nao alterar nenhum outro componente" — vou incluir apenas as mudancas no schema e defaults que sao obrigatorias para o build nao quebrar. A UI do modal pode ser ajustada em outra task se preferir.)
-
-**DECISAO:** Alterar o schema, defaults e refines no ExperienceModal para o build funcionar. A UI do campo remoto (trocar Checkbox por Select) pode ser feita agora ou em outra task — vou incluir no plano pois o tipo mudou de boolean para enum e o Checkbox vai parar de funcionar corretamente sem a troca. Aprovado, pode mudar
+6. Desabilitar botao "Cancelar" durante salvamento.
 
 ---
 
-### Arquivo 3: `src/components/education/EducationModal.tsx`
+### Mapeamento de campos criticos (resumo)
 
-**Schema Zod (linha 22):**
-
-Alterar de:
-
-```text
-tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao"], {
-```
-
-Para:
-
-```text
-tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao", "ensino_medio", "mestrado", "doutorado", "mba"], {
-```
-
-**Options array (linhas 49-55):**
-
-Adicionar os 4 novos valores ao array `tipoEducacaoOptions`:
-
-```text
-{ value: "ensino_medio", label: "Ensino médio" }
-{ value: "mestrado", label: "Mestrado" }
-{ value: "doutorado", label: "Doutorado" }
-{ value: "mba", label: "MBA" }
-```
-
----
-
-### Arquivo 4: `src/pages/studio/JobForm.tsx`
-
-**Schema Zod (linha 43):**
-
-Alterar de:
-
-```text
-tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio"]),
-```
-
-Para:
-
-```text
-tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"]),
-```
-
-O campo `remoto` na linha 44 ja usa `z.enum(["presencial", "hibrido", "remoto"])` — nao precisa de alteracao.
+| Estado do componente | Coluna no banco | Observacao |
+|---|---|---|
+| `exp.modalidade` | `experiencia.remoto` | Nome da coluna e "remoto" mas armazena enum modalidade_trabalho |
+| `exp.fim` (null/vazio) | `experiencia.atualmente_trabalhando` | Calculado: `!exp.fim` -> true/false |
+| `edu.area` | `educacao.area` | Sempre `null` (removido do fluxo) |
+| `edu.fim` (null/vazio) | `educacao.concluido` | Calculado: `!!edu.fim` -> true/false |
+| index no array | `*.ordem` | Preserva a ordem visual do drawer |
 
 ---
 
 ### Arquivos tocados
 
-
-| Arquivo                                         | Acao                                                   |
-| ----------------------------------------------- | ------------------------------------------------------ |
-| `src/components/ImportReviewDrawer.tsx`         | Editar (tipos, constantes, mapeamento, cards)          |
-| `src/components/experience/ExperienceModal.tsx` | Editar (schema, options, defaults, refines, UI remoto) |
-| `src/components/education/EducationModal.tsx`   | Editar (schema, options)                               |
-| `src/pages/studio/JobForm.tsx`                  | Editar (schema)                                        |
-
+| Arquivo | Acao |
+|---|---|
+| `src/hooks/useImportSave.ts` | Criar |
+| `src/components/ImportReviewDrawer.tsx` | Editar (importar hook, handleSave, loading no botao) |
 
 ### O que NAO muda
 
-- Estado "instructions" do drawer
 - Hook `useImportLinkedIn`
 - Edge Function
 - `Profile.tsx`
 - `ImportSection.tsx`
+- Estado "instructions" do drawer
+- Cards de revisao
 - Nenhuma biblioteca nova
+
