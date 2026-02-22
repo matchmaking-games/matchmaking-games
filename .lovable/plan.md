@@ -1,197 +1,162 @@
 
-## Plano: Refatorar ImportReviewDrawer com dois estados + corrigir build errors
+## Plano: Corrigir campos do estado de revisao da importacao
 
 ### Resumo
 
-Refatorar o fluxo de importacao para que o botao "Importar do LinkedIn" abra o drawer (sem abrir o gerenciador de arquivos), e o drawer tenha dois estados internos: "instructions" (com instrucoes, alerta, accordions e botao "Subir PDF") e "review" (com os cards editaveis). Tambem corrigir os build errors pre-existentes de `freelance` vs `freelancer`.
+Atualizar os tipos, o mapeamento de dados e os cards de revisao no `ImportReviewDrawer` para alinhar com o schema real do banco de dados (campos em portugues). Adicionar Select para `tipo_emprego` e `tipo` (formacao). Adicionar AlertDialog para confirmar saida no estado de revisao.
+
+Unico arquivo tocado: `src/components/ImportReviewDrawer.tsx`.
 
 ---
 
-### Arquivo 1: `src/components/ImportSection.tsx` (reescrever)
-
-Simplificar drasticamente. Novas props:
+### 1. Tipos TypeScript atualizados
 
 ```text
-interface ImportSectionProps {
-  onOpen: () => void;
+export interface ReviewExperience {
+  empresa: string;
+  titulo_cargo: string;
+  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio";
+  inicio: string;
+  fim: string | null;
+  descricao: string;
 }
-```
 
-Remover: `useRef`, input file oculto, `handleFileChange`, validacao de PDF, props `onFileSelected`/`isProcessing`/`progress`.
-
-JSX final: apenas o botao "Importar do LinkedIn" (mesmo visual, `variant="outline"`, `size="sm"`, icone `Upload`) que chama `onOpen()`, e abaixo o texto "Veja como trazer seu curriculo do LinkedIn".
-
----
-
-### Arquivo 2: `src/components/ImportReviewDrawer.tsx` (reescrever)
-
-**Novas props (simplificadas):**
-
-```text
-interface ImportReviewDrawerProps {
-  open: boolean;
-  onClose: () => void;
-  onSave: (data: ReviewedData) => void;
+export interface ReviewEducation {
+  instituicao: string;
+  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao";
+  titulo: string;
+  area: string;
+  inicio: string;
+  fim: string | null;
 }
-```
 
-Remove: `extractedData`, `rawSectionText` das props. Tudo e gerenciado internamente.
-
-**Estado interno:**
-
-- `step: "instructions" | "review"` (inicia em "instructions")
-- `experiences`, `education` (arrays editaveis, populados apos processamento)
-- `isProcessing: boolean`
-- `processingProgress: string`
-- `fileInputRef: useRef<HTMLInputElement>`
-
-**Hooks usados internamente:**
-
-- `useImportLinkedIn()` para `uploadPdf`, `isProcessing`, `progress`, `errorRef`
-- `useImportLimit()` para `remainingImports`, `canImport`, `isLoading`
-
-**Logica do input file:**
-
-- Input oculto `<input type="file" accept=".pdf" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />`
-- Botao "Subir PDF" chama `fileInputRef.current?.click()`
-- `handleFileSelect`: extrai arquivo, valida tipo e tamanho, chama `uploadPdf(file)`. Se sucesso, popula `experiences` e `education` com os dados retornados, seta `step = "review"`. Se erro, mostra toast.
-
-**Estado "instructions" — conteudo:**
-
-Header: "Importar do LinkedIn"
-
-Alert destructive com icone `AlertTriangle`: texto sobre substituicao de dados e backup automatico.
-
-Dois blocos lado a lado (grid-cols-2 em desktop, grid-cols-1 em mobile):
-- Bloco vermelho (bg-destructive/10 border-destructive/20): "Serao substituidos:" com lista de "Experiencias profissionais" e "Formacao academica"
-- Bloco verde (bg-primary/10 border-primary/20): "Serao mantidos:" com lista de "Informacoes basicas do perfil", "Seus projetos", "Suas configuracoes de conta"
-
-Texto discreto de recomendacao.
-
-Tres accordions (Accordion type="single" collapsible):
-1. "Como baixar o PDF a partir do desktop" com texto e imagem
-2. "Como baixar o PDF a partir do celular" com texto e duas imagens
-3. "Por que nao e possivel importar diretamente do LinkedIn?" com texto explicativo
-
-Texto de limite: "X/3 importacoes utilizadas este mes" (vermelho se limite atingido).
-
-Footer: "Cancelar" (outline) + "Subir PDF" (default, icone Upload, desabilitado se `!canImport`).
-
-Durante processamento: footer mostra spinner + texto de progresso do hook, drawer nao fecha (`onOpenChange` ignorado).
-
-**Estado "review" — conteudo:**
-
-Header: "Revisao da Importacao"
-
-Cards de resumo (experiencias e formacoes — sem skills).
-
-Texto de orientacao: "Confira os dados extraidos abaixo..."
-
-Secao de experiencias com `ExperienceReviewCard` — SEM radio button, SEM textarea de descricao alternativa. Apenas campos: Empresa, Cargo, Datas, Localizacao, Descricao (textarea simples editavel).
-
-Secao de formacoes com `EducationReviewCard` — sem alteracoes.
-
-SEM secao de Skills.
-
-Footer: "Cancelar" + "Confirmar e Salvar".
-
-**Subcomponente ExperienceReviewCard (simplificado):**
-
-Remover: `rawSectionText` prop, `descSource` state, `aiDescription` state, `RadioGroup`, `handleDescSourceChange`.
-
-Manter: campos editaveis de Empresa, Cargo, Datas (controlados com `startDateDisplay`/`endDateDisplay`), Localizacao, Descricao (textarea simples).
-
-**ReviewedData (tipo ajustado):**
-
-```text
 export interface ReviewedData {
   experiences: ReviewExperience[];
   education: ReviewEducation[];
 }
 ```
 
-Remover `skills` do tipo.
-
 ---
 
-### Arquivo 3: `src/pages/Profile.tsx` (simplificar)
+### 2. Mapeamento no handleFileSelect
 
-**Remover:**
-- `reviewData` state
-- `isReviewOpen` state
-- import de `useImportLinkedIn`
-- Toda logica de `uploadPdf`, `isProcessing`, `progress`, `errorRef`
+Ao receber dados do `uploadPdf`, mapear campos em ingles para portugues:
 
-**Adicionar:**
-- `const [isDrawerOpen, setIsDrawerOpen] = useState(false)`
-
-**ImportSection:**
 ```text
-<ImportSection onOpen={() => setIsDrawerOpen(true)} />
-```
+// Experiencias
+const mappedExperiences = (result.extracted_data?.experiences ?? []).map((exp: any) => ({
+  empresa: exp.company || "",
+  titulo_cargo: exp.role || "",
+  tipo_emprego: "clt" as const,
+  inicio: exp.start_date || "",
+  fim: exp.end_date || null,
+  descricao: exp.description || "",
+}));
 
-**ImportReviewDrawer:**
-```text
-<ImportReviewDrawer
-  open={isDrawerOpen}
-  onClose={() => setIsDrawerOpen(false)}
-  onSave={(data) => {
-    toast({ title: "Salvando dados...", description: "A logica de salvar sera implementada na proxima task." });
-    setIsDrawerOpen(false);
-  }}
-/>
+// Formacoes
+const mappedEducation = (result.extracted_data?.education ?? []).map((edu: any) => ({
+  instituicao: edu.institution || "",
+  tipo: "curso" as const,
+  titulo: edu.field || "",
+  area: edu.field || "",
+  inicio: edu.start_year || "",
+  fim: edu.end_year || null,
+}));
 ```
 
 ---
 
-### Arquivo 4: `src/components/experience/ExperienceModal.tsx` (fix build error)
+### 3. ExperienceReviewCard atualizado
 
-Linha 24: trocar `"freelance"` por `"freelancer"` no enum do zod:
+Campos na ordem:
+
+1. **Empresa** — Input, `experience.empresa`
+2. **Cargo** — Input, `experience.titulo_cargo`
+3. **Tipo de contrato** — Select do shadcn/ui, `experience.tipo_emprego`
+   - Opcoes: clt/CLT, pj/PJ, freelancer/Freelancer, estagio/Estagio
+4. **Data de inicio** — Input MM/YYYY controlado com `startDateDisplay` + `formatBrazilianDate`/`parseToIsoDate`, campo `inicio`
+5. **Data de termino** — Input MM/YYYY controlado com `endDateDisplay`, campo `fim`. Se `fim` for null, exibir string vazia (nao "Atual")
+6. **Descricao** — Textarea 6 linhas, campo `descricao`
+
+Remover: campo `location`.
+
+O titulo do card muda para: `{experience.titulo_cargo || "Cargo"} -- {experience.empresa || "Empresa"}`
+
+A funcao `handleChange` atualiza para usar os novos nomes de campos (`inicio`, `fim` em vez de `start_date`, `end_date`).
+
+Para exibir string vazia quando `fim` e null (em vez de "Atual"), usar uma variacao: `formatBrazilianDate(experience.fim)` retorna "Atual" para null, entao inicializar `endDateDisplay` com `experience.fim ? formatBrazilianDate(experience.fim) : ""`.
+
+---
+
+### 4. EducationReviewCard atualizado
+
+Campos na ordem:
+
+1. **Instituicao** — Input, `education.instituicao`
+2. **Tipo de formacao** — Select do shadcn/ui, `education.tipo`
+   - Opcoes: graduacao/Graduacao, pos/Pos-graduacao, tecnico/Tecnico, curso/Curso, certificacao/Certificacao
+3. **Titulo / Nome do curso** — Input, `education.titulo`
+4. **Area** — Input, `education.area`
+5. **Ano de inicio** — Input placeholder "YYYY", `education.inicio`
+6. **Ano de termino** — Input placeholder "YYYY ou deixe vazio", `education.fim`. Se null, exibir string vazia.
+
+O titulo do card muda para: `{education.titulo || "Curso"} -- {education.instituicao || "Instituicao"}`
+
+---
+
+### 5. AlertDialog ao tentar sair no estado de revisao
+
+Adicionar um estado `showExitConfirm: boolean` (inicia false).
+
+Modificar `handleOpenChange`:
+- Se `step === "review"` e tentando fechar (`o === false`): setar `showExitConfirm = true` em vez de fechar
+- Se `step === "instructions"` e nao esta processando: fechar normalmente
+
+O botao "Cancelar" no footer do review tambem deve abrir o AlertDialog em vez de fechar diretamente.
+
+Renderizar o AlertDialog dentro do Sheet (fora do condicional de step):
 
 ```text
-tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio"], {
-```
-
-Verificar se ha labels de exibicao com "Freelance" e manter o label visual, apenas o value muda.
-
-### Arquivo 5: `src/pages/studio/JobForm.tsx` (fix build error)
-
-Linha 43: trocar `"freelance"` por `"freelancer"` no enum do zod:
-
-```text
-tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio"]),
+<AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Sair sem salvar?</AlertDialogTitle>
+      <AlertDialogDescription>
+        Os dados extraidos serao perdidos e voce precisara fazer a importacao novamente.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Continuar revisando</AlertDialogCancel>
+      <AlertDialogAction variant="destructive" onClick={handleClose}>
+        Sair sem salvar
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
 ```
 
 ---
 
-### Fluxo de dados final
+### 6. Imports adicionais
 
-```text
-Profile.tsx
-  |-- isDrawerOpen (boolean)
-  |-- ImportSection (onOpen -> setIsDrawerOpen(true))
-  |-- ImportReviewDrawer (open, onClose, onSave)
-        |-- useImportLinkedIn() (interno)
-        |-- useImportLimit() (interno)
-        |-- step: "instructions" | "review"
-        |-- fileInputRef (input oculto interno)
-        |-- ExperienceReviewCard (sem radio button)
-        |-- EducationReviewCard (sem alteracao)
-```
+Adicionar ao arquivo:
+
+- `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` de `@/components/ui/select`
+- `AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle` de `@/components/ui/alert-dialog`
+
+---
 
 ### O que NAO muda
 
+- Estado "instructions" do drawer (intacto)
 - Hook `useImportLinkedIn`
-- Hook `useImportLimit`
 - Edge Function
+- `Profile.tsx`
 - Nenhuma biblioteca nova
+- Logica de salvar no banco (proxima task)
 
 ### Arquivos tocados
 
 | Arquivo | Acao |
 |---|---|
-| `src/components/ImportSection.tsx` | Reescrever (simplificar) |
-| `src/components/ImportReviewDrawer.tsx` | Reescrever (dois estados) |
-| `src/pages/Profile.tsx` | Editar (simplificar) |
-| `src/components/experience/ExperienceModal.tsx` | Editar (freelance -> freelancer) |
-| `src/pages/studio/JobForm.tsx` | Editar (freelance -> freelancer) |
+| `src/components/ImportReviewDrawer.tsx` | Editar |
