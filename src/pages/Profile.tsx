@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff, Check, X, AlertTriangle } from "lucide-react";
 import { ImportSection } from "@/components/ImportSection";
-
 import { ImportReviewDrawer } from "@/components/ImportReviewDrawer";
-import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
 import { AvatarUpload } from "@/components/dashboard/AvatarUpload";
@@ -95,10 +93,7 @@ export default function Profile() {
   const [mostrarEmail, setMostrarEmail] = useState(false);
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [reviewData, setReviewData] = useState<any | null>(null);
-  const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const { uploadPdf, isProcessing, progress, error: importError, errorRef } = useImportLinkedIn();
-
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const debouncedSlug = useDebounce(slug, 500);
   const { estados, municipios, loadingEstados, loadingMunicipios, fetchMunicipios } = useIBGELocations();
 
@@ -337,37 +332,20 @@ export default function Profile() {
                       matchmaking.games/{slug || "seu-username"}
                     </p>
                     <div className="mt-2">
-                      <ImportSection
-                        onFileSelected={async (file) => {
-                          const result = await uploadPdf(file);
-                          if (result) {
-                            setReviewData(result);
-                            setIsReviewOpen(true);
-                          } else {
-                            toast({
-                              title: "Erro na importação",
-                              description: errorRef.current || "Erro desconhecido.",
-                              variant: "destructive",
-                            });
-                          }
-                        }}
-                        isProcessing={isProcessing}
-                        progress={progress}
+                    <ImportSection
+                        onOpen={() => setIsDrawerOpen(true)}
                       />
                     </div>
                   </div>
                 </div>
 
                 <ImportReviewDrawer
-                  open={isReviewOpen}
-                  onClose={() => { setIsReviewOpen(false); setReviewData(null); }}
+                  open={isDrawerOpen}
+                  onClose={() => setIsDrawerOpen(false)}
                   onSave={(data) => {
                     toast({ title: "Salvando dados...", description: "A lógica de salvar será implementada na próxima task." });
-                    setIsReviewOpen(false);
-                    setReviewData(null);
+                    setIsDrawerOpen(false);
                   }}
-                  extractedData={reviewData?.extracted_data}
-                  rawSectionText={reviewData?.raw_text?.sections?.experiences || ""}
                 />
 
                 {/* Form Fields */}
