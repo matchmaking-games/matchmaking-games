@@ -328,9 +328,9 @@ export default function Profile() {
                     
 
 
-                    <p className="text-sm text-muted-foreground">
-                      matchmaking.games/{slug || "seu-username"}
-                    </p>
+                    
+
+
                     <div className="mt-2">
                     <ImportSection
                       onOpen={() => setIsDrawerOpen(true)} />
