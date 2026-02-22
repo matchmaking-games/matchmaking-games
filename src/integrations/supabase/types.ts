@@ -421,7 +421,7 @@ export type Database = {
           fim: string | null
           habilidades_usadas: string[] | null
           id: string
-          inicio: string
+          inicio: string | null
           ordem: number | null
           remoto: boolean | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
@@ -440,7 +440,7 @@ export type Database = {
           fim?: string | null
           habilidades_usadas?: string[] | null
           id?: string
-          inicio: string
+          inicio?: string | null
           ordem?: number | null
           remoto?: boolean | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
@@ -459,7 +459,7 @@ export type Database = {
           fim?: string | null
           habilidades_usadas?: string[] | null
           id?: string
-          inicio?: string
+          inicio?: string | null
           ordem?: number | null
           remoto?: boolean | null
           tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
@@ -1319,9 +1319,9 @@ export type Database = {
       status_jogo: "lancado" | "em_desenvolvimento" | "cancelado"
       status_projeto: "em_andamento" | "concluido"
       tamanho_estudio: "micro" | "pequeno" | "medio" | "grande"
-      tipo_contrato: "clt" | "pj" | "freelance" | "estagio"
+      tipo_contrato: "clt" | "pj" | "freelancer" | "estagio"
       tipo_educacao: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao"
-      tipo_emprego: "clt" | "pj" | "freelance" | "estagio"
+      tipo_emprego: "clt" | "pj" | "freelancer" | "estagio"
       tipo_projeto: "profissional" | "pessoal" | "game_jam" | "open_source"
       tipo_publicacao_vaga: "gratuita" | "destaque"
       tipo_trabalho: "presencial" | "hibrido" | "remoto"
@@ -1466,9 +1466,9 @@ export const Constants = {
       status_jogo: ["lancado", "em_desenvolvimento", "cancelado"],
       status_projeto: ["em_andamento", "concluido"],
       tamanho_estudio: ["micro", "pequeno", "medio", "grande"],
-      tipo_contrato: ["clt", "pj", "freelance", "estagio"],
+      tipo_contrato: ["clt", "pj", "freelancer", "estagio"],
       tipo_educacao: ["graduacao", "pos", "tecnico", "curso", "certificacao"],
-      tipo_emprego: ["clt", "pj", "freelance", "estagio"],
+      tipo_emprego: ["clt", "pj", "freelancer", "estagio"],
       tipo_projeto: ["profissional", "pessoal", "game_jam", "open_source"],
       tipo_publicacao_vaga: ["gratuita", "destaque"],
       tipo_trabalho: ["presencial", "hibrido", "remoto"],
