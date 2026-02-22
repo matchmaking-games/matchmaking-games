@@ -1,21 +1,21 @@
-
-## Plano: Corrigir campos do estado de revisao da importacao
+## Plano: Atualizar campos do drawer de revisao com novos enums
 
 ### Resumo
 
-Atualizar os tipos, o mapeamento de dados e os cards de revisao no `ImportReviewDrawer` para alinhar com o schema real do banco de dados (campos em portugues). Adicionar Select para `tipo_emprego` e `tipo` (formacao). Adicionar AlertDialog para confirmar saida no estado de revisao.
-
-Unico arquivo tocado: `src/components/ImportReviewDrawer.tsx`.
+Atualizar os enums `tipo_emprego`, `tipo_educacao` e `modalidade_trabalho` em 4 arquivos: o drawer de revisao, o modal de experiencia, o modal de educacao e o formulario de vagas. Adicionar campo "Modalidade" ao ExperienceReviewCard. Remover campo `area` do EducationReviewCard.
 
 ---
 
-### 1. Tipos TypeScript atualizados
+### Arquivo 1: `src/components/ImportReviewDrawer.tsx`
+
+**Tipos atualizados:**
 
 ```text
 export interface ReviewExperience {
   empresa: string;
   titulo_cargo: string;
-  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio";
+  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral";
+  modalidade: "presencial" | "hibrido" | "remoto";
   inicio: string;
   fim: string | null;
   descricao: string;
@@ -23,140 +23,163 @@ export interface ReviewExperience {
 
 export interface ReviewEducation {
   instituicao: string;
-  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao";
+  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao" | "ensino_medio" | "mestrado" | "doutorado" | "mba";
   titulo: string;
-  area: string;
   inicio: string;
   fim: string | null;
 }
-
-export interface ReviewedData {
-  experiences: ReviewExperience[];
-  education: ReviewEducation[];
-}
 ```
 
----
+Remover `area` do `ReviewEducation`.
 
-### 2. Mapeamento no handleFileSelect
-
-Ao receber dados do `uploadPdf`, mapear campos em ingles para portugues:
+**Constantes de opcoes atualizadas:**
 
 ```text
-// Experiencias
-const mappedExperiences = (result.extracted_data?.experiences ?? []).map((exp: any) => ({
-  empresa: exp.company || "",
-  titulo_cargo: exp.role || "",
-  tipo_emprego: "clt" as const,
-  inicio: exp.start_date || "",
-  fim: exp.end_date || null,
-  descricao: exp.description || "",
-}));
+TIPO_EMPREGO_OPTIONS: adicionar { value: "tempo_integral", label: "Tempo integral" }
 
-// Formacoes
-const mappedEducation = (result.extracted_data?.education ?? []).map((edu: any) => ({
-  instituicao: edu.institution || "",
-  tipo: "curso" as const,
-  titulo: edu.field || "",
-  area: edu.field || "",
-  inicio: edu.start_year || "",
-  fim: edu.end_year || null,
-}));
+TIPO_EDUCACAO_OPTIONS: adicionar 4 novos:
+  { value: "ensino_medio", label: "Ensino médio" }
+  { value: "mestrado", label: "Mestrado" }
+  { value: "doutorado", label: "Doutorado" }
+  { value: "mba", label: "MBA" }
+
+Nova constante MODALIDADE_OPTIONS:
+  { value: "presencial", label: "Presencial" }
+  { value: "hibrido", label: "Híbrido" }
+  { value: "remoto", label: "Remoto" }
 ```
 
----
+**Mapeamento no handleFileSelect:**
 
-### 3. ExperienceReviewCard atualizado
+Experiencias: adicionar `modalidade: "presencial" as const` ao mapeamento.
 
-Campos na ordem:
+Formacoes: remover `area: edu.field || ""` do mapeamento.
 
-1. **Empresa** — Input, `experience.empresa`
-2. **Cargo** — Input, `experience.titulo_cargo`
-3. **Tipo de contrato** — Select do shadcn/ui, `experience.tipo_emprego`
-   - Opcoes: clt/CLT, pj/PJ, freelancer/Freelancer, estagio/Estagio
-4. **Data de inicio** — Input MM/YYYY controlado com `startDateDisplay` + `formatBrazilianDate`/`parseToIsoDate`, campo `inicio`
-5. **Data de termino** — Input MM/YYYY controlado com `endDateDisplay`, campo `fim`. Se `fim` for null, exibir string vazia (nao "Atual")
-6. **Descricao** — Textarea 6 linhas, campo `descricao`
+**ExperienceReviewCard:**
 
-Remover: campo `location`.
+Adicionar novo Select de "Modalidade" logo apos o Select de "Tipo de contrato", usando `MODALIDADE_OPTIONS`. Colocar ambos os Selects em um grid de 2 colunas para aproveitar espaco.
 
-O titulo do card muda para: `{experience.titulo_cargo || "Cargo"} -- {experience.empresa || "Empresa"}`
+**EducationReviewCard:**
 
-A funcao `handleChange` atualiza para usar os novos nomes de campos (`inicio`, `fim` em vez de `start_date`, `end_date`).
-
-Para exibir string vazia quando `fim` e null (em vez de "Atual"), usar uma variacao: `formatBrazilianDate(experience.fim)` retorna "Atual" para null, entao inicializar `endDateDisplay` com `experience.fim ? formatBrazilianDate(experience.fim) : ""`.
+Remover o Input de "Area" completamente. Ajustar o grid: "Titulo / Nome do curso" passa a ocupar largura total (nao mais em grid de 2 colunas com Area).
 
 ---
 
-### 4. EducationReviewCard atualizado
+### Arquivo 2: `src/components/experience/ExperienceModal.tsx`
 
-Campos na ordem:
+**Schema Zod (linha 24):**
 
-1. **Instituicao** — Input, `education.instituicao`
-2. **Tipo de formacao** — Select do shadcn/ui, `education.tipo`
-   - Opcoes: graduacao/Graduacao, pos/Pos-graduacao, tecnico/Tecnico, curso/Curso, certificacao/Certificacao
-3. **Titulo / Nome do curso** — Input, `education.titulo`
-4. **Area** — Input, `education.area`
-5. **Ano de inicio** — Input placeholder "YYYY", `education.inicio`
-6. **Ano de termino** — Input placeholder "YYYY ou deixe vazio", `education.fim`. Se null, exibir string vazia.
-
-O titulo do card muda para: `{education.titulo || "Curso"} -- {education.instituicao || "Instituicao"}`
-
----
-
-### 5. AlertDialog ao tentar sair no estado de revisao
-
-Adicionar um estado `showExitConfirm: boolean` (inicia false).
-
-Modificar `handleOpenChange`:
-- Se `step === "review"` e tentando fechar (`o === false`): setar `showExitConfirm = true` em vez de fechar
-- Se `step === "instructions"` e nao esta processando: fechar normalmente
-
-O botao "Cancelar" no footer do review tambem deve abrir o AlertDialog em vez de fechar diretamente.
-
-Renderizar o AlertDialog dentro do Sheet (fora do condicional de step):
+Alterar de:
 
 ```text
-<AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>Sair sem salvar?</AlertDialogTitle>
-      <AlertDialogDescription>
-        Os dados extraidos serao perdidos e voce precisara fazer a importacao novamente.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel>Continuar revisando</AlertDialogCancel>
-      <AlertDialogAction variant="destructive" onClick={handleClose}>
-        Sair sem salvar
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio"], {
+```
+
+Para:
+
+```text
+tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"], {
+```
+
+**Schema Zod (linha 30):**
+
+Alterar de:
+
+```text
+remoto: z.boolean().default(false),
+```
+
+Para:
+
+```text
+remoto: z.enum(["presencial", "hibrido", "remoto"]).default("presencial"),
+```
+
+**Refines (linhas 36-60):**
+
+Atualizar as condicoes de `!data.remoto` (boolean) para `data.remoto !== "remoto"` — exigir estado e cidade quando modalidade nao for "remoto".
+
+**Default values (linha 134):**
+
+Alterar `remoto: false` para `remoto: "presencial"`.
+
+**Options array (linhas 91-96):**
+
+Adicionar `{ value: "tempo_integral", label: "Tempo integral" }` ao array `tipoEmpregoOptions`.
+
+**UI do campo remoto:**
+
+O checkbox de "Trabalho remoto" precisa ser substituido por um Select com as opcoes de modalidade. Isso requer localizar o Checkbox de remoto no JSX e trocar por um Select. (Essa alteracao de UI no ExperienceModal e necessaria para manter consistencia, mas o prompt diz "nao alterar nenhum outro componente" — vou incluir apenas as mudancas no schema e defaults que sao obrigatorias para o build nao quebrar. A UI do modal pode ser ajustada em outra task se preferir.)
+
+**DECISAO:** Alterar o schema, defaults e refines no ExperienceModal para o build funcionar. A UI do campo remoto (trocar Checkbox por Select) pode ser feita agora ou em outra task — vou incluir no plano pois o tipo mudou de boolean para enum e o Checkbox vai parar de funcionar corretamente sem a troca. Aprovado, pode mudar
+
+---
+
+### Arquivo 3: `src/components/education/EducationModal.tsx`
+
+**Schema Zod (linha 22):**
+
+Alterar de:
+
+```text
+tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao"], {
+```
+
+Para:
+
+```text
+tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao", "ensino_medio", "mestrado", "doutorado", "mba"], {
+```
+
+**Options array (linhas 49-55):**
+
+Adicionar os 4 novos valores ao array `tipoEducacaoOptions`:
+
+```text
+{ value: "ensino_medio", label: "Ensino médio" }
+{ value: "mestrado", label: "Mestrado" }
+{ value: "doutorado", label: "Doutorado" }
+{ value: "mba", label: "MBA" }
 ```
 
 ---
 
-### 6. Imports adicionais
+### Arquivo 4: `src/pages/studio/JobForm.tsx`
 
-Adicionar ao arquivo:
+**Schema Zod (linha 43):**
 
-- `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` de `@/components/ui/select`
-- `AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle` de `@/components/ui/alert-dialog`
+Alterar de:
+
+```text
+tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio"]),
+```
+
+Para:
+
+```text
+tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"]),
+```
+
+O campo `remoto` na linha 44 ja usa `z.enum(["presencial", "hibrido", "remoto"])` — nao precisa de alteracao.
 
 ---
-
-### O que NAO muda
-
-- Estado "instructions" do drawer (intacto)
-- Hook `useImportLinkedIn`
-- Edge Function
-- `Profile.tsx`
-- Nenhuma biblioteca nova
-- Logica de salvar no banco (proxima task)
 
 ### Arquivos tocados
 
-| Arquivo | Acao |
-|---|---|
-| `src/components/ImportReviewDrawer.tsx` | Editar |
+
+| Arquivo                                         | Acao                                                   |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| `src/components/ImportReviewDrawer.tsx`         | Editar (tipos, constantes, mapeamento, cards)          |
+| `src/components/experience/ExperienceModal.tsx` | Editar (schema, options, defaults, refines, UI remoto) |
+| `src/components/education/EducationModal.tsx`   | Editar (schema, options)                               |
+| `src/pages/studio/JobForm.tsx`                  | Editar (schema)                                        |
+
+
+### O que NAO muda
+
+- Estado "instructions" do drawer
+- Hook `useImportLinkedIn`
+- Edge Function
+- `Profile.tsx`
+- `ImportSection.tsx`
+- Nenhuma biblioteca nova
