@@ -39,6 +39,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { useImportLimit } from "@/hooks/useImportLimit";
+import { useImportSave } from "@/hooks/useImportSave";
 import { formatBrazilianDate, parseToIsoDate } from "@/utils/dateFormat";
 
 // --- Types ---
@@ -321,6 +322,7 @@ export function ImportReviewDrawer({
 
   const { uploadPdf, isProcessing, progress, errorRef } = useImportLinkedIn();
   const { remainingImports, canImport, isLoading: isLoadingLimit } = useImportLimit();
+  const { saveImportData, isSaving } = useImportSave();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -367,7 +369,7 @@ export function ImportReviewDrawer({
 
   const handleOpenChange = (o: boolean) => {
     if (!o) {
-      if (isProcessing) return; // Block close during processing
+      if (isProcessing || isSaving) return; // Block close during processing/saving
       if (step === "review") {
         setShowExitConfirm(true); // Show confirm dialog instead of closing
         return;
@@ -392,8 +394,21 @@ export function ImportReviewDrawer({
     setEducation((prev) => prev.map((edu, i) => (i === index ? updated : edu)));
   };
 
-  const handleSave = () => {
-    onSave({ experiences, education });
+  const handleSave = async () => {
+    try {
+      await saveImportData({ experiences, education });
+      toast({
+        title: "Importação concluída!",
+        description: "Suas experiências e formações foram atualizadas.",
+      });
+      handleClose();
+    } catch {
+      toast({
+        title: "Erro ao salvar os dados",
+        description: "Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const usedImports = 3 - remainingImports;
@@ -629,13 +644,23 @@ export function ImportReviewDrawer({
                   type="button"
                   variant="outline"
                   onClick={() => setShowExitConfirm(true)}
+                  disabled={isSaving}
                   className="w-full sm:w-auto"
                 >
                   Cancelar
                 </Button>
-                <Button type="button" onClick={handleSave} className="w-full sm:w-auto">
-                  <Check className="h-4 w-4" />
-                  Confirmar e Salvar
+                <Button type="button" onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Confirmar e Salvar
+                    </>
+                  )}
                 </Button>
               </div>
             </>
