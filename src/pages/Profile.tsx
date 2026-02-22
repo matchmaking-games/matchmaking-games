@@ -17,8 +17,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
@@ -29,20 +29,20 @@ const slugRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
 const profileSchema = z.object({
   nome_completo: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Máximo 100 caracteres"),
-  slug: z.string()
-    .min(3, "Mínimo 3 caracteres")
-    .max(30, "Máximo 30 caracteres")
-    .regex(slugRegex, "Use apenas letras minúsculas, números e hífen"),
+  slug: z.string().
+  min(3, "Mínimo 3 caracteres").
+  max(30, "Máximo 30 caracteres").
+  regex(slugRegex, "Use apenas letras minúsculas, números e hífen"),
   pronomes: z.string().max(30, "Máximo 30 caracteres").optional().or(z.literal("")),
   titulo_profissional: z.string().max(150, "Máximo 150 caracteres").optional().or(z.literal("")),
   bio_curta: z.string().max(200, "Máximo 200 caracteres").optional().or(z.literal("")),
-  telefone: z.string()
-    .max(20, "Máximo 20 caracteres")
-    .refine((val) => val === "" || telefoneRegex.test(val), {
-      message: "Formato inválido. Use (XX) XXXXX-XXXX",
-    })
-    .optional()
-    .or(z.literal("")),
+  telefone: z.string().
+  max(20, "Máximo 20 caracteres").
+  refine((val) => val === "" || telefoneRegex.test(val), {
+    message: "Formato inválido. Use (XX) XXXXX-XXXX"
+  }).
+  optional().
+  or(z.literal(""))
 });
 
 type ValidationErrors = {
@@ -127,11 +127,11 @@ export default function Profile() {
 
     const checkAvailability = async () => {
       setSlugStatus("checking");
-      const { data, error } = await supabase
-        .from("users")
-        .select("id")
-        .eq("slug", debouncedSlug)
-        .maybeSingle();
+      const { data, error } = await supabase.
+      from("users").
+      select("id").
+      eq("slug", debouncedSlug).
+      maybeSingle();
 
       if (error) {
         setSlugStatus("invalid");
@@ -164,11 +164,11 @@ export default function Profile() {
 
     setUserId(session.user.id);
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("nome_completo, titulo_profissional, bio_curta, estado, cidade, avatar_url, email, telefone, mostrar_email, mostrar_telefone, slug, pronomes, disponivel_para_trabalho")
-      .eq("id", session.user.id)
-      .single();
+    const { data, error } = await supabase.
+    from("users").
+    select("nome_completo, titulo_profissional, bio_curta, estado, cidade, avatar_url, email, telefone, mostrar_email, mostrar_telefone, slug, pronomes, disponivel_para_trabalho").
+    eq("id", session.user.id).
+    single();
 
     if (data) {
       setNomeCompleto(data.nome_completo || "");
@@ -212,7 +212,7 @@ export default function Profile() {
       pronomes,
       titulo_profissional: tituloProfissional,
       bio_curta: bioCurta,
-      telefone: telefone,
+      telefone: telefone
     };
 
     const result = profileSchema.safeParse(formData);
@@ -238,22 +238,22 @@ export default function Profile() {
 
     const cleanedPhone = cleanPhone(telefone);
 
-    const { error } = await supabase
-      .from("users")
-      .update({
-        nome_completo: nomeCompleto,
-        slug,
-        pronomes: pronomes || null,
-        titulo_profissional: tituloProfissional || null,
-        bio_curta: bioCurta || null,
-        estado: estado || null,
-        cidade: cidade || null,
-        telefone: cleanedPhone || null,
-        mostrar_email: mostrarEmail,
-        mostrar_telefone: mostrarTelefone,
-        disponivel_para_trabalho: disponivelParaTrabalho,
-      })
-      .eq("id", session.user.id);
+    const { error } = await supabase.
+    from("users").
+    update({
+      nome_completo: nomeCompleto,
+      slug,
+      pronomes: pronomes || null,
+      titulo_profissional: tituloProfissional || null,
+      bio_curta: bioCurta || null,
+      estado: estado || null,
+      cidade: cidade || null,
+      telefone: cleanedPhone || null,
+      mostrar_email: mostrarEmail,
+      mostrar_telefone: mostrarTelefone,
+      disponivel_para_trabalho: disponivelParaTrabalho
+    }).
+    eq("id", session.user.id);
 
     setIsSaving(false);
 
@@ -310,43 +310,43 @@ export default function Profile() {
               Meu Perfil
             </h1>
             <ProfileNavigation />
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
+            {isLoading ?
+            <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              </div> :
+
+            <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Profile Header */}
                 <div className="flex flex-col items-center md:flex-row md:items-start gap-6 pb-6 border-b border-border">
                   <AvatarUpload
-                    userId={userId || ""}
-                    currentAvatarUrl={avatarUrl}
-                    nomeCompleto={nomeCompleto}
-                    onAvatarUpdated={setAvatarUrl}
-                  />
+                  userId={userId || ""}
+                  currentAvatarUrl={avatarUrl}
+                  nomeCompleto={nomeCompleto}
+                  onAvatarUpdated={setAvatarUrl} />
+
                    <div className="flex flex-col items-center md:items-start gap-1 flex-1">
-                    <h2 className="font-display text-2xl font-bold text-foreground">
-                      {nomeCompleto || "Seu nome"}
-                    </h2>
+                    
+
+
                     <p className="text-sm text-muted-foreground">
                       matchmaking.games/{slug || "seu-username"}
                     </p>
                     <div className="mt-2">
                     <ImportSection
-                        onOpen={() => setIsDrawerOpen(true)}
-                      />
+                      onOpen={() => setIsDrawerOpen(true)} />
+
                     </div>
                   </div>
                 </div>
 
                 <ImportReviewDrawer
-                  open={isDrawerOpen}
-                  onClose={() => setIsDrawerOpen(false)}
-                  onSave={(data) => {
-                    toast({ title: "Salvando dados...", description: "A lógica de salvar será implementada na próxima task." });
-                    setIsDrawerOpen(false);
-                  }}
-                />
+                open={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                onSave={(data) => {
+                  toast({ title: "Salvando dados...", description: "A lógica de salvar será implementada na próxima task." });
+                  setIsDrawerOpen(false);
+                }} />
+
 
                 {/* Form Fields */}
                 <div className="grid gap-6 md:grid-cols-2">
@@ -356,16 +356,16 @@ export default function Profile() {
                       Nome <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="nome_completo"
-                      value={nomeCompleto}
-                      onChange={(e) => setNomeCompleto(e.target.value)}
-                      placeholder="Seu nome"
-                      maxLength={100}
-                      className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    {validationErrors.nome_completo && (
-                      <p className="text-sm text-destructive">{validationErrors.nome_completo}</p>
-                    )}
+                    id="nome_completo"
+                    value={nomeCompleto}
+                    onChange={(e) => setNomeCompleto(e.target.value)}
+                    placeholder="Seu nome"
+                    maxLength={100}
+                    className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
+                    {validationErrors.nome_completo &&
+                  <p className="text-sm text-destructive">{validationErrors.nome_completo}</p>
+                  }
                   </div>
 
                   {/* Slug */}
@@ -375,61 +375,61 @@ export default function Profile() {
                     </Label>
                     <div className="relative">
                       <Input
-                        id="slug"
-                        value={slug}
-                        onChange={(e) => handleSlugChange(e.target.value)}
-                        placeholder="seu-username"
-                        maxLength={30}
-                        className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 lowercase pr-10"
-                      />
+                      id="slug"
+                      value={slug}
+                      onChange={(e) => handleSlugChange(e.target.value)}
+                      placeholder="seu-username"
+                      maxLength={30}
+                      className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 lowercase pr-10" />
+
                       <div className="absolute right-3 top-1/2 -translate-y-1/2">
                         {slugIcon()}
                       </div>
                     </div>
-                    {slug && (
-                      <p className="text-xs text-muted-foreground">
+                    {slug &&
+                  <p className="text-xs text-muted-foreground">
                         matchmaking.games/p/{slug}
                       </p>
-                    )}
-                    {slugMessage() && (
-                      <p className="text-sm">{slugMessage()}</p>
-                    )}
-                    {validationErrors.slug && (
-                      <p className="text-sm text-destructive">{validationErrors.slug}</p>
-                    )}
+                  }
+                    {slugMessage() &&
+                  <p className="text-sm">{slugMessage()}</p>
+                  }
+                    {validationErrors.slug &&
+                  <p className="text-sm text-destructive">{validationErrors.slug}</p>
+                  }
                   </div>
 
                   {/* Pronomes */}
                   <div className="space-y-2">
                     <Label htmlFor="pronomes">Pronomes</Label>
                     <Input
-                      id="pronomes"
-                      value={pronomes}
-                      onChange={(e) => setPronomes(e.target.value)}
-                      placeholder="Ex: ele/dele, ela/dela, elu/delu"
-                      maxLength={30}
-                      className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
+                    id="pronomes"
+                    value={pronomes}
+                    onChange={(e) => setPronomes(e.target.value)}
+                    placeholder="Ex: ele/dele, ela/dela, elu/delu"
+                    maxLength={30}
+                    className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
                     <p className="text-xs text-muted-foreground">Como você prefere ser chamado(a)</p>
-                    {validationErrors.pronomes && (
-                      <p className="text-sm text-destructive">{validationErrors.pronomes}</p>
-                    )}
+                    {validationErrors.pronomes &&
+                  <p className="text-sm text-destructive">{validationErrors.pronomes}</p>
+                  }
                   </div>
 
                   {/* Título Profissional */}
                   <div className="space-y-2">
                     <Label htmlFor="titulo_profissional">Título profissional</Label>
                     <Input
-                      id="titulo_profissional"
-                      value={tituloProfissional}
-                      onChange={(e) => setTituloProfissional(e.target.value)}
-                      placeholder="Ex: Game Designer, Desenvolvedor Unity"
-                      maxLength={150}
-                      className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    />
-                    {validationErrors.titulo_profissional && (
-                      <p className="text-sm text-destructive">{validationErrors.titulo_profissional}</p>
-                    )}
+                    id="titulo_profissional"
+                    value={tituloProfissional}
+                    onChange={(e) => setTituloProfissional(e.target.value)}
+                    placeholder="Ex: Game Designer, Desenvolvedor Unity"
+                    maxLength={150}
+                    className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
+                    {validationErrors.titulo_profissional &&
+                  <p className="text-sm text-destructive">{validationErrors.titulo_profissional}</p>
+                  }
                   </div>
 
                   {/* Disponível para trabalho */}
@@ -439,20 +439,20 @@ export default function Profile() {
                         Disponível para trabalho
                       </Label>
                       <Switch
-                        id="disponivel_para_trabalho"
-                        checked={disponivelParaTrabalho}
-                        onCheckedChange={setDisponivelParaTrabalho}
-                      />
+                      id="disponivel_para_trabalho"
+                      checked={disponivelParaTrabalho}
+                      onCheckedChange={setDisponivelParaTrabalho} />
+
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {disponivelParaTrabalho ? (
-                        <span className="flex items-center gap-1 text-primary">
+                      {disponivelParaTrabalho ?
+                    <span className="flex items-center gap-1 text-primary">
                           <Check className="h-4 w-4" />
                           Seu perfil mostra que você está aberto a oportunidades
-                        </span>
-                      ) : (
-                        "Seu perfil não indica que você está procurando oportunidades"
-                      )}
+                        </span> :
+
+                    "Seu perfil não indica que você está procurando oportunidades"
+                    }
                     </p>
                   </div>
 
@@ -460,16 +460,16 @@ export default function Profile() {
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="bio_curta">Bio curta</Label>
                     <Textarea
-                      id="bio_curta"
-                      value={bioCurta}
-                      onChange={(e) => setBioCurta(e.target.value)}
-                      placeholder="Uma breve descrição sobre você (máx. 200 caracteres)"
-                      maxLength={200}
-                      className="min-h-[100px] bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
-                    />
-                    {validationErrors.bio_curta && (
-                      <p className="text-sm text-destructive">{validationErrors.bio_curta}</p>
-                    )}
+                    id="bio_curta"
+                    value={bioCurta}
+                    onChange={(e) => setBioCurta(e.target.value)}
+                    placeholder="Uma breve descrição sobre você (máx. 200 caracteres)"
+                    maxLength={200}
+                    className="min-h-[100px] bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none" />
+
+                    {validationErrors.bio_curta &&
+                  <p className="text-sm text-destructive">{validationErrors.bio_curta}</p>
+                  }
                   </div>
 
                   {/* Estado */}
@@ -480,11 +480,11 @@ export default function Profile() {
                         <SelectValue placeholder={loadingEstados ? "Carregando..." : "Selecione o estado"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {estados.map((est) => (
-                          <SelectItem key={est.sigla} value={est.sigla}>
+                        {estados.map((est) =>
+                      <SelectItem key={est.sigla} value={est.sigla}>
                             {est.nome}
                           </SelectItem>
-                        ))}
+                      )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -495,19 +495,19 @@ export default function Profile() {
                     <Select value={cidade} onValueChange={setCidade} disabled={!estado}>
                       <SelectTrigger className="h-11 bg-input border-border">
                         <SelectValue placeholder={
-                          !estado
-                            ? "Selecione um estado primeiro"
-                            : loadingMunicipios
-                              ? "Carregando..."
-                              : "Selecione a cidade"
-                        } />
+                      !estado ?
+                      "Selecione um estado primeiro" :
+                      loadingMunicipios ?
+                      "Carregando..." :
+                      "Selecione a cidade"
+                      } />
                       </SelectTrigger>
                       <SelectContent>
-                        {municipios.map((mun) => (
-                          <SelectItem key={mun.id} value={mun.nome}>
+                        {municipios.map((mun) =>
+                      <SelectItem key={mun.id} value={mun.nome}>
                             {mun.nome}
                           </SelectItem>
-                        ))}
+                      )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -518,30 +518,30 @@ export default function Profile() {
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        readOnly
-                        disabled
-                        className="h-11 pl-10 bg-muted border-border cursor-not-allowed"
-                      />
+                      id="email"
+                      type="email"
+                      value={email}
+                      readOnly
+                      disabled
+                      className="h-11 pl-10 bg-muted border-border cursor-not-allowed" />
+
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
-                        id="mostrar_email"
-                        checked={mostrarEmail}
-                        onCheckedChange={setMostrarEmail}
-                      />
+                      id="mostrar_email"
+                      checked={mostrarEmail}
+                      onCheckedChange={setMostrarEmail} />
+
                       <Label htmlFor="mostrar_email" className="text-sm text-muted-foreground cursor-pointer">
-                        {mostrarEmail ? (
-                          <span className="flex items-center gap-1">
+                        {mostrarEmail ?
+                      <span className="flex items-center gap-1">
                             <Eye className="h-4 w-4" /> Visível no perfil público
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
+                          </span> :
+
+                      <span className="flex items-center gap-1">
                             <EyeOff className="h-4 w-4" /> Oculto no perfil público
                           </span>
-                        )}
+                      }
                       </Label>
                     </div>
                   </div>
@@ -552,34 +552,34 @@ export default function Profile() {
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
-                        id="telefone"
-                        type="tel"
-                        value={telefone}
-                        onChange={(e) => setTelefone(formatPhoneInput(e.target.value))}
-                        placeholder="(XX) XXXXX-XXXX"
-                        maxLength={15}
-                        className="h-11 pl-10 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
+                      id="telefone"
+                      type="tel"
+                      value={telefone}
+                      onChange={(e) => setTelefone(formatPhoneInput(e.target.value))}
+                      placeholder="(XX) XXXXX-XXXX"
+                      maxLength={15}
+                      className="h-11 pl-10 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20" />
+
                     </div>
-                    {validationErrors.telefone && (
-                      <p className="text-sm text-destructive">{validationErrors.telefone}</p>
-                    )}
+                    {validationErrors.telefone &&
+                  <p className="text-sm text-destructive">{validationErrors.telefone}</p>
+                  }
                     <div className="flex items-center gap-2">
                       <Switch
-                        id="mostrar_telefone"
-                        checked={mostrarTelefone}
-                        onCheckedChange={setMostrarTelefone}
-                      />
+                      id="mostrar_telefone"
+                      checked={mostrarTelefone}
+                      onCheckedChange={setMostrarTelefone} />
+
                       <Label htmlFor="mostrar_telefone" className="text-sm text-muted-foreground cursor-pointer">
-                        {mostrarTelefone ? (
-                          <span className="flex items-center gap-1">
+                        {mostrarTelefone ?
+                      <span className="flex items-center gap-1">
                             <Eye className="h-4 w-4" /> Visível no perfil público
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1">
+                          </span> :
+
+                      <span className="flex items-center gap-1">
                             <EyeOff className="h-4 w-4" /> Oculto no perfil público
                           </span>
-                        )}
+                      }
                       </Label>
                     </div>
                   </div>
@@ -588,25 +588,25 @@ export default function Profile() {
                 {/* Submit Button */}
                 <div className="flex justify-end pt-4 border-t border-border">
                   <Button
-                    type="submit"
-                    disabled={isSaveDisabled}
-                    className="min-w-[140px]"
-                  >
-                    {isSaving ? (
-                      <>
+                  type="submit"
+                  disabled={isSaveDisabled}
+                  className="min-w-[140px]">
+
+                    {isSaving ?
+                  <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Salvando...
-                      </>
-                    ) : (
-                      "Salvar alterações"
-                    )}
+                      </> :
+
+                  "Salvar alterações"
+                  }
                   </Button>
                 </div>
               </form>
-            )}
+            }
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>);
+
 }
