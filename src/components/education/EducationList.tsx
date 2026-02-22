@@ -56,7 +56,7 @@ export function EducationList({
         {educations.map((education) =>
         <div key={education.id} className="relative md:pl-10">
             {/* Timeline dot - desktop only */}
-            <div className="hidden md:block absolute left-2.5 top-8 w-3 h-3 rounded-full bg-primary border-2 border-background z-10" />
+            
             
             <EducationCard
             education={education}
