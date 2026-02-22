@@ -15,17 +15,17 @@ export function EducationList({
   educations,
   loading,
   onEdit,
-  onDelete,
+  onDelete
 }: EducationListProps) {
   // Loading state
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-32 w-full" />
-        ))}
-      </div>
-    );
+        {[1, 2, 3].map((i) =>
+        <Skeleton key={i} className="h-32 w-full" />
+        )}
+      </div>);
+
   }
 
   // Empty state
@@ -42,30 +42,30 @@ export function EducationList({
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Primeira Educação
         </Button>
-      </div>
-    );
+      </div>);
+
   }
 
   // List with timeline
   return (
     <div className="relative">
       {/* Vertical timeline line - desktop only */}
-      <div className="hidden md:block absolute left-4 top-6 bottom-6 w-0.5 bg-border" />
+      
 
       <div className="space-y-4">
-        {educations.map((education) => (
-          <div key={education.id} className="relative md:pl-10">
+        {educations.map((education) =>
+        <div key={education.id} className="relative md:pl-10">
             {/* Timeline dot - desktop only */}
             <div className="hidden md:block absolute left-2.5 top-8 w-3 h-3 rounded-full bg-primary border-2 border-background z-10" />
             
             <EducationCard
-              education={education}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
+            education={education}
+            onEdit={onEdit}
+            onDelete={onDelete} />
+
           </div>
-        ))}
+        )}
       </div>
-    </div>
-  );
+    </div>);
+
 }
