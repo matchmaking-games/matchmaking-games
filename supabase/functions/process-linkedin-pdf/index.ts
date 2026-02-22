@@ -63,26 +63,119 @@ function splitSections(text: string): Sections {
 // --- AI prompt ---
 
 function buildPrompt(pdfText: string): string {
-  return `Você é um assistente especializado em extrair informações estruturadas de currículos do LinkedIn.
+  return `Você é um assistente especializado em extrair informações estruturadas de currículos do LinkedIn em português brasileiro.
 
-Extraia as informações deste currículo do LinkedIn e retorne APENAS JSON válido, sem markdown, sem explicações, sem preamble.
+Sua única tarefa é ler o texto de um currículo e retornar um JSON válido com as informações extraídas. Você não deve explicar nada, não deve fazer perguntas, não deve adicionar comentários. Apenas retorne o JSON.
 
-REGRAS CRÍTICAS DE DATAS: Converta TODAS as datas para formato ISO YYYY-MM. Mapeamento em português: janeiro/jan=01, fevereiro/fev=02, março/mar=03, abril/abr=04, maio/mai=05, junho/jun=06, julho/jul=07, agosto/ago=08, setembro/set=09, outubro/out=10, novembro/nov=11, dezembro/dez=12. Se data atual (Present, Atual, até hoje): retorne null. SEMPRE use 2 dígitos para mês.
+---
 
-ESTRUTURA DO JSON:
+## REGRAS DE DATAS
+
+Todas as datas devem ser convertidas para o formato ISO.
+
+Para experiências profissionais, o formato é YYYY-MM (ano e mês). Exemplos de conversão:
+- "jan de 2021" → "2021-01"
+- "março 2019" → "2019-03"
+- "out. 2022" → "2022-10"
+- "Present", "Atual", "até o momento", "o momento" → null
+- Se tiver apenas o ano sem mês → use "YYYY-01"
+
+Mapeamento completo de meses em português:
+janeiro/jan = 01, fevereiro/fev = 02, março/mar = 03, abril/abr = 04,
+maio/mai = 05, junho/jun = 06, julho/jul = 07, agosto/ago = 08,
+setembro/set = 09, outubro/out = 10, novembro/nov = 11, dezembro/dez = 12
+
+Para formações acadêmicas, o formato é apenas YYYY (somente o ano). Exemplos:
+- "2018" → "2018"
+- "jan de 2018" → "2018"
+- "Present", "Atual" → null
+
+---
+
+## REGRAS PARA tipo_emprego (experiências)
+
+Cada experiência profissional deve ter um campo tipo_emprego. Você deve inferir o valor correto com base no título do cargo e na descrição. Os únicos valores permitidos são: clt, pj, freelancer, estagio, tempo_integral.
+
+Use estas regras para inferir:
+- Se o cargo ou descrição mencionar "estágio", "estagiário", "intern" ou "internship" → use "estagio"
+- Se o cargo ou descrição mencionar "freelance", "freelancer", "autônomo" ou "autônoma" → use "freelancer"
+- Se o cargo ou descrição mencionar "PJ", "pessoa jurídica" ou "CNPJ" → use "pj"
+- Se o cargo ou descrição mencionar "full-time", "tempo integral" → use "tempo_integral"
+- Em todos os outros casos → use "clt"
+
+---
+
+## REGRAS PARA tipo (formações acadêmicas)
+
+Cada formação deve ter um campo tipo. Você deve inferir o valor correto com base no nome do grau ou título da formação. Os únicos valores permitidos são: graduacao, pos, tecnico, curso, certificacao, ensino_medio, mestrado, doutorado, mba.
+
+Use estas regras para inferir:
+- Se mencionar "bacharelado", "licenciatura", "graduação" ou "bachelor" → use "graduacao"
+- Se mencionar "pós-graduação", "especialização", "lato sensu" ou "pós graduação" → use "pos"
+- Se mencionar "mestrado", "mestre", "stricto sensu" ou "master" → use "mestrado"
+- Se mencionar "doutorado", "doutor" ou "PhD" → use "doutorado"
+- Se mencionar "MBA" → use "mba"
+- Se mencionar "técnico" ou "tecnólogo" → use "tecnico"
+- Se mencionar "ensino médio", "segundo grau" ou "high school" → use "ensino_medio"
+- Se mencionar "certificação" ou "certificate" → use "certificacao"
+- Em todos os outros casos → use "curso"
+
+---
+
+## REGRAS GERAIS
+
+- Se a pessoa teve múltiplos cargos na mesma empresa, crie entradas SEPARADAS no array de experiences. Cada cargo é um objeto separado.
+- Preserve TODA a descrição original de cada experiência. Não resuma, não corte, não parafraseie.
+- Extraia skills apenas da seção "Principais competências" do currículo. Não invente skills a partir da descrição das experiências.
+- Se uma informação não existir no currículo, retorne string vazia "" para campos de texto ou null para datas.
+- Nunca invente dados que não estão no currículo.
+- Preserve acentos e caracteres especiais em português.
+
+---
+
+## ESTRUTURA DO JSON QUE VOCÊ DEVE RETORNAR
+
 {
-  "basic_info": { "name": "", "email": "", "phone": "", "linkedin_url": "", "location": "", "bio": "" },
-  "experiences": [{ "company": "", "role": "", "start_date": "YYYY-MM", "end_date": "YYYY-MM ou null", "location": "", "description": "" }],
-  "education": [{ "institution": "", "degree": "", "field": "", "start_year": "YYYY", "end_year": "YYYY ou null" }],
-  "skills": ["string"]
+  "basic_info": {
+    "name": "nome completo da pessoa",
+    "email": "email se disponível, senão string vazia",
+    "phone": "telefone se disponível, senão string vazia",
+    "linkedin_url": "URL do LinkedIn se disponível, senão string vazia",
+    "location": "cidade e estado se disponível, senão string vazia",
+    "bio": "resumo profissional se disponível, senão string vazia"
+  },
+  "experiences": [
+    {
+      "company": "nome da empresa",
+      "role": "título exato do cargo",
+      "tipo_emprego": "clt | pj | freelancer | estagio | tempo_integral",
+      "start_date": "YYYY-MM ou null",
+      "end_date": "YYYY-MM ou null",
+      "location": "localização se disponível, senão string vazia",
+      "description": "descrição completa e preservada, senão string vazia"
+    }
+  ],
+  "education": [
+    {
+      "institution": "nome da instituição",
+      "tipo": "graduacao | pos | tecnico | curso | certificacao | ensino_medio | mestrado | doutorado | mba",
+      "field": "nome do curso ou área de estudo",
+      "start_year": "YYYY ou null",
+      "end_year": "YYYY ou null"
+    }
+  ],
+  "skills": ["skill 1", "skill 2"]
 }
 
-REGRAS: Se a pessoa teve múltiplos cargos na mesma empresa, crie entradas SEPARADAS no array. Preservar TODA a descrição original, não resumir. Extrair skills apenas da seção "Principais competências". Se informação não existir: retornar string vazia "" ou null. Nunca inventar dados. Preservar acentos em português.
+---
 
-TEXTO DO CURRÍCULO:
+## TEXTO DO CURRÍCULO
+
 ${pdfText}
 
-Retorne APENAS o JSON, sem \`\`\`json, sem explicações:`;
+---
+
+Retorne APENAS o JSON acima preenchido. Sem \`\`\`json, sem explicações, sem texto antes ou depois do JSON.`;
 }
 
 // --- AI call with retry ---
