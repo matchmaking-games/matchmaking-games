@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Mail, Phone, Eye, EyeOff, Check, X, AlertTriangle } from "lucide-react";
 import { ImportSection } from "@/components/ImportSection";
-import { ImportConfirmModal } from "@/components/ImportConfirmModal";
+
 import { ImportReviewDrawer } from "@/components/ImportReviewDrawer";
 import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -95,8 +95,6 @@ export default function Profile() {
   const [mostrarEmail, setMostrarEmail] = useState(false);
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [selectedPdfFile, setSelectedPdfFile] = useState<File | null>(null);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [reviewData, setReviewData] = useState<any | null>(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const { uploadPdf, isProcessing, progress, error: importError, errorRef } = useImportLinkedIn();
@@ -331,7 +329,7 @@ export default function Profile() {
                     nomeCompleto={nomeCompleto}
                     onAvatarUpdated={setAvatarUrl}
                   />
-                  <div className="flex flex-col items-center md:items-start gap-1 flex-1">
+                   <div className="flex flex-col items-center md:items-start gap-1 flex-1">
                     <h2 className="font-display text-2xl font-bold text-foreground">
                       {nomeCompleto || "Seu nome"}
                     </h2>
@@ -340,9 +338,18 @@ export default function Profile() {
                     </p>
                     <div className="mt-2">
                       <ImportSection
-                        onFileSelected={(file) => {
-                          setSelectedPdfFile(file);
-                          setIsImportModalOpen(true);
+                        onFileSelected={async (file) => {
+                          const result = await uploadPdf(file);
+                          if (result) {
+                            setReviewData(result);
+                            setIsReviewOpen(true);
+                          } else {
+                            toast({
+                              title: "Erro na importação",
+                              description: errorRef.current || "Erro desconhecido.",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                         isProcessing={isProcessing}
                         progress={progress}
@@ -350,32 +357,6 @@ export default function Profile() {
                     </div>
                   </div>
                 </div>
-
-                <ImportConfirmModal
-                  open={isImportModalOpen}
-                  pdfFile={selectedPdfFile}
-                  onClose={() => {
-                    setIsImportModalOpen(false);
-                    setSelectedPdfFile(null);
-                  }}
-                  onConfirm={async () => {
-                    setIsImportModalOpen(false);
-                    const file = selectedPdfFile;
-                    setSelectedPdfFile(null);
-                    if (!file) return;
-                    const result = await uploadPdf(file);
-                    if (result) {
-                      setReviewData(result);
-                      setIsReviewOpen(true);
-                    } else {
-                      toast({
-                        title: "Erro na importação",
-                        description: errorRef.current || "Erro desconhecido.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                />
 
                 <ImportReviewDrawer
                   open={isReviewOpen}

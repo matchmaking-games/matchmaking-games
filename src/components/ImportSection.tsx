@@ -1,9 +1,7 @@
 import { useRef } from "react";
 import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import { useImportLimit } from "@/hooks/useImportLimit";
 
 const MAX_SIZE_MB = 10;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
@@ -16,7 +14,6 @@ interface ImportSectionProps {
 
 export function ImportSection({ onFileSelected, isProcessing, progress }: ImportSectionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { remainingImports, canImport, isLoading } = useImportLimit();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,15 +41,6 @@ export function ImportSection({ onFileSelected, isProcessing, progress }: Import
     onFileSelected(file);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-2 w-full md:w-auto">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-4 w-56" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-2 w-full md:w-auto items-center md:items-start">
       <input
@@ -74,7 +62,6 @@ export function ImportSection({ onFileSelected, isProcessing, progress }: Import
           type="button"
           variant="outline"
           size="sm"
-          disabled={!canImport}
           onClick={() => inputRef.current?.click()}
         >
           <Upload className="h-4 w-4 mr-2" />
@@ -82,18 +69,8 @@ export function ImportSection({ onFileSelected, isProcessing, progress }: Import
         </Button>
       )}
 
-      <span
-        className={`text-xs ${
-          isProcessing
-            ? "opacity-50 pointer-events-none text-muted-foreground"
-            : canImport
-              ? "text-muted-foreground"
-              : "text-destructive"
-        }`}
-      >
-        {canImport
-          ? `Ver histórico · ${remainingImports}/3 importações este mês`
-          : "Limite mensal atingido · 0/3 importações restantes"}
+      <span className="text-sm text-muted-foreground">
+        Veja como trazer seu currículo do LinkedIn
       </span>
     </div>
   );
