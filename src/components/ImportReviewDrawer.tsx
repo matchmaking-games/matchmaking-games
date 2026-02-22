@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Briefcase, GraduationCap, Check, Upload, Loader2, AlertTriangle } from "lucide-react";
 import {
   Sheet,
@@ -40,6 +40,7 @@ import { toast } from "@/hooks/use-toast";
 import { useImportLinkedIn } from "@/hooks/useImportLinkedIn";
 import { useImportLimit } from "@/hooks/useImportLimit";
 import { useImportSave } from "@/hooks/useImportSave";
+import { useIBGELocations, type EstadoIBGE, type MunicipioIBGE } from "@/hooks/useIBGELocations";
 import { formatBrazilianDate, parseToIsoDate } from "@/utils/dateFormat";
 
 // --- Types ---
@@ -48,7 +49,9 @@ export interface ReviewExperience {
   empresa: string;
   titulo_cargo: string;
   tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral";
-  modalidade: "presencial" | "hibrido" | "remoto";
+  modalidade: "presencial" | "hibrido" | "remoto" | null;
+  estado: string | null;
+  cidade: string | null;
   inicio: string;
   fim: string | null;
   descricao: string;
@@ -78,6 +81,8 @@ const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
 const DESKTOP_IMG = "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/Captura%20de%20tela%202026-02-21%20230438.png";
 const MOBILE_IMG = "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/WhatsApp%20Image%202026-02-21%20at%2023.04.10.jpeg";
+
+const IBGE_API_BASE = "https://servicodados.ibge.gov.br/api/v1/localidades";
 
 const TIPO_EMPREGO_OPTIONS = [
   { value: "clt", label: "CLT" },
@@ -110,9 +115,13 @@ const MODALIDADE_OPTIONS = [
 function ExperienceReviewCard({
   experience,
   onUpdate,
+  estadosIBGE,
+  validationTriggered,
 }: {
   experience: ReviewExperience;
   onUpdate: (updated: ReviewExperience) => void;
+  estadosIBGE: EstadoIBGE[];
+  validationTriggered: boolean;
 }) {
   const [startDateDisplay, setStartDateDisplay] = useState(
     experience.inicio ? formatBrazilianDate(experience.inicio) : ""
@@ -120,6 +129,36 @@ function ExperienceReviewCard({
   const [endDateDisplay, setEndDateDisplay] = useState(
     experience.fim ? formatBrazilianDate(experience.fim) : ""
   );
+  const [municipios, setMunicipios] = useState<MunicipioIBGE[]>([]);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+
+  // Fetch municipalities when estado changes
+  useEffect(() => {
+    if (!experience.estado) {
+      setMunicipios([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchMunicipios = async () => {
+      setLoadingMunicipios(true);
+      try {
+        const response = await fetch(
+          `${IBGE_API_BASE}/estados/${experience.estado}/municipios?orderBy=nome`
+        );
+        if (!response.ok) throw new Error("Erro ao carregar municípios");
+        const data: MunicipioIBGE[] = await response.json();
+        if (!cancelled) {
+          setMunicipios(data.sort((a, b) => a.nome.localeCompare(b.nome)));
+        }
+      } catch {
+        if (!cancelled) setMunicipios([]);
+      } finally {
+        if (!cancelled) setLoadingMunicipios(false);
+      }
+    };
+    fetchMunicipios();
+    return () => { cancelled = true; };
+  }, [experience.estado]);
 
   const handleChange = (field: keyof ReviewExperience, value: string | null) => {
     if (field === "inicio" || field === "fim") {
@@ -129,6 +168,25 @@ function ExperienceReviewCard({
       onUpdate({ ...experience, [field]: value });
     }
   };
+
+  const handleModalidadeChange = (value: string) => {
+    const modalidade = value as ReviewExperience["modalidade"];
+    if (modalidade === "remoto") {
+      onUpdate({ ...experience, modalidade, estado: null, cidade: null });
+    } else {
+      onUpdate({ ...experience, modalidade });
+    }
+  };
+
+  const handleEstadoChange = (uf: string) => {
+    onUpdate({ ...experience, estado: uf, cidade: null });
+  };
+
+  const handleCidadeChange = (cidade: string) => {
+    onUpdate({ ...experience, cidade });
+  };
+
+  const needsLocation = experience.modalidade === "presencial" || experience.modalidade === "hibrido";
 
   return (
     <Card className="border-border">
@@ -140,18 +198,28 @@ function ExperienceReviewCard({
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Empresa</Label>
+            <Label className="text-xs text-muted-foreground">
+              Empresa <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={experience.empresa}
               onChange={(e) => handleChange("empresa", e.target.value)}
             />
+            {validationTriggered && !experience.empresa && (
+              <p className="text-xs text-destructive">Preencha este campo antes de salvar</p>
+            )}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Cargo</Label>
+            <Label className="text-xs text-muted-foreground">
+              Cargo <span className="text-destructive">*</span>
+            </Label>
             <Input
               value={experience.titulo_cargo}
               onChange={(e) => handleChange("titulo_cargo", e.target.value)}
             />
+            {validationTriggered && !experience.titulo_cargo && (
+              <p className="text-xs text-destructive">Preencha este campo antes de salvar</p>
+            )}
           </div>
         </div>
 
@@ -175,13 +243,15 @@ function ExperienceReviewCard({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Modalidade</Label>
+            <Label className="text-xs text-muted-foreground">
+              Modalidade <span className="text-destructive">*</span>
+            </Label>
             <Select
-              value={experience.modalidade}
-              onValueChange={(v) => onUpdate({ ...experience, modalidade: v as ReviewExperience["modalidade"] })}
+              value={experience.modalidade || ""}
+              onValueChange={handleModalidadeChange}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecione a modalidade" />
               </SelectTrigger>
               <SelectContent>
                 {MODALIDADE_OPTIONS.map((opt) => (
@@ -191,8 +261,63 @@ function ExperienceReviewCard({
                 ))}
               </SelectContent>
             </Select>
+            {validationTriggered && !experience.modalidade && (
+              <p className="text-xs text-destructive">Selecione uma modalidade antes de salvar</p>
+            )}
           </div>
         </div>
+
+        {needsLocation && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Estado <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={experience.estado || ""}
+                onValueChange={handleEstadoChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {estadosIBGE.map((estado) => (
+                    <SelectItem key={estado.sigla} value={estado.sigla}>
+                      {estado.sigla} — {estado.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {validationTriggered && !experience.estado && (
+                <p className="text-xs text-destructive">Selecione o estado antes de salvar</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Cidade <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={experience.cidade || ""}
+                onValueChange={handleCidadeChange}
+                disabled={!experience.estado || loadingMunicipios}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingMunicipios ? "Carregando..." : "Selecione a cidade"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {municipios.map((m) => (
+                    <SelectItem key={m.id} value={m.nome}>
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {validationTriggered && !experience.cidade && (
+                <p className="text-xs text-destructive">Selecione a cidade antes de salvar</p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -307,6 +432,16 @@ function EducationReviewCard({
   );
 }
 
+// --- Validation ---
+
+function validateExperiences(exps: ReviewExperience[]): boolean {
+  return exps.every(exp => {
+    if (!exp.empresa || !exp.titulo_cargo || !exp.modalidade) return false;
+    if ((exp.modalidade === "presencial" || exp.modalidade === "hibrido") && (!exp.estado || !exp.cidade)) return false;
+    return true;
+  });
+}
+
 // --- Main Drawer ---
 
 export function ImportReviewDrawer({
@@ -318,11 +453,13 @@ export function ImportReviewDrawer({
   const [experiences, setExperiences] = useState<ReviewExperience[]>([]);
   const [education, setEducation] = useState<ReviewEducation[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [validationTriggered, setValidationTriggered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { uploadPdf, isProcessing, progress, errorRef } = useImportLinkedIn();
   const { remainingImports, canImport, isLoading: isLoadingLimit } = useImportLimit();
   const { saveImportData, isSaving } = useImportSave();
+  const { estados } = useIBGELocations();
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -340,20 +477,29 @@ export function ImportReviewDrawer({
 
     const result = await uploadPdf(file);
     if (result) {
-      // Map English fields from PDF to Portuguese fields matching DB schema
-      const mappedExperiences: ReviewExperience[] = ((result.extracted_data?.experiences as any[]) ?? []).map((exp: any) => ({
-        empresa: exp.company || "",
-        titulo_cargo: exp.role || "",
-        tipo_emprego: "clt" as const,
-        modalidade: "presencial" as const,
-        inicio: exp.start_date || "",
-        fim: exp.end_date || null,
-        descricao: exp.description || "",
-      }));
+      // Flatten grouped experiences from Gemini into flat ReviewExperience array
+      const mappedExperiences: ReviewExperience[] = [];
+      const extractedExps = (result.extracted_data?.experiences as any[]) ?? [];
+      for (const exp of extractedExps) {
+        const cargos = Array.isArray(exp.cargos) ? exp.cargos : [exp];
+        for (const cargo of cargos) {
+          mappedExperiences.push({
+            empresa: exp.company || cargo.company || "",
+            titulo_cargo: cargo.role || "",
+            tipo_emprego: cargo.tipo_emprego || "clt",
+            modalidade: null,
+            estado: null,
+            cidade: null,
+            inicio: cargo.start_date || "",
+            fim: cargo.end_date || null,
+            descricao: cargo.description || "",
+          });
+        }
+      }
 
       const mappedEducation: ReviewEducation[] = ((result.extracted_data?.education as any[]) ?? []).map((edu: any) => ({
         instituicao: edu.institution || "",
-        tipo: "curso" as const,
+        tipo: edu.tipo || "curso" as const,
         titulo: edu.field || "",
         inicio: edu.start_year || "",
         fim: edu.end_year || null,
@@ -361,6 +507,7 @@ export function ImportReviewDrawer({
 
       setExperiences(mappedExperiences);
       setEducation(mappedEducation);
+      setValidationTriggered(false);
       setStep("review");
     } else {
       toast({ title: "Erro na importação", description: errorRef.current || "Erro desconhecido.", variant: "destructive" });
@@ -369,9 +516,9 @@ export function ImportReviewDrawer({
 
   const handleOpenChange = (o: boolean) => {
     if (!o) {
-      if (isProcessing || isSaving) return; // Block close during processing/saving
+      if (isProcessing || isSaving) return;
       if (step === "review") {
-        setShowExitConfirm(true); // Show confirm dialog instead of closing
+        setShowExitConfirm(true);
         return;
       }
       handleClose();
@@ -383,6 +530,7 @@ export function ImportReviewDrawer({
     setExperiences([]);
     setEducation([]);
     setShowExitConfirm(false);
+    setValidationTriggered(false);
     onClose();
   };
 
@@ -395,6 +543,17 @@ export function ImportReviewDrawer({
   };
 
   const handleSave = async () => {
+    // Validate before saving
+    if (!validateExperiences(experiences)) {
+      setValidationTriggered(true);
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios antes de confirmar a importação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await saveImportData({ experiences, education });
       toast({
@@ -613,6 +772,8 @@ export function ImportReviewDrawer({
                         key={i}
                         experience={exp}
                         onUpdate={(updated) => updateExperience(i, updated)}
+                        estadosIBGE={estados}
+                        validationTriggered={validationTriggered}
                       />
                     ))
                   )}

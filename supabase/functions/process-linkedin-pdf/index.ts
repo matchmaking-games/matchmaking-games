@@ -94,7 +94,7 @@ Para formações acadêmicas, o formato é apenas YYYY (somente o ano). Exemplos
 
 ## REGRAS PARA tipo_emprego (experiências)
 
-Cada experiência profissional deve ter um campo tipo_emprego. Você deve inferir o valor correto com base no título do cargo e na descrição. Os únicos valores permitidos são: clt, pj, freelancer, estagio, tempo_integral.
+Cada cargo deve ter um campo tipo_emprego. Você deve inferir o valor correto com base no título do cargo e na descrição. Os únicos valores permitidos são: clt, pj, freelancer, estagio, tempo_integral.
 
 Use estas regras para inferir:
 - Se o cargo ou descrição mencionar "estágio", "estagiário", "intern" ou "internship" → use "estagio"
@@ -122,14 +122,30 @@ Use estas regras para inferir:
 
 ---
 
+## REGRAS PARA AGRUPAMENTO DE CARGOS POR EMPRESA
+
+REGRA CRÍTICA: Se a pessoa teve múltiplos cargos na mesma empresa, eles devem ser agrupados dentro de um ÚNICO objeto no array "experiences", com todos os cargos listados no array "cargos".
+
+O LinkedIn apresenta múltiplos cargos na mesma empresa de duas formas:
+1. Uma linha com o nome da empresa seguida de um tempo total (ex: "1 ano 3 meses"), com múltiplos cargos indentados abaixo — todos pertencem ao mesmo objeto.
+2. Entradas separadas com o MESMO nome de empresa — devem ser agrupadas no mesmo objeto.
+
+Para empresas com um único cargo, o array "cargos" terá apenas 1 item.
+
+SEMPRE retorne a estrutura com o array "cargos", nunca retorne campos de cargo diretamente no objeto da empresa.
+
+Os cargos dentro do array devem estar ordenados do mais recente para o mais antigo (com base em start_date).
+
+---
+
 ## REGRAS GERAIS
 
-- Se a pessoa teve múltiplos cargos na mesma empresa, crie entradas SEPARADAS no array de experiences. Cada cargo é um objeto separado.
-- Preserve TODA a descrição original de cada experiência. Não resuma, não corte, não parafraseie.
+- Preserve TODA a descrição original de cada cargo. Não resuma, não corte, não parafraseie.
 - Extraia skills apenas da seção "Principais competências" do currículo. Não invente skills a partir da descrição das experiências.
 - Se uma informação não existir no currículo, retorne string vazia "" para campos de texto ou null para datas.
 - Nunca invente dados que não estão no currículo.
 - Preserve acentos e caracteres especiais em português.
+- NÃO extraia localização/cidade/estado das experiências. Esses dados serão preenchidos manualmente pelo usuário.
 
 ---
 
@@ -141,18 +157,21 @@ Use estas regras para inferir:
     "email": "email se disponível, senão string vazia",
     "phone": "telefone se disponível, senão string vazia",
     "linkedin_url": "URL do LinkedIn se disponível, senão string vazia",
-    "location": "cidade e estado se disponível, senão string vazia",
     "bio": "resumo profissional se disponível, senão string vazia"
   },
   "experiences": [
     {
       "company": "nome da empresa",
-      "role": "título exato do cargo",
-      "tipo_emprego": "clt | pj | freelancer | estagio | tempo_integral",
-      "start_date": "YYYY-MM ou null",
-      "end_date": "YYYY-MM ou null",
-      "location": "localização se disponível, senão string vazia",
-      "description": "descrição completa e preservada, senão string vazia"
+      "cargos": [
+        {
+          "role": "título exato do cargo",
+          "tipo_emprego": "clt | pj | freelancer | estagio | tempo_integral",
+          "start_date": "YYYY-MM ou null",
+          "end_date": "YYYY-MM ou null",
+          "is_current": true ou false,
+          "description": "descrição completa e preservada, senão string vazia"
+        }
+      ]
     }
   ],
   "education": [
@@ -315,8 +334,13 @@ Deno.serve(async (req) => {
 
     // 7. Record success in import_history
     const processingTime = Date.now() - startTime;
+    const experiencesArr = Array.isArray(extractedData.experiences) ? extractedData.experiences : [];
+    const totalCargos = experiencesArr.reduce((sum: number, exp: any) => {
+      const cargos = Array.isArray(exp.cargos) ? exp.cargos : [exp];
+      return sum + cargos.length;
+    }, 0);
     const itemsImported = {
-      experiences: Array.isArray(extractedData.experiences) ? extractedData.experiences.length : 0,
+      experiences: totalCargos,
       education: Array.isArray(extractedData.education) ? extractedData.education.length : 0,
       skills: Array.isArray(extractedData.skills) ? extractedData.skills.length : 0,
     };
