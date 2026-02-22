@@ -40,7 +40,7 @@ const vagaFormSchema = z.object({
   titulo: z.string().min(5, "Mínimo 5 caracteres").max(100, "Máximo 100 caracteres"),
   tipo_funcao: z.array(z.string()).min(1, "Selecione pelo menos um tipo de função"),
   nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
-  tipo_contrato: z.enum(["clt", "pj", "freelance", "estagio"]),
+  tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio"]),
   remoto: z.enum(["presencial", "hibrido", "remoto"]),
   estado: z.string().optional(),
   cidade: z.string().optional(),

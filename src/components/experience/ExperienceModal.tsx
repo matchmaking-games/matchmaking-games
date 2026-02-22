@@ -21,7 +21,7 @@ const experienceSchema = z
   .object({
     titulo_cargo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
     empresa: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
-    tipo_emprego: z.enum(["clt", "pj", "freelance", "estagio"], {
+    tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio"], {
       required_error: "Selecione o tipo de contrato",
     }),
     estado: z.string().optional(),
@@ -91,7 +91,7 @@ type ExperienceFormData = z.infer<typeof experienceSchema>;
 const tipoEmpregoOptions = [
   { value: "clt", label: "CLT" },
   { value: "pj", label: "PJ" },
-  { value: "freelance", label: "Freelancer" },
+  { value: "freelancer", label: "Freelancer" },
   { value: "estagio", label: "Estágio" },
 ];
 
