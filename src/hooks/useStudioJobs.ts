@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
-type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
+type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
 type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
 
 export interface StudioVaga {
@@ -11,7 +11,7 @@ export interface StudioVaga {
   titulo: string;
   slug: string;
   nivel: NivelVaga;
-  tipo_contrato: TipoContrato;
+  tipo_emprego: TipoEmprego;
   ativa: boolean | null;
   tipo_publicacao: TipoPublicacaoVaga | null;
   criada_em: string | null;
@@ -48,7 +48,7 @@ export function useStudioJobs(estudioId: string | null): UseStudioJobsReturn {
 
       const { data, error: fetchError } = await supabase
         .from("vagas")
-        .select("id, titulo, slug, nivel, tipo_contrato, ativa, tipo_publicacao, criada_em, atualizada_em, expira_em, estudio_id, status")
+        .select("id, titulo, slug, nivel, tipo_emprego, ativa, tipo_publicacao, criada_em, atualizada_em, expira_em, estudio_id, status")
         .eq("estudio_id", estudioId)
         .order("atualizada_em", { ascending: false });
 

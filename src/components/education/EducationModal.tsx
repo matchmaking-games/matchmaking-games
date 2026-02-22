@@ -19,7 +19,7 @@ import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 const educationSchema = z
   .object({
     instituicao: z.string().min(2, "Mínimo 2 caracteres").max(200, "Máximo 200 caracteres"),
-    tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao"], {
+    tipo: z.enum(["graduacao", "pos", "tecnico", "curso", "certificacao", "ensino_medio", "mestrado", "doutorado", "mba"], {
       required_error: "Selecione o tipo de educação",
     }),
     titulo: z.string().min(2, "Mínimo 2 caracteres").max(200, "Máximo 200 caracteres"),
@@ -52,6 +52,10 @@ const tipoEducacaoOptions = [
   { value: "tecnico", label: "Técnico" },
   { value: "curso", label: "Curso" },
   { value: "certificacao", label: "Certificação" },
+  { value: "ensino_medio", label: "Ensino médio" },
+  { value: "mestrado", label: "Mestrado" },
+  { value: "doutorado", label: "Doutorado" },
+  { value: "mba", label: "MBA" },
 ];
 
 interface EducationModalProps {

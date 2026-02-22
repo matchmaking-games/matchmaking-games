@@ -46,7 +46,8 @@ import { formatBrazilianDate, parseToIsoDate } from "@/utils/dateFormat";
 export interface ReviewExperience {
   empresa: string;
   titulo_cargo: string;
-  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio";
+  tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral";
+  modalidade: "presencial" | "hibrido" | "remoto";
   inicio: string;
   fim: string | null;
   descricao: string;
@@ -54,9 +55,8 @@ export interface ReviewExperience {
 
 export interface ReviewEducation {
   instituicao: string;
-  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao";
+  tipo: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao" | "ensino_medio" | "mestrado" | "doutorado" | "mba";
   titulo: string;
-  area: string;
   inicio: string;
   fim: string | null;
 }
@@ -83,6 +83,7 @@ const TIPO_EMPREGO_OPTIONS = [
   { value: "pj", label: "PJ" },
   { value: "freelancer", label: "Freelancer" },
   { value: "estagio", label: "Estágio" },
+  { value: "tempo_integral", label: "Tempo integral" },
 ] as const;
 
 const TIPO_EDUCACAO_OPTIONS = [
@@ -91,6 +92,16 @@ const TIPO_EDUCACAO_OPTIONS = [
   { value: "tecnico", label: "Técnico" },
   { value: "curso", label: "Curso" },
   { value: "certificacao", label: "Certificação" },
+  { value: "ensino_medio", label: "Ensino médio" },
+  { value: "mestrado", label: "Mestrado" },
+  { value: "doutorado", label: "Doutorado" },
+  { value: "mba", label: "MBA" },
+] as const;
+
+const MODALIDADE_OPTIONS = [
+  { value: "presencial", label: "Presencial" },
+  { value: "hibrido", label: "Híbrido" },
+  { value: "remoto", label: "Remoto" },
 ] as const;
 
 // --- ExperienceReviewCard ---
@@ -143,23 +154,43 @@ function ExperienceReviewCard({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Tipo de contrato</Label>
-          <Select
-            value={experience.tipo_emprego}
-            onValueChange={(v) => onUpdate({ ...experience, tipo_emprego: v as ReviewExperience["tipo_emprego"] })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TIPO_EMPREGO_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Tipo de contrato</Label>
+            <Select
+              value={experience.tipo_emprego}
+              onValueChange={(v) => onUpdate({ ...experience, tipo_emprego: v as ReviewExperience["tipo_emprego"] })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPO_EMPREGO_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Modalidade</Label>
+            <Select
+              value={experience.modalidade}
+              onValueChange={(v) => onUpdate({ ...experience, modalidade: v as ReviewExperience["modalidade"] })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MODALIDADE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -244,21 +275,12 @@ function EducationReviewCard({
           </Select>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Título / Nome do curso</Label>
-            <Input
-              value={education.titulo}
-              onChange={(e) => onUpdate({ ...education, titulo: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Área</Label>
-            <Input
-              value={education.area}
-              onChange={(e) => onUpdate({ ...education, area: e.target.value })}
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Título / Nome do curso</Label>
+          <Input
+            value={education.titulo}
+            onChange={(e) => onUpdate({ ...education, titulo: e.target.value })}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -321,6 +343,7 @@ export function ImportReviewDrawer({
         empresa: exp.company || "",
         titulo_cargo: exp.role || "",
         tipo_emprego: "clt" as const,
+        modalidade: "presencial" as const,
         inicio: exp.start_date || "",
         fim: exp.end_date || null,
         descricao: exp.description || "",
@@ -330,7 +353,6 @@ export function ImportReviewDrawer({
         instituicao: edu.institution || "",
         tipo: "curso" as const,
         titulo: edu.field || "",
-        area: edu.field || "",
         inicio: edu.start_year || "",
         fim: edu.end_year || null,
       }));
