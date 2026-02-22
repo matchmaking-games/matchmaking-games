@@ -79,7 +79,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
       instituicao: "",
       tipo: "graduacao",
       titulo: "",
-      area: "",
       inicio: "",
       fim: "",
       concluido: false,
@@ -107,7 +106,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
           instituicao: editingEducation.instituicao,
           tipo: editingEducation.tipo as EducationFormData["tipo"],
           titulo: editingEducation.titulo,
-          area: editingEducation.area || "",
           inicio: editingEducation.inicio?.substring(0, 7) || "",
           fim: editingEducation.fim?.substring(0, 7) || "",
           concluido: editingEducation.concluido || false,
@@ -120,7 +118,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
           instituicao: "",
           tipo: "graduacao",
           titulo: "",
-          area: "",
           inicio: "",
           fim: "",
           concluido: false,
@@ -135,17 +132,13 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
     try {
       setIsSubmitting(true);
 
-      // Convert dates to YYYY-MM-DD format (first day of month)
-      const inicioDate = data.inicio ? `${data.inicio}-01` : null;
-      const fimDate = data.fim ? `${data.fim}-01` : null;
-
       const educationData = {
         instituicao: data.instituicao,
         tipo: data.tipo,
         titulo: data.titulo,
-        area: data.area || null,
-        inicio: inicioDate,
-        fim: fimDate,
+        area: null,
+        inicio: data.inicio || null,
+        fim: data.fim || null,
         concluido: data.concluido,
         descricao: data.descricao || null,
         credencial_url: data.credencial_url || null,
@@ -251,21 +244,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
                       </FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Ciência da Computação" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Area of Study */}
-                <FormField
-                  control={form.control}
-                  name="area"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Área de estudo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Desenvolvimento de Jogos" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

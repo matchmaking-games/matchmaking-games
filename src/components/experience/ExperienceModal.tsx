@@ -263,10 +263,7 @@ export function ExperienceModal({
     try {
       setIsSubmitting(true);
 
-      // Build location string based on remote status
-      const localizacao = data.remoto === "remoto" ? "Remoto" : `${data.cidade}, ${data.estado}`;
-
-      // Convert dates to YYYY-MM-DD format
+      // Convert dates to YYYY-MM-DD format (only for cargos_experiencia which uses date type)
       const inicioDate = `${data.inicio}-01`;
       const fimDate = data.fim ? `${data.fim}-01` : null;
 
@@ -292,13 +289,12 @@ export function ExperienceModal({
           titulo_cargo: data.titulo_cargo,
           empresa: data.empresa,
           tipo_emprego: data.tipo_emprego,
-          localizacao,
           cidade: data.remoto === "remoto" ? null : data.cidade || null,
           estado: data.remoto === "remoto" ? null : data.estado || null,
           cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
-          inicio: inicioDate,
-          fim: fimDate,
+          inicio: data.inicio,
+          fim: data.fim || null,
           atualmente_trabalhando: data.atualmente_trabalhando,
           descricao: data.descricao || null,
         };
@@ -314,13 +310,12 @@ export function ExperienceModal({
           titulo_cargo: data.titulo_cargo,
           empresa: data.empresa,
           tipo_emprego: data.tipo_emprego,
-          localizacao,
           cidade: data.remoto === "remoto" ? null : data.cidade || null,
           estado: data.remoto === "remoto" ? null : data.estado || null,
           cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
-          inicio: inicioDate,
-          fim: fimDate,
+          inicio: data.inicio,
+          fim: data.fim || null,
           atualmente_trabalhando: data.atualmente_trabalhando,
           descricao: data.descricao || null,
         };
