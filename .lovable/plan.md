@@ -1,171 +1,68 @@
 
 
-## Plano: TASK-811 — Salvar dados da importacao no banco de dados
+## Plano: Corrigir 4 bugs criticos nos modals de experiencia e educacao
 
 ### Resumo
 
-Criar o hook `useImportSave` com a logica de deletar dados antigos e inserir dados revisados no banco. Conectar ao botao "Confirmar e Salvar" no ImportReviewDrawer. O edge function ja registra o historico de importacao com status "success", entao o hook nao precisa atualizar a tabela `import_history`.
+Corrigir campos incompativeis com o schema atual do banco de dados em dois arquivos: remover `localizacao`, corrigir formato de datas para YYYY-MM, e remover campo `area` do formulario de educacao.
 
 ---
 
-### Arquivo 1: `src/hooks/useImportSave.ts` (criar)
+### Arquivo 1: `src/components/experience/ExperienceModal.tsx`
 
-**Assinatura do hook:**
+**Bug 1 — Remover variavel `localizacao`**
 
-```text
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { ReviewedData } from "@/components/ImportReviewDrawer";
+Linha 267: remover a linha `const localizacao = ...`
 
-export function useImportSave() {
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+Linhas 295 e 317: remover `localizacao,` dos objetos `experienceData` nos modos "edit" e "create".
 
-  const saveImportData = async (data: ReviewedData): Promise<void> => { ... };
+**Bug 2 — Corrigir formato de datas nos modos edit e create**
 
-  return { saveImportData, isSaving, saveError };
-}
-```
+As variaveis `inicioDate` e `fimDate` (linhas 270-271) continuam existindo pois sao usadas no modo "add-position" (linha 278-279) onde o formato YYYY-MM-DD e correto.
 
-**Sequencia de operacoes dentro de `saveImportData`:**
+Nos objetos `experienceData` dos modos "edit" (linha 300) e "create" (linha 322):
+- Substituir `inicioDate` por `data.inicio`
+- Substituir `fimDate` por `(data.fim || null)`
 
-Passo 1 -- Verificar autenticacao:
-- Chamar `supabase.auth.getUser()`
-- Se `user` nao existir, lancar erro "Usuario nao autenticado"
-
-Passo 2 -- Deletar experiencias existentes:
-- `await supabase.from("experiencia").delete().eq("user_id", user.id)`
-- Verificar `error`, lancar excecao se existir
-
-Passo 3 -- Deletar formacoes existentes:
-- `await supabase.from("educacao").delete().eq("user_id", user.id)`
-- Verificar `error`, lancar excecao se existir
-
-Passo 4 -- Inserir novas experiencias (se array nao estiver vazio):
-- Mapear cada item do array `data.experiences` para o formato da tabela:
-
-```text
-{
-  user_id: user.id,
-  empresa: exp.empresa,
-  titulo_cargo: exp.titulo_cargo,
-  tipo_emprego: exp.tipo_emprego,
-  remoto: exp.modalidade,           // campo "modalidade" no estado -> coluna "remoto" no banco
-  inicio: exp.inicio,
-  fim: exp.fim || null,
-  atualmente_trabalhando: !exp.fim, // true se fim for null/vazio
-  descricao: exp.descricao || "",
-  ordem: index,                     // indice no array
-}
-```
-
-- `await supabase.from("experiencia").insert(mappedArray)`
-- Verificar `error`, lancar excecao se existir
-
-Passo 5 -- Inserir novas formacoes (se array nao estiver vazio):
-- Mapear cada item do array `data.education` para o formato da tabela:
-
-```text
-{
-  user_id: user.id,
-  instituicao: edu.instituicao,
-  tipo: edu.tipo,
-  titulo: edu.titulo,
-  area: null,                       // removido do fluxo de revisao
-  inicio: edu.inicio,
-  fim: edu.fim || null,
-  concluido: !!edu.fim,             // true se fim tiver valor
-  ordem: index,
-}
-```
-
-- `await supabase.from("educacao").insert(mappedArray)`
-- Verificar `error`, lancar excecao se existir
-
-**Nota sobre import_history:** O edge function `process-linkedin-pdf` ja insere o registro com status "success" apos o processamento. Nao e necessario atualizar a tabela `import_history` no hook de salvamento. O parametro `importHistoryId` mencionado no prompt sera omitido da assinatura pois nao e necessario.
-
-**Tratamento de erro:**
-- Toda a sequencia envolvida em try/catch
-- No catch: atualizar `saveError` com a mensagem, re-lancar a excecao
-- No finally: setar `isSaving = false`
+O modo "add-position" (linhas 275-283) permanece inalterado — continua usando `inicioDate` e `fimDate` com "-01".
 
 ---
 
-### Arquivo 2: `src/components/ImportReviewDrawer.tsx` (editar)
+### Arquivo 2: `src/components/education/EducationModal.tsx`
 
-**Alteracoes:**
+**Bug 3 — Corrigir formato de datas**
 
-1. Importar o hook:
-```text
-import { useImportSave } from "@/hooks/useImportSave";
-```
+Linhas 139-140: remover as variaveis `inicioDate` e `fimDate` (nao ha modo add-position em educacao, entao nao sao necessarias).
 
-2. Dentro do componente, desestruturar:
-```text
-const { saveImportData, isSaving } = useImportSave();
-```
+No objeto `educationData` (linhas 147-148):
+- Substituir `inicioDate` por `(data.inicio || null)`
+- Substituir `fimDate` por `(data.fim || null)`
 
-3. Substituir a funcao `handleSave` (linha 395-397):
+**Bug 4 — Remover campo `area` completamente**
 
-```text
-const handleSave = async () => {
-  try {
-    await saveImportData({ experiences, education });
-    toast({
-      title: "Importacao concluida!",
-      description: "Suas experiencias e formacoes foram atualizadas.",
-    });
-    handleClose();
-  } catch {
-    toast({
-      title: "Erro ao salvar os dados",
-      description: "Tente novamente.",
-      variant: "destructive",
-    });
-  }
-};
-```
+4 locais a alterar:
 
-4. Atualizar o `handleOpenChange` para bloquear fechamento durante salvamento (adicionar `isSaving` na verificacao, mesma logica que `isProcessing`):
-```text
-if (isProcessing || isSaving) return;
-```
-
-5. Atualizar o botao "Confirmar e Salvar" no footer do review (linha 636-639):
-- Adicionar `disabled={isSaving}`
-- Quando `isSaving`, mostrar icone `Loader2` com `animate-spin` e texto "Salvando..."
-- Quando nao, mostrar icone `Check` e texto "Confirmar e Salvar"
-
-6. Desabilitar botao "Cancelar" durante salvamento.
-
----
-
-### Mapeamento de campos criticos (resumo)
-
-| Estado do componente | Coluna no banco | Observacao |
-|---|---|---|
-| `exp.modalidade` | `experiencia.remoto` | Nome da coluna e "remoto" mas armazena enum modalidade_trabalho |
-| `exp.fim` (null/vazio) | `experiencia.atualmente_trabalhando` | Calculado: `!exp.fim` -> true/false |
-| `edu.area` | `educacao.area` | Sempre `null` (removido do fluxo) |
-| `edu.fim` (null/vazio) | `educacao.concluido` | Calculado: `!!edu.fim` -> true/false |
-| index no array | `*.ordem` | Preserva a ordem visual do drawer |
+1. Schema Zod (linha 26): remover `area: z.string().max(100, ...).optional().or(z.literal(""))`
+2. defaultValues (linha 82): remover `area: ""`
+3. Reset no modo edicao (linha 110): remover `area: editingEducation.area || ""`
+4. Reset no modo criacao (linha 123): remover `area: ""`
+5. Objeto educationData (linha 146): remover `area: data.area || null`
+6. JSX (linhas 260-273): remover o bloco FormField inteiro com `name="area"`
 
 ---
 
 ### Arquivos tocados
 
-| Arquivo | Acao |
+| Arquivo | Alteracoes |
 |---|---|
-| `src/hooks/useImportSave.ts` | Criar |
-| `src/components/ImportReviewDrawer.tsx` | Editar (importar hook, handleSave, loading no botao) |
+| `src/components/experience/ExperienceModal.tsx` | Remover `localizacao`, corrigir datas nos modos edit/create |
+| `src/components/education/EducationModal.tsx` | Corrigir datas, remover campo `area` |
 
 ### O que NAO muda
 
-- Hook `useImportLinkedIn`
-- Edge Function
-- `Profile.tsx`
-- `ImportSection.tsx`
-- Estado "instructions" do drawer
-- Cards de revisao
-- Nenhuma biblioteca nova
+- Modo "add-position" do ExperienceModal (datas YYYY-MM-DD para cargos_experiencia)
+- Hooks useExperiences e useEducations
+- MonthYearPicker
+- Layout visual, espacamentos, cores
+- Nenhum outro arquivo
 
