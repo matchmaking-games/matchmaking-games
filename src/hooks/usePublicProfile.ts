@@ -102,7 +102,7 @@ export interface PublicExperienceData {
   descricao: string | null;
   estado: string | null;
   cidade: string | null;
-  remoto: boolean | null;
+  remoto: string | null;
   estudio_id: string | null;
   cargos: PublicCargoData[];
 }

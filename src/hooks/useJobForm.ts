@@ -7,8 +7,8 @@ import { addDays } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
 
 type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
-type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
-type TipoTrabalho = Database["public"]["Enums"]["tipo_trabalho"];
+type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
+type TipoTrabalho = Database["public"]["Enums"]["modalidade_trabalho"];
 type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
 
 export interface VagaCompleta {
@@ -18,7 +18,7 @@ export interface VagaCompleta {
   descricao: string;
   tipo_funcao: string[];
   nivel: NivelVaga;
-  tipo_contrato: TipoContrato;
+  tipo_emprego: TipoEmprego;
   remoto: TipoTrabalho;
   estado: string | null;
   cidade: string | null;
@@ -36,7 +36,7 @@ export interface VagaFormData {
   titulo: string;
   tipo_funcao: string[];
   nivel: NivelVaga;
-  tipo_contrato: TipoContrato;
+  tipo_emprego: TipoEmprego;
   remoto: TipoTrabalho;
   estado: string | null;
   cidade: string | null;
@@ -286,7 +286,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           descricao: data.descricao,
           tipo_funcao: data.tipo_funcao,
           nivel: data.nivel,
-          tipo_contrato: data.tipo_contrato,
+          tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
           estado: data.estado,
           cidade: data.cidade,
@@ -363,7 +363,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           descricao: data.descricao,
           tipo_funcao: data.tipo_funcao,
           nivel: data.nivel,
-          tipo_contrato: data.tipo_contrato,
+          tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
           estado: data.estado,
           cidade: data.cidade,
@@ -436,7 +436,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
             descricao: data.descricao,
             tipo_funcao: data.tipo_funcao,
             nivel: data.nivel,
-            tipo_contrato: data.tipo_contrato,
+            tipo_emprego: data.tipo_emprego,
             remoto: data.remoto,
             estado: data.estado,
             cidade: data.cidade,
@@ -483,7 +483,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
             descricao: data.descricao,
             tipo_funcao: data.tipo_funcao,
             nivel: data.nivel,
-            tipo_contrato: data.tipo_contrato,
+            tipo_emprego: data.tipo_emprego,
             remoto: data.remoto,
             estado: data.estado,
             cidade: data.cidade,
@@ -574,7 +574,7 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           descricao: data.descricao,
           tipo_funcao: data.tipo_funcao,
           nivel: data.nivel,
-          tipo_contrato: data.tipo_contrato,
+          tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
           estado: data.estado,
           cidade: data.cidade,

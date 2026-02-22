@@ -173,7 +173,7 @@ export default function JobDetail() {
                         {formatNivelVaga(vaga.nivel)}
                       </Badge>
                       <Badge variant="outline">
-                        {formatTipoContrato(vaga.tipo_contrato)}
+                        {formatTipoContrato(vaga.tipo_emprego)}
                       </Badge>
                       <Badge variant="outline">
                         {formatTipoTrabalho(vaga.remoto)}

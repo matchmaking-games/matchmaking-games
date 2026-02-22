@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 
 type NivelVaga = Database["public"]["Enums"]["nivel_vaga"];
-type TipoContrato = Database["public"]["Enums"]["tipo_contrato"];
-type TipoTrabalho = Database["public"]["Enums"]["tipo_trabalho"];
+type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
+type TipoTrabalho = Database["public"]["Enums"]["modalidade_trabalho"];
 type TipoPublicacaoVaga = Database["public"]["Enums"]["tipo_publicacao_vaga"];
 type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
 
@@ -32,7 +32,7 @@ export interface VagaListItem {
   slug: string;
   nivel: NivelVaga;
   remoto: TipoTrabalho;
-  tipo_contrato: TipoContrato;
+  tipo_emprego: TipoEmprego;
   tipo_publicacao: TipoPublicacaoVaga | null;
   tipo_funcao: string[];
   estado: string | null;
@@ -101,7 +101,7 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
       slug,
       nivel,
       remoto,
-      tipo_contrato,
+      tipo_emprego,
       tipo_publicacao,
       tipo_funcao,
       estado,
@@ -122,7 +122,7 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
   }
 
   if (filters.tipoContrato) {
-    query = query.eq("tipo_contrato", filters.tipoContrato as TipoContrato);
+    query = query.eq("tipo_emprego", filters.tipoContrato as TipoEmprego);
   }
 
   if (filters.modeloTrabalho) {

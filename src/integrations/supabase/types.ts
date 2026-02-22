@@ -423,7 +423,7 @@ export type Database = {
           id: string
           inicio: string | null
           ordem: number | null
-          remoto: boolean | null
+          remoto: Database["public"]["Enums"]["modalidade_trabalho"] | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
           titulo_cargo: string
           user_id: string
@@ -442,7 +442,7 @@ export type Database = {
           id?: string
           inicio?: string | null
           ordem?: number | null
-          remoto?: boolean | null
+          remoto?: Database["public"]["Enums"]["modalidade_trabalho"] | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
           titulo_cargo: string
           user_id: string
@@ -461,7 +461,7 @@ export type Database = {
           id?: string
           inicio?: string | null
           ordem?: number | null
-          remoto?: boolean | null
+          remoto?: Database["public"]["Enums"]["modalidade_trabalho"] | null
           tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
           titulo_cargo?: string
           user_id?: string
@@ -1131,12 +1131,12 @@ export type Database = {
           id: string
           mostrar_salario: boolean | null
           nivel: Database["public"]["Enums"]["nivel_vaga"]
-          remoto: Database["public"]["Enums"]["tipo_trabalho"]
+          remoto: Database["public"]["Enums"]["modalidade_trabalho"]
           salario_max: number | null
           salario_min: number | null
           slug: string
           status: string | null
-          tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
+          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
           tipo_funcao: string[]
           tipo_publicacao:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
@@ -1158,12 +1158,12 @@ export type Database = {
           id?: string
           mostrar_salario?: boolean | null
           nivel: Database["public"]["Enums"]["nivel_vaga"]
-          remoto: Database["public"]["Enums"]["tipo_trabalho"]
+          remoto: Database["public"]["Enums"]["modalidade_trabalho"]
           salario_max?: number | null
           salario_min?: number | null
           slug: string
           status?: string | null
-          tipo_contrato: Database["public"]["Enums"]["tipo_contrato"]
+          tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
           tipo_funcao: string[]
           tipo_publicacao?:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
@@ -1185,12 +1185,12 @@ export type Database = {
           id?: string
           mostrar_salario?: boolean | null
           nivel?: Database["public"]["Enums"]["nivel_vaga"]
-          remoto?: Database["public"]["Enums"]["tipo_trabalho"]
+          remoto?: Database["public"]["Enums"]["modalidade_trabalho"]
           salario_max?: number | null
           salario_min?: number | null
           slug?: string
           status?: string | null
-          tipo_contrato?: Database["public"]["Enums"]["tipo_contrato"]
+          tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
           tipo_funcao?: string[]
           tipo_publicacao?:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
@@ -1308,6 +1308,7 @@ export type Database = {
     }
     Enums: {
       categoria_habilidade: "engine" | "linguagem" | "ferramenta" | "soft_skill"
+      modalidade_trabalho: "presencial" | "hibrido" | "remoto"
       nivel_habilidade: "basico" | "intermediario" | "avancado" | "expert"
       nivel_vaga: "iniciante" | "junior" | "pleno" | "senior" | "lead"
       status_candidatura:
@@ -1319,9 +1320,17 @@ export type Database = {
       status_jogo: "lancado" | "em_desenvolvimento" | "cancelado"
       status_projeto: "em_andamento" | "concluido"
       tamanho_estudio: "micro" | "pequeno" | "medio" | "grande"
-      tipo_contrato: "clt" | "pj" | "freelancer" | "estagio"
-      tipo_educacao: "graduacao" | "pos" | "tecnico" | "curso" | "certificacao"
-      tipo_emprego: "clt" | "pj" | "freelancer" | "estagio"
+      tipo_educacao:
+        | "graduacao"
+        | "pos"
+        | "tecnico"
+        | "curso"
+        | "certificacao"
+        | "ensino_medio"
+        | "mestrado"
+        | "doutorado"
+        | "mba"
+      tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral"
       tipo_projeto: "profissional" | "pessoal" | "game_jam" | "open_source"
       tipo_publicacao_vaga: "gratuita" | "destaque"
       tipo_trabalho: "presencial" | "hibrido" | "remoto"
@@ -1454,6 +1463,7 @@ export const Constants = {
   public: {
     Enums: {
       categoria_habilidade: ["engine", "linguagem", "ferramenta", "soft_skill"],
+      modalidade_trabalho: ["presencial", "hibrido", "remoto"],
       nivel_habilidade: ["basico", "intermediario", "avancado", "expert"],
       nivel_vaga: ["iniciante", "junior", "pleno", "senior", "lead"],
       status_candidatura: [
@@ -1466,9 +1476,18 @@ export const Constants = {
       status_jogo: ["lancado", "em_desenvolvimento", "cancelado"],
       status_projeto: ["em_andamento", "concluido"],
       tamanho_estudio: ["micro", "pequeno", "medio", "grande"],
-      tipo_contrato: ["clt", "pj", "freelancer", "estagio"],
-      tipo_educacao: ["graduacao", "pos", "tecnico", "curso", "certificacao"],
-      tipo_emprego: ["clt", "pj", "freelancer", "estagio"],
+      tipo_educacao: [
+        "graduacao",
+        "pos",
+        "tecnico",
+        "curso",
+        "certificacao",
+        "ensino_medio",
+        "mestrado",
+        "doutorado",
+        "mba",
+      ],
+      tipo_emprego: ["clt", "pj", "freelancer", "estagio", "tempo_integral"],
       tipo_projeto: ["profissional", "pessoal", "game_jam", "open_source"],
       tipo_publicacao_vaga: ["gratuita", "destaque"],
       tipo_trabalho: ["presencial", "hibrido", "remoto"],

@@ -68,7 +68,9 @@ export function formatTipoEmprego(tipo: string): string {
     clt: "CLT",
     pj: "PJ",
     freelance: "Freelancer",
+    freelancer: "Freelancer",
     estagio: "Estágio",
+    tempo_integral: "Tempo integral",
   };
   return map[tipo] || tipo;
 }
@@ -84,6 +86,10 @@ export function formatTipoEducacao(tipo: string): string {
     tecnico: "Técnico",
     curso: "Curso",
     certificacao: "Certificação",
+    ensino_medio: "Ensino médio",
+    mestrado: "Mestrado",
+    doutorado: "Doutorado",
+    mba: "MBA",
   };
   return map[tipo] || tipo;
 }
@@ -188,7 +194,9 @@ export function formatTipoContrato(tipo: string): string {
     clt: "CLT",
     pj: "PJ",
     freelance: "Freelance",
+    freelancer: "Freelancer",
     estagio: "Estágio",
+    tempo_integral: "Tempo integral",
   };
   return map[tipo] || tipo;
 }

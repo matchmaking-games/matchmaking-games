@@ -7,7 +7,7 @@ export interface JobDetailData {
   slug: string;
   descricao: string;
   nivel: string;
-  tipo_contrato: string;
+  tipo_emprego: string;
   remoto: string;
   estado: string | null;
   cidade: string | null;
@@ -41,7 +41,7 @@ async function fetchJobDetail(slug: string): Promise<JobDetailData | null> {
   const { data, error } = await supabase
     .from("vagas")
     .select(`
-      id, titulo, slug, descricao, nivel, tipo_contrato, remoto,
+      id, titulo, slug, descricao, nivel, tipo_emprego, remoto,
       estado, cidade, salario_min, salario_max, mostrar_salario,
       contato_candidatura, criada_em,
       estudio:estudios(id, nome, slug, logo_url, estado, cidade, tamanho),

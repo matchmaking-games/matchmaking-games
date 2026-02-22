@@ -40,7 +40,7 @@ const vagaFormSchema = z.object({
   titulo: z.string().min(5, "Mínimo 5 caracteres").max(100, "Máximo 100 caracteres"),
   tipo_funcao: z.array(z.string()).min(1, "Selecione pelo menos um tipo de função"),
   nivel: z.enum(["iniciante", "junior", "pleno", "senior", "lead"]),
-  tipo_contrato: z.enum(["clt", "pj", "freelancer", "estagio"]),
+  tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"]),
   remoto: z.enum(["presencial", "hibrido", "remoto"]),
   estado: z.string().optional(),
   cidade: z.string().optional(),
@@ -118,7 +118,7 @@ export default function JobForm() {
       titulo: "",
       tipo_funcao: [],
       nivel: "pleno",
-      tipo_contrato: "clt",
+      tipo_emprego: "clt",
       remoto: "remoto",
       estado: "",
       cidade: "",
@@ -187,7 +187,7 @@ export default function JobForm() {
         titulo: existingJob.titulo,
         tipo_funcao: existingJob.tipo_funcao || [],
         nivel: existingJob.nivel,
-        tipo_contrato: existingJob.tipo_contrato,
+        tipo_emprego: existingJob.tipo_emprego,
         remoto: existingJob.remoto,
         estado: existingJob.estado || "",
         cidade: existingJob.cidade || "",
@@ -263,7 +263,7 @@ export default function JobForm() {
       titulo: data.titulo || "",
       tipo_funcao: data.tipo_funcao || [],
       nivel: data.nivel || "pleno",
-      tipo_contrato: data.tipo_contrato || "clt",
+      tipo_emprego: data.tipo_emprego || "clt",
       remoto: data.remoto || "remoto",
       estado: data.estado || null,
       cidade: data.cidade || null,
@@ -615,7 +615,7 @@ export default function JobForm() {
                 {/* Contract Type - Full width Select dropdown */}
                 <FormField
                   control={form.control}
-                  name="tipo_contrato"
+                  name="tipo_emprego"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
@@ -630,8 +630,9 @@ export default function JobForm() {
                         <SelectContent>
                           <SelectItem value="clt">CLT</SelectItem>
                           <SelectItem value="pj">PJ</SelectItem>
-                          <SelectItem value="freelance">Freelance</SelectItem>
+                          <SelectItem value="freelancer">Freelancer</SelectItem>
                           <SelectItem value="estagio">Estágio</SelectItem>
+                          <SelectItem value="tempo_integral">Tempo integral</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

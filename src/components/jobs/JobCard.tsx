@@ -90,7 +90,7 @@ export function JobCard({ job }: JobCardProps) {
             {/* Badges: Contract, Level, Work Model */}
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="text-xs">
-                {formatTipoContrato(job.tipo_contrato)}
+                {formatTipoContrato(job.tipo_emprego)}
               </Badge>
               <Badge variant="outline" className="text-xs">
                 {formatNivelVaga(job.nivel)}

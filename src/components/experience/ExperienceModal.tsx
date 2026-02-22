@@ -21,13 +21,13 @@ const experienceSchema = z
   .object({
     titulo_cargo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
     empresa: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
-    tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio"], {
+    tipo_emprego: z.enum(["clt", "pj", "freelancer", "estagio", "tempo_integral"], {
       required_error: "Selecione o tipo de contrato",
     }),
     estado: z.string().optional(),
     cidade: z.string().optional(),
     cidade_ibge_id: z.number().optional(),
-    remoto: z.boolean().default(false),
+    remoto: z.enum(["presencial", "hibrido", "remoto"]).default("presencial"),
     inicio: z.string().regex(/^\d{4}-\d{2}$/, "Selecione a data de início"),
     atualmente_trabalhando: z.boolean().default(false),
     fim: z.string().optional(),
@@ -36,7 +36,7 @@ const experienceSchema = z
   .refine(
     (data) => {
       // If remote work is disabled, location fields are required
-      if (!data.remoto) {
+      if (data.remoto !== "remoto") {
         return !!data.estado && data.estado.length === 2;
       }
       return true;
@@ -48,8 +48,8 @@ const experienceSchema = z
   )
   .refine(
     (data) => {
-      // If remote work is disabled, city is required
-      if (!data.remoto) {
+      // If not remote, city is required
+      if (data.remoto !== "remoto") {
         return !!data.cidade && data.cidade.length >= 2;
       }
       return true;
@@ -93,6 +93,13 @@ const tipoEmpregoOptions = [
   { value: "pj", label: "PJ" },
   { value: "freelancer", label: "Freelancer" },
   { value: "estagio", label: "Estágio" },
+  { value: "tempo_integral", label: "Tempo integral" },
+];
+
+const modalidadeOptions = [
+  { value: "presencial", label: "Presencial" },
+  { value: "hibrido", label: "Híbrido" },
+  { value: "remoto", label: "Remoto" },
 ];
 
 interface ExperienceModalProps {
@@ -131,7 +138,7 @@ export function ExperienceModal({
       estado: "",
       cidade: "",
       cidade_ibge_id: 0,
-      remoto: false,
+      remoto: "presencial",
       inicio: "",
       atualmente_trabalhando: false,
       fim: "",
@@ -167,7 +174,7 @@ export function ExperienceModal({
           estado: parentExperience.estado || "",  // PRE-FILLED but EDITABLE
           cidade: parentExperience.cidade || "",  // PRE-FILLED but EDITABLE
           cidade_ibge_id: parentExperience.cidade_ibge_id || 0,
-          remoto: parentExperience.remoto || false,  // PRE-FILLED but EDITABLE
+          remoto: parentExperience.remoto || "presencial",  // PRE-FILLED but EDITABLE
           inicio: "",  // EMPTY - user fills
           atualmente_trabalhando: false,
           fim: "",
@@ -175,7 +182,7 @@ export function ExperienceModal({
         });
         
         // Load municipalities if state is set and not remote
-        if (parentExperience.estado && !parentExperience.remoto) {
+        if (parentExperience.estado && parentExperience.remoto !== "remoto") {
           fetchMunicipios(parentExperience.estado);
         }
       } else if (isEditing && editingExperience) {
@@ -187,7 +194,7 @@ export function ExperienceModal({
           estado: editingExperience.estado || "",
           cidade: editingExperience.cidade || "",
           cidade_ibge_id: editingExperience.cidade_ibge_id || 0,
-          remoto: editingExperience.remoto || false,
+          remoto: editingExperience.remoto || "presencial",
           inicio: editingExperience.inicio?.substring(0, 7) || "",
           atualmente_trabalhando: editingExperience.atualmente_trabalhando || false,
           fim: editingExperience.fim?.substring(0, 7) || "",
@@ -195,7 +202,7 @@ export function ExperienceModal({
         });
 
         // Load municipalities if state is set and not remote
-        if (editingExperience.estado && !editingExperience.remoto) {
+        if (editingExperience.estado && editingExperience.remoto !== "remoto") {
           fetchMunicipios(editingExperience.estado);
         }
       } else {
@@ -207,7 +214,7 @@ export function ExperienceModal({
           estado: "",
           cidade: "",
           cidade_ibge_id: 0,
-          remoto: false,
+          remoto: "presencial",
           inicio: "",
           atualmente_trabalhando: false,
           fim: "",
@@ -225,9 +232,9 @@ export function ExperienceModal({
     }
   }, [atualmenteTrabalhando, form]);
 
-  // Clear location fields when remote is checked
+  // Clear location fields when remote is selected
   useEffect(() => {
-    if (remoto) {
+    if (remoto === "remoto") {
       form.setValue("estado", "");
       form.setValue("cidade", "");
       form.setValue("cidade_ibge_id", 0);
@@ -257,7 +264,7 @@ export function ExperienceModal({
       setIsSubmitting(true);
 
       // Build location string based on remote status
-      const localizacao = data.remoto ? "Remoto" : `${data.cidade}, ${data.estado}`;
+      const localizacao = data.remoto === "remoto" ? "Remoto" : `${data.cidade}, ${data.estado}`;
 
       // Convert dates to YYYY-MM-DD format
       const inicioDate = `${data.inicio}-01`;
@@ -286,9 +293,9 @@ export function ExperienceModal({
           empresa: data.empresa,
           tipo_emprego: data.tipo_emprego,
           localizacao,
-          cidade: data.remoto ? null : data.cidade || null,
-          estado: data.remoto ? null : data.estado || null,
-          cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
+          cidade: data.remoto === "remoto" ? null : data.cidade || null,
+          estado: data.remoto === "remoto" ? null : data.estado || null,
+          cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
           inicio: inicioDate,
           fim: fimDate,
@@ -308,9 +315,9 @@ export function ExperienceModal({
           empresa: data.empresa,
           tipo_emprego: data.tipo_emprego,
           localizacao,
-          cidade: data.remoto ? null : data.cidade || null,
-          estado: data.remoto ? null : data.estado || null,
-          cidade_ibge_id: data.remoto ? null : data.cidade_ibge_id || null,
+          cidade: data.remoto === "remoto" ? null : data.cidade || null,
+          estado: data.remoto === "remoto" ? null : data.estado || null,
+          cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
           inicio: inicioDate,
           fim: fimDate,
@@ -423,7 +430,7 @@ export function ExperienceModal({
                 />
 
                 {/* State and City - only show when not remote */}
-                {!remoto && (
+                {remoto !== "remoto" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -499,16 +506,30 @@ export function ExperienceModal({
                   </div>
                 )}
 
-                {/* Remote Work - AFTER location fields */}
+                {/* Work Modality */}
                 <FormField
                   control={form.control}
                   name="remoto"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center gap-3 space-y-0">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className="font-normal cursor-pointer">Trabalho remoto</FormLabel>
+                    <FormItem>
+                      <FormLabel>
+                        Modalidade <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a modalidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {modalidadeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
