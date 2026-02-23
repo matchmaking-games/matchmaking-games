@@ -11,24 +11,17 @@ interface EducationListProps {
   onDelete: (education: Education) => void;
 }
 
-export function EducationList({
-  educations,
-  loading,
-  onEdit,
-  onDelete
-}: EducationListProps) {
-  // Loading state
+export function EducationList({ educations, loading, onEdit, onDelete }: EducationListProps) {
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) =>
-        <Skeleton key={i} className="h-32 w-full" />
-        )}
-      </div>);
-
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
   }
 
-  // Empty state
   if (educations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -42,30 +35,20 @@ export function EducationList({
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Primeira Educação
         </Button>
-      </div>);
-
+      </div>
+    );
   }
 
-  // List with timeline
   return (
-    <div className="relative">
-      {/* Vertical timeline line - desktop only */}
-      
-
-      <div className="space-y-4">
-        {educations.map((education) =>
-        <div key={education.id} className="relative md:pl-10 px-0">
-            {/* Timeline dot - desktop only */}
-            
-            
-            <EducationCard
-            education={education}
-            onEdit={onEdit}
-            onDelete={onDelete} />
-
-          </div>
-        )}
-      </div>
-    </div>);
-
+    <div className="space-y-4">
+      {educations.map((education) => (
+        <EducationCard
+          key={education.id}
+          education={education}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      ))}
+    </div>
+  );
 }
