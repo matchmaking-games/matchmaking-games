@@ -1,31 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Briefcase, GraduationCap, Check, Upload, Loader2, AlertTriangle } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,8 +62,10 @@ interface ImportReviewDrawerProps {
 const MAX_SIZE_MB = 10;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
-const DESKTOP_IMG = "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/Captura%20de%20tela%202026-02-21%20230438.png";
-const MOBILE_IMG = "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/WhatsApp%20Image%202026-02-21%20at%2023.04.10.jpeg";
+const DESKTOP_IMG =
+  "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/Captura%20de%20tela%202026-02-21%20230438.png";
+const MOBILE_IMG =
+  "https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/Importacao%20FAQ/WhatsApp%20Image%202026-02-21%20at%2023.04.10.jpeg";
 
 const IBGE_API_BASE = "https://servicodados.ibge.gov.br/api/v1/localidades";
 
@@ -124,11 +109,9 @@ function ExperienceReviewCard({
   validationTriggered: boolean;
 }) {
   const [startDateDisplay, setStartDateDisplay] = useState(
-    experience.inicio ? formatBrazilianDate(experience.inicio) : ""
+    experience.inicio ? formatBrazilianDate(experience.inicio) : "",
   );
-  const [endDateDisplay, setEndDateDisplay] = useState(
-    experience.fim ? formatBrazilianDate(experience.fim) : ""
-  );
+  const [endDateDisplay, setEndDateDisplay] = useState(experience.fim ? formatBrazilianDate(experience.fim) : "");
   const [municipios, setMunicipios] = useState<MunicipioIBGE[]>([]);
   const [loadingMunicipios, setLoadingMunicipios] = useState(false);
 
@@ -142,9 +125,7 @@ function ExperienceReviewCard({
     const fetchMunicipios = async () => {
       setLoadingMunicipios(true);
       try {
-        const response = await fetch(
-          `${IBGE_API_BASE}/estados/${experience.estado}/municipios?orderBy=nome`
-        );
+        const response = await fetch(`${IBGE_API_BASE}/estados/${experience.estado}/municipios?orderBy=nome`);
         if (!response.ok) throw new Error("Erro ao carregar municípios");
         const data: MunicipioIBGE[] = await response.json();
         if (!cancelled) {
@@ -157,7 +138,9 @@ function ExperienceReviewCard({
       }
     };
     fetchMunicipios();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [experience.estado]);
 
   const handleChange = (field: keyof ReviewExperience, value: string | null) => {
@@ -201,10 +184,7 @@ function ExperienceReviewCard({
             <Label className="text-xs text-muted-foreground">
               Empresa <span className="text-destructive">*</span>
             </Label>
-            <Input
-              value={experience.empresa}
-              onChange={(e) => handleChange("empresa", e.target.value)}
-            />
+            <Input value={experience.empresa} onChange={(e) => handleChange("empresa", e.target.value)} />
             {validationTriggered && !experience.empresa && (
               <p className="text-xs text-destructive">Preencha este campo antes de salvar</p>
             )}
@@ -213,10 +193,7 @@ function ExperienceReviewCard({
             <Label className="text-xs text-muted-foreground">
               Cargo <span className="text-destructive">*</span>
             </Label>
-            <Input
-              value={experience.titulo_cargo}
-              onChange={(e) => handleChange("titulo_cargo", e.target.value)}
-            />
+            <Input value={experience.titulo_cargo} onChange={(e) => handleChange("titulo_cargo", e.target.value)} />
             {validationTriggered && !experience.titulo_cargo && (
               <p className="text-xs text-destructive">Preencha este campo antes de salvar</p>
             )}
@@ -246,10 +223,7 @@ function ExperienceReviewCard({
             <Label className="text-xs text-muted-foreground">
               Modalidade <span className="text-destructive">*</span>
             </Label>
-            <Select
-              value={experience.modalidade || ""}
-              onValueChange={handleModalidadeChange}
-            >
+            <Select value={experience.modalidade || ""} onValueChange={handleModalidadeChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a modalidade" />
               </SelectTrigger>
@@ -273,10 +247,7 @@ function ExperienceReviewCard({
               <Label className="text-xs text-muted-foreground">
                 Estado <span className="text-destructive">*</span>
               </Label>
-              <Select
-                value={experience.estado || ""}
-                onValueChange={handleEstadoChange}
-              >
+              <Select value={experience.estado || ""} onValueChange={handleEstadoChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o estado" />
                 </SelectTrigger>
@@ -403,10 +374,7 @@ function EducationReviewCard({
 
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Título / Nome do curso</Label>
-          <Input
-            value={education.titulo}
-            onChange={(e) => onUpdate({ ...education, titulo: e.target.value })}
-          />
+          <Input value={education.titulo} onChange={(e) => onUpdate({ ...education, titulo: e.target.value })} />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -435,7 +403,7 @@ function EducationReviewCard({
 // --- Validation ---
 
 function validateExperiences(exps: ReviewExperience[]): boolean {
-  return exps.every(exp => {
+  return exps.every((exp) => {
     if (!exp.empresa || !exp.titulo_cargo || !exp.modalidade) return false;
     if ((exp.modalidade === "presencial" || exp.modalidade === "hibrido") && (!exp.estado || !exp.cidade)) return false;
     return true;
@@ -444,11 +412,7 @@ function validateExperiences(exps: ReviewExperience[]): boolean {
 
 // --- Main Drawer ---
 
-export function ImportReviewDrawer({
-  open,
-  onClose,
-  onSave,
-}: ImportReviewDrawerProps) {
+export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawerProps) {
   const [step, setStep] = useState<"instructions" | "review">("instructions");
   const [experiences, setExperiences] = useState<ReviewExperience[]>([]);
   const [education, setEducation] = useState<ReviewEducation[]>([]);
@@ -497,20 +461,26 @@ export function ImportReviewDrawer({
         }
       }
 
-      const mappedEducation: ReviewEducation[] = ((result.extracted_data?.education as any[]) ?? []).map((edu: any) => ({
-        instituicao: edu.institution || "",
-        tipo: edu.tipo || "curso" as const,
-        titulo: edu.field || "",
-        inicio: edu.start_year || "",
-        fim: edu.end_year || null,
-      }));
+      const mappedEducation: ReviewEducation[] = ((result.extracted_data?.education as any[]) ?? []).map(
+        (edu: any) => ({
+          instituicao: edu.institution || "",
+          tipo: edu.tipo || ("curso" as const),
+          titulo: edu.field || "",
+          inicio: edu.start_year || "",
+          fim: edu.end_year || null,
+        }),
+      );
 
       setExperiences(mappedExperiences);
       setEducation(mappedEducation);
       setValidationTriggered(false);
       setStep("review");
     } else {
-      toast({ title: "Erro na importação", description: errorRef.current || "Erro desconhecido.", variant: "destructive" });
+      toast({
+        title: "Erro na importação",
+        description: errorRef.current || "Erro desconhecido.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -576,10 +546,7 @@ export function ImportReviewDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent
-          side="right"
-          className="sm:max-w-3xl w-full h-full flex flex-col p-0 gap-0"
-        >
+        <SheetContent side="right" className="sm:max-w-3xl w-full h-full flex flex-col p-0 gap-0">
           <input
             type="file"
             accept=".pdf"
@@ -594,9 +561,7 @@ export function ImportReviewDrawer({
               {/* Header */}
               <div className="p-6 pb-4 border-b border-border shrink-0">
                 <SheetHeader>
-                  <SheetTitle className="font-display text-xl font-bold">
-                    Importar do LinkedIn
-                  </SheetTitle>
+                  <SheetTitle className="font-display text-xl font-bold">Importar do LinkedIn</SheetTitle>
                   <SheetDescription className="sr-only">
                     Instruções para importação do currículo do LinkedIn
                   </SheetDescription>
@@ -609,7 +574,9 @@ export function ImportReviewDrawer({
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Ao confirmar a importação, todas as suas experiências profissionais e formações acadêmicas salvas serão apagadas e substituídas pelos dados extraídos do PDF. Esta ação é permanente. Um backup automático será criado antes da importação.
+                    Ao confirmar a importação, todas as suas experiências profissionais e formações acadêmicas salvas
+                    serão apagadas e substituídas pelos dados extraídos do PDF. Esta ação é permanente. Um backup
+                    automático será criado antes da importação.
                   </AlertDescription>
                 </Alert>
 
@@ -634,48 +601,50 @@ export function ImportReviewDrawer({
 
                 {/* Recommendation */}
                 <p className="text-sm text-muted-foreground">
-                  Recomendamos utilizar esta função ao criar seu perfil pela primeira vez ou quando quiser atualizar completamente suas informações.
+                  Recomendamos utilizar esta função ao criar seu perfil pela primeira vez ou quando quiser atualizar
+                  completamente suas informações.
                 </p>
 
                 {/* Accordions */}
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="desktop">
-                    <AccordionTrigger className="text-sm">
-                      Como baixar o PDF a partir do desktop
-                    </AccordionTrigger>
+                    <AccordionTrigger className="text-sm">Como baixar o PDF a partir do desktop</AccordionTrigger>
                     <AccordionContent className="space-y-3 text-sm text-muted-foreground">
                       <p>
-                        Na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo na primeira seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a imagem abaixo:
+                        Na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo na primeira
+                        seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a imagem abaixo:
                       </p>
-                      <img
-                        src={DESKTOP_IMG}
-                        alt="Instruções para baixar PDF no desktop"
-                        className="w-full rounded-lg"
-                      />
+                      <div className="w-full md:max-w-2xl md:mx-auto">
+                        <img
+                          src={DESKTOP_IMG}
+                          alt="Instruções para baixar PDF no desktop"
+                          className="w-full rounded-lg"
+                        />
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="mobile">
-                    <AccordionTrigger className="text-sm">
-                      Como baixar o PDF a partir do celular
-                    </AccordionTrigger>
+                    <AccordionTrigger className="text-sm">Como baixar o PDF a partir do celular</AccordionTrigger>
                     <AccordionContent className="space-y-3 text-sm text-muted-foreground">
                       <p>
-                        No celular é um pouco diferente, pois não é possível baixar diretamente pelo aplicativo. Será necessário abrir o LinkedIn no navegador do celular e selecionar a opção "Site para computador" ou algo similar. Veja a imagem abaixo:
+                        No celular é um pouco diferente, pois não é possível baixar diretamente pelo aplicativo. Será
+                        necessário abrir o LinkedIn no navegador do celular e selecionar a opção "Site para computador"
+                        ou algo similar. Veja a imagem abaixo:
                       </p>
-                      <img
-                        src={MOBILE_IMG}
-                        alt="Instruções para baixar PDF no celular"
-                        className="w-full rounded-lg"
-                      />
+                      <img src={MOBILE_IMG} alt="Instruções para baixar PDF no celular" className="w-full rounded-lg" />
                       <p>
-                        Em seguida, na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo na primeira seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a imagem abaixo:
+                        Em seguida, na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo
+                        na primeira seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a
+                        imagem abaixo:
                       </p>
-                      <img
-                        src={DESKTOP_IMG}
-                        alt="Instruções para baixar PDF no desktop"
-                        className="w-full rounded-lg"
-                      />
+                      <div className="w-full md:max-w-2xl md:mx-auto">
+                        <img
+                          src={DESKTOP_IMG}
+                          alt="Instruções para baixar PDF no desktop"
+                          className="w-full rounded-lg"
+                        />
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
 
@@ -684,7 +653,11 @@ export function ImportReviewDrawer({
                       Por que não é possível importar diretamente do LinkedIn?
                     </AccordionTrigger>
                     <AccordionContent className="text-sm text-muted-foreground">
-                      O LinkedIn tem políticas muito restritas contra a extração automática de dados, o que torna extremamente difícil e até ilegal fazer isso. Por isso, a melhor alternativa é utilizar o currículo gerado por eles. Como estamos em versão beta, utilizar o PDF do LinkedIn torna a importação mais padronizada e certeira, pois outros tipos de PDFs podem ter formatos muito diferentes e causar erros.
+                      O LinkedIn tem políticas muito restritas contra a extração automática de dados, o que torna
+                      extremamente difícil e até ilegal fazer isso. Por isso, a melhor alternativa é utilizar o
+                      currículo gerado por eles. Como estamos em versão beta, utilizar o PDF do LinkedIn torna a
+                      importação mais padronizada e certeira, pois outros tipos de PDFs podem ter formatos muito
+                      diferentes e causar erros.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -727,12 +700,8 @@ export function ImportReviewDrawer({
               {/* Review Header */}
               <div className="p-6 pb-4 border-b border-border shrink-0">
                 <SheetHeader>
-                  <SheetTitle className="font-display text-xl font-bold">
-                    Revisão da Importação
-                  </SheetTitle>
-                  <SheetDescription className="sr-only">
-                    Revise os dados extraídos do seu currículo
-                  </SheetDescription>
+                  <SheetTitle className="font-display text-xl font-bold">Revisão da Importação</SheetTitle>
+                  <SheetDescription className="sr-only">Revise os dados extraídos do seu currículo</SheetDescription>
                 </SheetHeader>
 
                 {/* Summary cards */}
@@ -755,7 +724,8 @@ export function ImportReviewDrawer({
               {/* Review content */}
               <div className="flex-1 overflow-y-auto p-6 space-y-8">
                 <p className="text-sm text-muted-foreground">
-                  Confira os dados extraídos abaixo. Você pode editar qualquer campo antes de salvar. Após confirmar, suas experiências e formações serão substituídas.
+                  Confira os dados extraídos abaixo. Você pode editar qualquer campo antes de salvar. Após confirmar,
+                  suas experiências e formações serão substituídas.
                 </p>
 
                 {/* Experiences */}
