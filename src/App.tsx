@@ -32,6 +32,7 @@ import Settings from "./pages/Settings";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +187,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/support"
+            element={
+              <ProtectedRoute>
+                <Support />
               </ProtectedRoute>
             }
           />

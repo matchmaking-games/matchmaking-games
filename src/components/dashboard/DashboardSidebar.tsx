@@ -189,10 +189,10 @@ export function DashboardSidebar() {
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
-                <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
+                <Link to="/support" className="cursor-pointer">
                   <Mail className="mr-2 h-4 w-4" />
                   Suporte
-                </a>
+                </Link>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
