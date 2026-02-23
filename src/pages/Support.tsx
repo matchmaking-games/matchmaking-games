@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Loader2, ImagePlus, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -93,108 +94,112 @@ export default function Support() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div>
-          <h1 className="font-display font-bold text-4xl text-foreground">Suporte</h1>
-          <p className="text-muted-foreground mt-1">
-            Envie sua dúvida, reporte um bug ou faça uma sugestão. Responderemos por email.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Tipo */}
-          <div className="space-y-2">
-            <Label htmlFor="tipo">Tipo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger id="tipo">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {tipos.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.tipo && (
-              <p className="text-sm text-destructive">{errors.tipo}</p>
-            )}
-          </div>
-
-          {/* Mensagem */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="mensagem">Mensagem</Label>
-              <span className="text-xs text-muted-foreground">
-                {mensagem.length}/2000
-              </span>
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div>
+              <h1 className="font-display font-bold text-4xl text-foreground">Suporte</h1>
+              <p className="text-muted-foreground mt-1">
+                Envie sua dúvida, reporte um bug ou faça uma sugestão. Responderemos por email.
+              </p>
             </div>
-            <Textarea
-              id="mensagem"
-              value={mensagem}
-              onChange={(e) => setMensagem(e.target.value)}
-              placeholder="Descreva com detalhes. Se for um bug, inclua o que você estava fazendo antes de acontecer."
-              className="min-h-[160px]"
-              maxLength={2000}
-            />
-            {errors.mensagem && (
-              <p className="text-sm text-destructive">{errors.mensagem}</p>
-            )}
-          </div>
 
-          {/* Imagem */}
-          <div className="space-y-2">
-            <Label>Imagem (opcional)</Label>
-            {imagemPreview ? (
-              <div className="relative inline-block">
-                <img
-                  src={imagemPreview}
-                  alt="Preview"
-                  className="h-24 w-24 rounded-md object-cover border border-border"
-                />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Tipo */}
+              <div className="space-y-2">
+                <Label htmlFor="tipo">Tipo</Label>
+                <Select value={tipo} onValueChange={setTipo}>
+                  <SelectTrigger id="tipo">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tipos.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.tipo && (
+                  <p className="text-sm text-destructive">{errors.tipo}</p>
+                )}
               </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <ImagePlus className="h-4 w-4 mr-2" />
-                Anexar imagem
-              </Button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              className="hidden"
-              onChange={handleImageChange}
-            />
-            {imagemError && (
-              <p className="text-sm text-destructive">{imagemError}</p>
-            )}
-          </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              "Enviar mensagem"
-            )}
-          </Button>
-        </form>
+              {/* Mensagem */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="mensagem">Mensagem</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {mensagem.length}/2000
+                  </span>
+                </div>
+                <Textarea
+                  id="mensagem"
+                  value={mensagem}
+                  onChange={(e) => setMensagem(e.target.value)}
+                  placeholder="Descreva com detalhes. Se for um bug, inclua o que você estava fazendo antes de acontecer."
+                  className="min-h-[160px]"
+                  maxLength={2000}
+                />
+                {errors.mensagem && (
+                  <p className="text-sm text-destructive">{errors.mensagem}</p>
+                )}
+              </div>
+
+              {/* Imagem */}
+              <div className="space-y-2">
+                <Label>Imagem (opcional)</Label>
+                {imagemPreview ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imagemPreview}
+                      alt="Preview"
+                      className="h-24 w-24 rounded-md object-cover border border-border"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    Anexar imagem
+                  </Button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                {imagemError && (
+                  <p className="text-sm text-destructive">{imagemError}</p>
+                )}
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  "Enviar mensagem"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
