@@ -94,10 +94,10 @@ export default function ExperiencePage() {
 
             <ProfileNavigation />
 
-            <div className="flex items-start justify-between gap-4 mb-6">
-              <p className="text-muted-foreground">Adicione suas experiências profissionais na indústria de games</p>
-              <Button onClick={handleAdd} className="flex-shrink-0">
-                <Plus className="h-4 w-4 mr-2" />
+            <div className="flex items-start justify-between gap-3 mb-6">
+              <p className="text-sm text-muted-foreground flex-1">Adicione suas experiências profissionais na indústria de games</p>
+              <Button onClick={handleAdd} size="sm" className="flex-shrink-0">
+                <Plus className="h-4 w-4 mr-1" />
                 Adicionar
               </Button>
             </div>
