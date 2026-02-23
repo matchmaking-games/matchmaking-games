@@ -7,13 +7,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Star, Trash2, Gamepad2 } from "lucide-react";
+import { MoreVertical, Pencil, Star, Trash2, Gamepad2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
 import type { ProjectWithSkills } from "@/hooks/useProjects";
 
 interface ProjectCardProps {
   project: ProjectWithSkills;
+  userSlug?: string;
   onEdit: (project: ProjectWithSkills) => void;
   onDelete: (project: ProjectWithSkills) => void;
   onToggleDestaque: (id: string, currentValue: boolean) => void;
@@ -49,6 +50,7 @@ function getSkillBadgeClasses(categoria: string): string {
 
 export function ProjectCard({
   project,
+  userSlug,
   onEdit,
   onDelete,
   onToggleDestaque,
@@ -79,6 +81,18 @@ export function ProjectCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {userSlug && project.slug && (
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/p/${userSlug}/project/${project.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" /> Ver projeto
+                </a>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onEdit(project)}>
               <Pencil className="h-4 w-4 mr-2" /> Editar
             </DropdownMenuItem>

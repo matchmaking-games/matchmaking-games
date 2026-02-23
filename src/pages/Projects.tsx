@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ProjectsList } from "@/components/projects/ProjectsList";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectDeleteDialog } from "@/components/projects/ProjectDeleteDialog";
@@ -21,6 +22,7 @@ export default function ProjectsPage() {
     saveProjectSkills,
   } = useProjects();
   const { toast } = useToast();
+  const { data: currentUser } = useCurrentUser();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectWithSkills | null>(null);
@@ -100,6 +102,7 @@ export default function ProjectsPage() {
             <ProjectsList
               projects={projects}
               loading={loading}
+              userSlug={currentUser?.slug}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggleDestaque={handleToggleDestaque}

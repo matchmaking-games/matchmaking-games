@@ -7,6 +7,7 @@ import type { ProjectWithSkills } from "@/hooks/useProjects";
 interface ProjectsListProps {
   projects: ProjectWithSkills[];
   loading: boolean;
+  userSlug?: string;
   onEdit: (project: ProjectWithSkills) => void;
   onDelete: (project: ProjectWithSkills) => void;
   onToggleDestaque: (id: string, currentValue: boolean) => void;
@@ -16,6 +17,7 @@ interface ProjectsListProps {
 export function ProjectsList({
   projects,
   loading,
+  userSlug,
   onEdit,
   onDelete,
   onToggleDestaque,
@@ -59,6 +61,7 @@ export function ProjectsList({
         <ProjectCard
           key={project.id}
           project={project}
+          userSlug={userSlug}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleDestaque={onToggleDestaque}
