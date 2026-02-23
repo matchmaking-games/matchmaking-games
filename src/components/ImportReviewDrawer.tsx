@@ -614,7 +614,7 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
                         Na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo na primeira
                         seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a imagem abaixo:
                       </p>
-                      <div className="w-full md:max-w-2xl md:mx-auto">
+                      <div className="w-full md:max-w-xl md:mx-auto">
                         <img
                           src={DESKTOP_IMG}
                           alt="Instruções para baixar PDF no desktop"
@@ -632,13 +632,19 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
                         necessário abrir o LinkedIn no navegador do celular e selecionar a opção "Site para computador"
                         ou algo similar. Veja a imagem abaixo:
                       </p>
-                      <img src={MOBILE_IMG} alt="Instruções para baixar PDF no celular" className="w-full rounded-lg" />
+                      <div className="w-full max-w-sm mx-auto">
+                        <img
+                          src={MOBILE_IMG}
+                          alt="Instruções para baixar PDF no celular"
+                          className="w-full max-h-[500px] object-contain rounded-lg"
+                        />
+                      </div>
                       <p>
                         Em seguida, na página principal do seu LinkedIn, clique na sua foto de perfil ou seu nome. Logo
                         na primeira seção, clique no botão com o ícone "..." e selecione "Salvar como PDF". Veja a
                         imagem abaixo:
                       </p>
-                      <div className="w-full md:max-w-2xl md:mx-auto">
+                      <div className="w-full md:max-w-xl md:mx-auto">
                         <img
                           src={DESKTOP_IMG}
                           alt="Instruções para baixar PDF no desktop"
