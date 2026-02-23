@@ -54,7 +54,7 @@ export function EducationList({
 
       <div className="space-y-4">
         {educations.map((education) =>
-        <div key={education.id} className="relative md:pl-10">
+        <div key={education.id} className="relative md:pl-10 px-0">
             {/* Timeline dot - desktop only */}
             
             
