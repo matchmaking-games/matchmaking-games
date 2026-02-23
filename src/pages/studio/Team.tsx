@@ -157,18 +157,22 @@ export default function Team() {
           <User className="mr-2 h-4 w-4" />
           Ver Perfil Público
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleRoleClick(member)}>
-          <Shield className="mr-2 h-4 w-4" />
-          Alterar Permissão
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={() => handleRemoveClick(member)}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Remover do Estúdio
-        </DropdownMenuItem>
+        {activeStudio?.role === "super_admin" && (
+          <>
+            <DropdownMenuItem onClick={() => handleRoleClick(member)}>
+              <Shield className="mr-2 h-4 w-4" />
+              Alterar Permissão
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => handleRemoveClick(member)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remover do Estúdio
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
