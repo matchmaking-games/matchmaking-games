@@ -1,118 +1,105 @@
 
-## Plano: Refatorar dropdown do rodape da sidebar
+
+## Plano: Pagina de Suporte com Formulario de Contato via Resend
 
 ### Resumo
 
-Unificar o dropdown do rodape em ambas as sidebars (DashboardSidebar e StudioSidebar) com estrutura de secoes, submenu "Trocar de perfil", e "Criar novo estudio" sempre visivel.
+Criar uma pagina protegida `/support` com formulario de contato, uma Edge Function para envio via Resend, um hook dedicado, e atualizar os links "Suporte" existentes nas sidebars.
 
 ---
 
-### Arquivo 1: `src/components/dashboard/DashboardSidebar.tsx`
+### 1. Edge Function `send-support-email`
 
-**Alteracoes:**
+**Arquivo:** `supabase/functions/send-support-email/index.ts`
 
-1. Remover import e uso de `useHasStudio` — nao mais necessario
-2. Adicionar import de `useStudioMembership` para popular o submenu
-3. Adicionar imports: `Shuffle`, `Plus`, `Check` de lucide-react. Remover `Building2`.
-4. Adicionar imports: `DropdownMenuLabel`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent` do dropdown-menu
-5. Remover a logica condicional `navItems = hasStudio ? [...baseNavItems, studio] : baseNavItems` — a navegacao principal da sidebar nao deve depender disso (o item "Meu estudio" sai do nav principal, pois a troca agora e feita pelo submenu do dropdown)
-6. Buscar `useStudioMembership()` para obter a lista de estudios
+- Recebe `FormData` (nao JSON) com campos: `tipo`, `mensagem`, `nome`, `email`, `user_id`, `origem`, `user_agent`, e opcionalmente `imagem` (arquivo)
+- Valida presenca de `tipo` e `mensagem`
+- Se houver imagem, converte para base64 e inclui como attachment no Resend
+- Envia email via Resend API:
+  - From: `noreply@matchmaking.games`
+  - To: `lucas.pimenta@matchmaking.games`
+  - Reply-To: email do usuario
+  - Subject: `[{tipo}] Novo ticket de suporte -- {nome}`
+  - HTML formatado com secoes: Tipo, Remetente (nome, email, user_id), Mensagem, Contexto Tecnico (data/hora em Brasilia DD/MM/YYYY as HH:MM, origem, user_agent)
+- CORS headers padrao do projeto
+- `verify_jwt = false` no config.toml (validacao manual via auth header)
 
-**Novo layout do dropdown:**
-
+**Arquivo:** `supabase/config.toml` -- adicionar entrada:
 ```
-DropdownMenuLabel "Contas"
-DropdownMenuSub
-  DropdownMenuSubTrigger: Shuffle icon + "Trocar de perfil"
-  DropdownMenuSubContent:
-    Item: Avatar do user + nome_completo + Check (se em /dashboard)
-    Item por estudio: Avatar + nome + Check (se studio.id === studioParam ativo)
-DropdownMenuSeparator
-DropdownMenuItem: Plus + "Criar novo estudio" → /studio/manage/new
-DropdownMenuSeparator
-DropdownMenuLabel "Geral"
-DropdownMenuItem: Settings + "Configuracoes" → /dashboard/settings
-DropdownMenuItem: Mail + "Suporte" → mailto:
-DropdownMenuItem: ExternalLink + "Ver perfil publico" → /p/:slug
-DropdownMenuSeparator
-DropdownMenuItem: LogOut + "Sair"
+[functions.send-support-email]
+verify_jwt = false
 ```
-
-Contexto ativo: como estamos em `/dashboard`, o perfil pessoal tem o Check. Os estudios nao tem Check.
-
-Ao clicar num estudio no submenu: `navigate(/studio/manage/dashboard?studio=UUID)`
-Ao clicar no perfil pessoal: `navigate(/dashboard)`
 
 ---
 
-### Arquivo 2: `src/components/studio/StudioSidebar.tsx`
+### 2. Hook `useSupportForm`
 
-**Alteracoes:**
+**Arquivo:** `src/hooks/useSupportForm.ts`
 
-1. Adicionar import de `useCurrentUser` para ter dados do usuario no submenu
-2. Adicionar imports: `Shuffle`, `Plus` de lucide-react. Remover `Building2`, `UsersRound`.
-3. Adicionar imports: `DropdownMenuLabel`, `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent`
-4. Remover a badge "Admin" que aparece no studio switcher atual — simplificar
-
-**Novo layout do dropdown:**
-
-```
-DropdownMenuLabel "Contas"
-DropdownMenuSub
-  DropdownMenuSubTrigger: Shuffle icon + "Trocar de perfil"
-  DropdownMenuSubContent:
-    Item: Avatar do user + nome_completo (clicar → /dashboard)
-    Item por estudio: Avatar + nome + Check se ativo
-DropdownMenuSeparator
-DropdownMenuItem: Plus + "Criar novo estudio" → /studio/manage/new
-DropdownMenuSeparator
-DropdownMenuLabel "Estudio"
-DropdownMenuItem: CreditCard + "Faturas" → /studio/manage/billing
-DropdownMenuItem: ExternalLink + "Ver pagina publica" → /studio/:slug
-DropdownMenuSeparator
-DropdownMenuLabel "Geral"
-DropdownMenuItem: Settings + "Configuracoes" → /dashboard/settings
-DropdownMenuItem: Mail + "Suporte" → mailto:
-DropdownMenuSeparator
-DropdownMenuItem: LogOut + "Sair"
-```
-
-Contexto ativo: determinado por `membership.estudio.id`. O estudio ativo tem Check. Os outros nao.
-
-Ao clicar no perfil pessoal: `navigate(/dashboard)`
-Ao clicar num estudio diferente: chama `onStudioChange(studioId)` (comportamento existente)
+- Schema Zod:
+  - `tipo`: enum obrigatorio ("Bugs", "Sugestoes", "Duvidas", "Parcerias", "Outros")
+  - `mensagem`: string, min 20, max 2000
+  - `imagem`: File opcional (validacao de tipo e tamanho no componente)
+- Busca dados do usuario autenticado via `useCurrentUser()`
+- Coleta automatica de `window.location.href` e `navigator.userAgent`
+- Funcao `submitForm` que:
+  - Monta um `FormData` com todos os campos
+  - Chama `supabase.functions.invoke("send-support-email", { body: formData })` -- nota: como e FormData, nao passa headers content-type manualmente
+  - Gerencia estados: `isSubmitting`, `isSuccess`, `error`
+- Funcao `resetForm` para limpar apos sucesso
 
 ---
 
-### Detalhes de implementacao comuns
+### 3. Pagina `Support`
 
-**Submenu "Trocar de perfil":**
-- Cada item do submenu mostra Avatar (h-6 w-6) + nome (truncate, max-w-[140px]) + Check (h-4 w-4 text-primary) se ativo
-- O perfil pessoal usa `user.avatar_url` e `user.nome_completo`
-- Cada estudio usa `estudio.logo_url` e `estudio.nome`
-- Os nomes longos sao truncados com `truncate`
+**Arquivo:** `src/pages/Support.tsx`
 
-**"Criar novo estudio":**
-- Sempre visivel, sem condicao alguma
-- Usa icone `Plus`
+- Usa `DashboardLayout` como wrapper (consistente com outras paginas do dashboard)
+- Titulo da pagina: "Suporte" com subtitulo descritivo
+- Formulario com:
+  - **Tipo** (Select com opcoes: Bugs, Sugestoes, Duvidas, Parcerias, Outros)
+  - **Mensagem** (Textarea com placeholder especificado, contador de caracteres)
+  - **Imagem** (input file oculto + botao visual, aceita image/jpeg, image/png, image/gif, image/webp, max 3MB)
+    - Preview thumbnail apos selecao com botao X para remover
+    - Mensagem de erro se tipo ou tamanho invalido
+  - Botao "Enviar mensagem" com estado de loading (Loader2 spinner)
+- Apos sucesso: limpa formulario, exibe toast de sucesso
+- Apos erro: exibe toast de erro
 
-**Width do dropdown:**
-- DashboardSidebar: `w-56` (atual)
-- StudioSidebar: `w-56` (reduzir de `w-64` para consistencia)
+**Arquivo:** `src/App.tsx` -- adicionar rota protegida:
+```
+<Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+```
 
 ---
 
-### Arquivos tocados
+### 4. Atualizar links "Suporte"
+
+Dois locais com `mailto:` que serao substituidos por `navigate("/support")`:
+
+| Arquivo | Linha | De | Para |
+|---|---|---|---|
+| `src/components/dashboard/DashboardSidebar.tsx` | 191-196 | `<a href="mailto:...">` | `<Link to="/support">` |
+| `src/components/studio/StudioSidebar.tsx` | 252-257 | `<a href="mailto:...">` | `<Link to="/support">` |
+
+---
+
+### Arquivos criados/modificados
 
 | Arquivo | Acao |
 |---|---|
-| `src/components/dashboard/DashboardSidebar.tsx` | Refatorar dropdown completo |
-| `src/components/studio/StudioSidebar.tsx` | Refatorar dropdown completo |
+| `supabase/functions/send-support-email/index.ts` | Criar |
+| `supabase/config.toml` | Adicionar entrada |
+| `src/hooks/useSupportForm.ts` | Criar |
+| `src/pages/Support.tsx` | Criar |
+| `src/App.tsx` | Adicionar rota |
+| `src/components/dashboard/DashboardSidebar.tsx` | Alterar link Suporte |
+| `src/components/studio/StudioSidebar.tsx` | Alterar link Suporte |
 
 ### O que NAO muda
 
-- Navegacao principal da sidebar (itens de menu)
-- Rotas, paginas, queries Supabase, RLS
-- Hooks useCurrentUser, useStudioMembership, useActiveStudio
-- Nenhum outro componente
-- O trigger do dropdown (avatar + nome + chevron) permanece igual em ambos
+- Nenhuma outra pagina, rota ou componente existente
+- Nenhuma tabela, RLS ou schema do banco
+- Header.tsx nao tem link de suporte, nao sera alterado
+- Hooks, queries e logica de autenticacao existentes permanecem intactos
+
