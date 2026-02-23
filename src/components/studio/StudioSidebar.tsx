@@ -2,7 +2,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
-  Building2,
+  Building2 as BuildingIcon,
   Users,
   ChevronDown,
   Settings,
@@ -12,7 +12,8 @@ import {
   LogOut,
   ChevronLeft,
   Check,
-  UsersRound,
+  Shuffle,
+  Plus,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
@@ -33,18 +34,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { StudioMembership } from "@/hooks/useStudioMembership";
 
 const navItems = [
   { title: "Dashboard", url: "/studio/manage/dashboard", icon: LayoutDashboard },
   { title: "Minhas vagas", url: "/studio/manage/jobs", icon: Briefcase },
-  { title: "Perfil do estúdio", url: "/studio/manage/profile", icon: Building2 },
+  { title: "Perfil do estúdio", url: "/studio/manage/profile", icon: BuildingIcon },
   { title: "Minha equipe", url: "/studio/manage/team", icon: Users },
 ];
 
@@ -67,6 +72,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { data: user } = useCurrentUser();
 
   const studioParam = searchParams.get("studio");
   const buildUrl = (path: string) => {
@@ -150,55 +156,75 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" side="top" className="w-64">
-            {/* Studio switcher - only show if multiple studios */}
-            {studios.length > 1 && (
-              <>
-                <div className="px-2 py-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">Trocar estúdio</p>
-                </div>
+          <DropdownMenuContent align="end" side="top" className="w-56">
+            <DropdownMenuLabel>Contas</DropdownMenuLabel>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger className="cursor-pointer">
+                <Shuffle className="mr-2 h-4 w-4" />
+                Trocar de perfil
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {/* Perfil pessoal */}
+                {user && (
+                  <DropdownMenuItem
+                    onClick={() => navigate("/dashboard")}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar_url || undefined} />
+                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                          {getInitials(user.nome_completo)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1 truncate max-w-[140px] text-sm">{user.nome_completo}</span>
+                    </div>
+                  </DropdownMenuItem>
+                )}
+
+                {/* Estúdios */}
                 {studios.map((studio) => (
                   <DropdownMenuItem
                     key={studio.id}
                     onClick={() => handleStudioSwitch(studio.estudio.id)}
                     className="cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 w-full">
-                      <Avatar className="h-7 w-7">
+                    <div className="flex items-center gap-2 w-full">
+                      <Avatar className="h-6 w-6">
                         <AvatarImage src={studio.estudio.logo_url || undefined} />
                         <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
                           {getInitials(studio.estudio.nome)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="flex-1 truncate text-sm">{studio.estudio.nome}</span>
-                      {studio.role === "super_admin" && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                          Admin
-                        </Badge>
+                      <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
+                      {studio.estudio.id === membership.estudio.id && (
+                        <Check className="h-4 w-4 text-primary" />
                       )}
-                      {studio.estudio.id === membership.estudio.id && <Check className="h-4 w-4 text-primary" />}
                     </div>
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator />
-              </>
-            )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuSeparator />
 
             <DropdownMenuItem asChild>
-              <a href="/studio/manage/billing" className="cursor-pointer">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Faturas
-              </a>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem asChild>
-              <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
-                <Mail className="mr-2 h-4 w-4" />
-                Suporte
-              </a>
+              <Link to="/studio/manage/new" className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                Criar novo estúdio
+              </Link>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
+
+            <DropdownMenuLabel>Estúdio</DropdownMenuLabel>
+
+            <DropdownMenuItem asChild>
+              <Link to={buildUrl("/studio/manage/billing")} className="cursor-pointer">
+                <CreditCard className="mr-2 h-4 w-4" />
+                Faturas
+              </Link>
+            </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
               <a
@@ -209,6 +235,24 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
               >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Ver página pública
+              </a>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuLabel>Geral</DropdownMenuLabel>
+
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/settings" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem asChild>
+              <a href="mailto:lucas.pimenta@matchmaking.games" className="cursor-pointer">
+                <Mail className="mr-2 h-4 w-4" />
+                Suporte
               </a>
             </DropdownMenuItem>
 

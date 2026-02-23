@@ -3,12 +3,14 @@ import {
   LayoutDashboard,
   Briefcase,
   User,
-  Building2,
   ChevronDown,
   Settings,
   Mail,
   ExternalLink,
   LogOut,
+  Shuffle,
+  Plus,
+  Check,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
@@ -29,14 +31,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useHasStudio } from "@/hooks/useHasStudio";
+import { useStudioMembership } from "@/hooks/useStudioMembership";
 
-const baseNavItems = [
+const navItems = [
   { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
   { title: "Meu perfil", url: "/dashboard/profile", icon: User },
@@ -55,11 +61,7 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: user } = useCurrentUser();
-  const { data: hasStudio, isLoading: isLoadingStudio } = useHasStudio();
-
-  const navItems = hasStudio
-    ? [...baseNavItems, { title: "Meu estúdio", url: "/studio/manage/dashboard", icon: Building2 }]
-    : baseNavItems;
+  const { studios } = useStudioMembership();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -121,17 +123,63 @@ export function DashboardSidebar() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" side="top" className="w-56">
-              {!isLoadingStudio && !hasStudio && (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link to="/studio/manage/new" className="cursor-pointer">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      Criar Estúdio
-                    </Link>
+              <DropdownMenuLabel>Contas</DropdownMenuLabel>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <Shuffle className="mr-2 h-4 w-4" />
+                  Trocar de perfil
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {/* Perfil pessoal */}
+                  <DropdownMenuItem
+                    onClick={() => navigate("/dashboard")}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.avatar_url || undefined} />
+                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                          {getInitials(user.nome_completo)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1 truncate max-w-[140px] text-sm">{user.nome_completo}</span>
+                      <Check className="h-4 w-4 text-primary" />
+                    </div>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
+
+                  {/* Estúdios */}
+                  {studios.map((studio) => (
+                    <DropdownMenuItem
+                      key={studio.id}
+                      onClick={() => navigate(`/studio/manage/dashboard?studio=${studio.estudio.id}`)}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={studio.estudio.logo_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                            {getInitials(studio.estudio.nome)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild>
+                <Link to="/studio/manage/new" className="cursor-pointer">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar novo estúdio
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuLabel>Geral</DropdownMenuLabel>
 
               <DropdownMenuItem asChild>
                 <Link to="/dashboard/settings" className="cursor-pointer">
@@ -146,8 +194,6 @@ export function DashboardSidebar() {
                   Suporte
                 </a>
               </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
 
               <DropdownMenuItem asChild>
                 <a href={`/p/${user.slug}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
