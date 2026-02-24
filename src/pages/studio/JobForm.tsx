@@ -555,6 +555,34 @@ export default function JobForm() {
                   )}
                 />
 
+                {/* Contract Type - Full width Select dropdown */}
+                <FormField
+                  control={form.control}
+                  name="tipo_emprego"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Tipo de contrato <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de contrato" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="clt">CLT</SelectItem>
+                          <SelectItem value="pj">PJ</SelectItem>
+                          <SelectItem value="freelancer">Freelancer</SelectItem>
+                          <SelectItem value="estagio">Estágio</SelectItem>
+                          <SelectItem value="tempo_integral">Tempo integral</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Grid layout for dropdowns - 2 columns on desktop */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Level - Select dropdown */}
@@ -611,34 +639,6 @@ export default function JobForm() {
                     )}
                   />
                 </div>
-
-                {/* Contract Type - Full width Select dropdown */}
-                <FormField
-                  control={form.control}
-                  name="tipo_emprego"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Tipo de contrato <span className="text-destructive">*</span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo de contrato" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="clt">CLT</SelectItem>
-                          <SelectItem value="pj">PJ</SelectItem>
-                          <SelectItem value="freelancer">Freelancer</SelectItem>
-                          <SelectItem value="estagio">Estágio</SelectItem>
-                          <SelectItem value="tempo_integral">Tempo integral</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 {/* Location - State/City (hidden when remote) */}
                 {selectedRemoto !== "remoto" && (
@@ -843,14 +843,28 @@ export default function JobForm() {
                 <h3 className="text-lg font-semibold">Habilidades</h3>
                 <Separator />
 
+                {/* Obrigatórias */}
                 <div className="space-y-2">
-                  <JobSkillsSelector
-                    label={<>Habilidades obrigatórias <span className="text-destructive">*</span></>}
-                    helperText="Habilidades que o candidato deve ter para a vaga."
-                    selectedSkillIds={habilidadesObrigatorias}
-                    onSkillsChange={setHabilidadesObrigatorias}
-                    excludeSkillIds={habilidadesDesejaveis}
-                  />
+                  <label className="text-sm font-medium text-foreground">
+                    Habilidades obrigatórias <span className="text-destructive">*</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground">Habilidades que o candidato deve ter para a vaga.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <JobSkillsSelector
+                      label={<>Habilidades obrigatórias</>}
+                      selectedSkillIds={habilidadesObrigatorias}
+                      onSkillsChange={setHabilidadesObrigatorias}
+                      excludeSkillIds={habilidadesDesejaveis}
+                      categoria="habilidades"
+                    />
+                    <JobSkillsSelector
+                      label={<>Softwares obrigatórios</>}
+                      selectedSkillIds={habilidadesObrigatorias}
+                      onSkillsChange={setHabilidadesObrigatorias}
+                      excludeSkillIds={habilidadesDesejaveis}
+                      categoria="softwares"
+                    />
+                  </div>
                   {habilidadesObrigatorias.length === 0 && form.formState.isSubmitted && (
                     <p className="text-sm font-medium text-destructive">
                       Selecione pelo menos uma habilidade obrigatória
@@ -858,13 +872,29 @@ export default function JobForm() {
                   )}
                 </div>
 
-                <JobSkillsSelector
-                  label="Habilidades desejáveis (diferenciais)"
-                  helperText="Habilidades que são um diferencial, mas não obrigatórias."
-                  selectedSkillIds={habilidadesDesejaveis}
-                  onSkillsChange={setHabilidadesDesejaveis}
-                  excludeSkillIds={habilidadesObrigatorias}
-                />
+                {/* Desejáveis */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Habilidades desejáveis (diferenciais)
+                  </label>
+                  <p className="text-xs text-muted-foreground">Habilidades que são um diferencial, mas não obrigatórias.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <JobSkillsSelector
+                      label="Habilidades desejáveis"
+                      selectedSkillIds={habilidadesDesejaveis}
+                      onSkillsChange={setHabilidadesDesejaveis}
+                      excludeSkillIds={habilidadesObrigatorias}
+                      categoria="habilidades"
+                    />
+                    <JobSkillsSelector
+                      label="Softwares desejáveis"
+                      selectedSkillIds={habilidadesDesejaveis}
+                      onSkillsChange={setHabilidadesDesejaveis}
+                      excludeSkillIds={habilidadesObrigatorias}
+                      categoria="softwares"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* SECTION: PUBLICATION TYPE */}
