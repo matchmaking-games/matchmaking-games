@@ -75,29 +75,6 @@ export default function NewStudio() {
   // Hook de verificação de disponibilidade
   const { isChecking, isAvailable } = useCheckStudioSlug(slug, isSlugFormatValid);
 
-  // Verificar se usuário já tem estúdio
-  useEffect(() => {
-    const checkExistingStudio = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data: existingStudio } = await supabase
-        .from("estudios")
-        .select("id")
-        .eq("criado_por", session.user.id)
-        .maybeSingle();
-
-      if (existingStudio) {
-        toast({
-          title: "Você já tem um estúdio",
-          description: "Redirecionando para o dashboard...",
-        });
-        navigate("/studio/manage/dashboard");
-      }
-    };
-
-    checkExistingStudio();
-  }, [navigate, toast]);
 
   // Quando o nome muda, gerar slug automaticamente (se usuário não editou manualmente)
   useEffect(() => {
