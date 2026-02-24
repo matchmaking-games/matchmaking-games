@@ -15,6 +15,7 @@ import Skills from "./pages/Skills";
 import Experience from "./pages/Experience";
 import Education from "./pages/Education";
 import Projects from "./pages/Projects";
+import ProjectFormPage from "./pages/dashboard/ProjectFormPage";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
@@ -101,6 +102,22 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Projects />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/projects/new"
+            element={
+              <ProtectedRoute>
+                <ProjectFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/projects/:id/edit"
+            element={
+              <ProtectedRoute>
+                <ProjectFormPage />
               </ProtectedRoute>
             }
           />

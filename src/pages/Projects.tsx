@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { ProfileNavigation } from "@/components/dashboard/ProfileNavigation";
@@ -8,35 +9,28 @@ import { useToast } from "@/hooks/use-toast";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ProjectsList } from "@/components/projects/ProjectsList";
-import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectDeleteDialog } from "@/components/projects/ProjectDeleteDialog";
 
 export default function ProjectsPage() {
   const {
     projects,
     loading,
-    createProject,
-    updateProject,
     deleteProject,
     toggleDestaque,
-    saveProjectSkills,
   } = useProjects();
   const { toast } = useToast();
   const { data: currentUser } = useCurrentUser();
+  const navigate = useNavigate();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<ProjectWithSkills | null>(null);
   const [deletingProject, setDeletingProject] = useState<ProjectWithSkills | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleAdd = () => {
-    setEditingProject(null);
-    setIsModalOpen(true);
+    navigate("/dashboard/projects/new");
   };
 
   const handleEdit = (project: ProjectWithSkills) => {
-    setEditingProject(project);
-    setIsModalOpen(true);
+    navigate("/dashboard/projects/" + project.id + "/edit");
   };
 
   const handleDelete = (project: ProjectWithSkills) => {
@@ -69,11 +63,6 @@ export default function ProjectsPage() {
     } finally {
       setIsDeleting(false);
     }
-  };
-
-  const handleSuccess = () => {
-    setIsModalOpen(false);
-    setEditingProject(null);
   };
 
   return (
@@ -111,16 +100,6 @@ export default function ProjectsPage() {
           </CardContent>
         </Card>
       </div>
-
-      <ProjectForm
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        editingProject={editingProject}
-        onSuccess={handleSuccess}
-        createProject={createProject}
-        updateProject={updateProject}
-        saveProjectSkills={saveProjectSkills}
-      />
 
       <ProjectDeleteDialog
         open={!!deletingProject}
