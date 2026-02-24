@@ -40,10 +40,8 @@ function getStatusBadgeClasses(status: string): string {
 
 function getSkillBadgeClasses(categoria: string): string {
   const map: Record<string, string> = {
-    engine: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    linguagem: "bg-blue-500/20 text-blue-300 border-blue-500/30",
-    ferramenta: "bg-orange-500/20 text-orange-300 border-orange-500/30",
-    soft_skill: "bg-green-500/20 text-green-300 border-green-500/30",
+    habilidades: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+    softwares: "bg-orange-500/20 text-orange-300 border-orange-500/30",
   };
   return map[categoria] || "bg-muted text-muted-foreground border-border";
 }

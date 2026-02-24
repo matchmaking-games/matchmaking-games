@@ -460,7 +460,6 @@ export function ProjectForm({
                   selectedSkillIds={selectedSkillIds}
                   onSkillsChange={setSelectedSkillIds}
                   disabled={isSubmitting}
-                  maxSkills={10}
                 />
 
                 {/* Highlight checkbox */}

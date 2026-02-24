@@ -15,7 +15,7 @@ export type ProjectWithSkills = Project & {
     habilidade: {
       id: string;
       nome: string;
-      categoria: "engine" | "linguagem" | "ferramenta" | "soft_skill";
+      categoria: Database["public"]["Enums"]["categoria_habilidade"];
     };
   }>;
 };

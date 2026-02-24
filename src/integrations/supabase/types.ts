@@ -1310,7 +1310,7 @@ export type Database = {
       get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
     }
     Enums: {
-      categoria_habilidade: "engine" | "linguagem" | "ferramenta" | "soft_skill"
+      categoria_habilidade: "habilidades" | "softwares"
       modalidade_trabalho: "presencial" | "hibrido" | "remoto"
       nivel_habilidade: "basico" | "intermediario" | "avancado" | "expert"
       nivel_vaga: "iniciante" | "junior" | "pleno" | "senior" | "lead"
@@ -1465,7 +1465,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      categoria_habilidade: ["engine", "linguagem", "ferramenta", "soft_skill"],
+      categoria_habilidade: ["habilidades", "softwares"],
       modalidade_trabalho: ["presencial", "hibrido", "remoto"],
       nivel_habilidade: ["basico", "intermediario", "avancado", "expert"],
       nivel_vaga: ["iniciante", "junior", "pleno", "senior", "lead"],

@@ -14,13 +14,11 @@ const levelDots: Record<string, number> = {
 };
 
 const categoryLabels: Record<string, string> = {
-  engine: "Engines",
-  linguagem: "Linguagens",
-  ferramenta: "Ferramentas",
-  soft_skill: "Soft Skills",
+  habilidades: "Habilidades",
+  softwares: "Softwares",
 };
 
-const categoryOrder = ["engine", "linguagem", "ferramenta", "soft_skill"];
+const categoryOrder = ["habilidades", "softwares"];
 
 function SkillDots({ level }: { level: string }) {
   const filled = levelDots[level] || 1;
