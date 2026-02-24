@@ -42,7 +42,9 @@ const AcceptInvite = () => {
       }
 
       // Get session
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user) {
         setUserEmail(session.user.email ?? null);
         setUserId(session.user.id);
@@ -97,12 +99,10 @@ const AcceptInvite = () => {
 
       // If not logged in, check if email has account
       if (!session?.user) {
-        const { data: existing } = await supabase
-          .from("users")
-          .select("id")
-          .eq("email", inviteData.email_convidado)
-          .maybeSingle();
-        setExistingUser(!!existing);
+        const { data: exists } = await supabase.rpc("check_email_exists", {
+          email_to_check: inviteData.email_convidado,
+        });
+        setExistingUser(!!exists);
       }
 
       setLoading(false);
@@ -177,7 +177,9 @@ const AcceptInvite = () => {
   };
 
   const handleSignupRedirect = () => {
-    navigate(`/signup?redirect=${encodeURIComponent(`/invite/${token}`)}&email=${encodeURIComponent(invite?.email_convidado || "")}`);
+    navigate(
+      `/signup?redirect=${encodeURIComponent(`/invite/${token}`)}&email=${encodeURIComponent(invite?.email_convidado || "")}`,
+    );
   };
 
   // Loading
@@ -215,9 +217,7 @@ const AcceptInvite = () => {
               <AlertCircle className="w-12 h-12 text-muted-foreground" />
             </div>
             <CardTitle className="font-display">Convite não encontrado</CardTitle>
-            <CardDescription>
-              Este link de convite é inválido ou já foi usado.
-            </CardDescription>
+            <CardDescription>Este link de convite é inválido ou já foi usado.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => navigate("/")}>
@@ -251,7 +251,8 @@ const AcceptInvite = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para solicitar um novo convite.
+              Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para
+              solicitar um novo convite.
             </p>
             <div className="flex justify-center">
               <Button variant="outline" onClick={() => navigate("/")}>
@@ -274,9 +275,7 @@ const AcceptInvite = () => {
               <AlertCircle className="w-12 h-12 text-muted-foreground" />
             </div>
             <CardTitle className="font-display">Convite já utilizado</CardTitle>
-            <CardDescription>
-              Este convite já foi usado por outra pessoa.
-            </CardDescription>
+            <CardDescription>Este convite já foi usado por outra pessoa.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => navigate("/")}>
@@ -301,16 +300,14 @@ const AcceptInvite = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Este convite foi enviado para:
-              </p>
+              <p className="text-sm text-muted-foreground">Este convite foi enviado para:</p>
               <p className="text-sm font-medium text-foreground bg-secondary/50 px-3 py-2 rounded-md text-center">
                 {invite.email_convidado}
               </p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Você está logado como <span className="font-medium text-foreground">{userEmail}</span>.
-              Faça logout e acesse novamente com o email correto.
+              Você está logado como <span className="font-medium text-foreground">{userEmail}</span>. Faça logout e
+              acesse novamente com o email correto.
             </p>
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>
@@ -337,9 +334,7 @@ const AcceptInvite = () => {
               <AlertCircle className="w-12 h-12 text-muted-foreground" />
             </div>
             <CardTitle className="font-display">Erro ao aceitar convite</CardTitle>
-            <CardDescription>
-              Ocorreu um erro ao processar o convite. Tente novamente.
-            </CardDescription>
+            <CardDescription>Ocorreu um erro ao processar o convite. Tente novamente.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button variant="outline" onClick={() => window.location.reload()}>
@@ -367,9 +362,7 @@ const AcceptInvite = () => {
                 </AvatarFallback>
               </Avatar>
             </div>
-            <CardTitle className="font-display">
-              Convite para {invite.estudio_nome}
-            </CardTitle>
+            <CardTitle className="font-display">Convite para {invite.estudio_nome}</CardTitle>
             <CardDescription>
               Você foi convidado para se juntar ao estúdio como{" "}
               <Badge variant="secondary" className="ml-1">
@@ -381,10 +374,7 @@ const AcceptInvite = () => {
             <p className="text-sm text-muted-foreground text-center">
               {existingUser ? "Faça login" : "Crie sua conta"} para aceitar o convite
             </p>
-            <Button
-              className="w-full"
-              onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}
-            >
+            <Button className="w-full" onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}>
               {existingUser ? "Fazer Login" : "Criar Conta"}
             </Button>
           </CardContent>
