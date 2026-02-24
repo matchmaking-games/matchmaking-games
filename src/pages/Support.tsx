@@ -183,15 +183,17 @@ export default function Support() {
                     </button>
                   </div>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <ImagePlus className="h-4 w-4 mr-2" />
-                    Anexar imagem
-                  </Button>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImagePlus className="h-4 w-4 mr-2" />
+                      Anexar imagem
+                    </Button>
+                  </div>
                 )}
                 <input
                   ref={fileInputRef}
