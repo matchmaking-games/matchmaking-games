@@ -9,45 +9,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCheckStudioSlug } from "@/hooks/useCheckStudioSlug";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
 
 const createStudioSchema = z.object({
-  nome: z.string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(100, "Nome muito longo"),
-  slug: z.string()
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
+  slug: z
+    .string()
     .min(3, "Slug deve ter pelo menos 3 caracteres")
     .max(50, "Slug muito longo")
     .regex(/^[a-z0-9-]+$/, "Use apenas letras minúsculas, números e hífen")
-    .refine(slug => !slug.startsWith('-') && !slug.endsWith('-'),
-      "Slug não pode começar ou terminar com hífen"),
-  estado: z.string()
-    .length(2, "Selecione o estado"),
-  cidade: z.string()
-    .min(1, "Selecione a cidade"),
-  tamanho: z.enum(['micro', 'pequeno', 'medio', 'grande'], {
-    errorMap: () => ({ message: "Selecione o tamanho do estúdio" })
+    .refine((slug) => !slug.startsWith("-") && !slug.endsWith("-"), "Slug não pode começar ou terminar com hífen"),
+  estado: z.string().length(2, "Selecione o estado"),
+  cidade: z.string().min(1, "Selecione a cidade"),
+  tamanho: z.enum(["micro", "pequeno", "medio", "grande"], {
+    errorMap: () => ({ message: "Selecione o tamanho do estúdio" }),
   }),
 });
 
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-    .replace(/[^a-z0-9]+/g, '-')     // Substitui espaços e especiais por hífen
-    .replace(/^-+|-+$/g, '')         // Remove hífens do início/fim
-    .substring(0, 50);               // Limita a 50 caracteres
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[^a-z0-9]+/g, "-") // Substitui espaços e especiais por hífen
+    .replace(/^-+|-+$/g, "") // Remove hífens do início/fim
+    .substring(0, 50); // Limita a 50 caracteres
 }
 
 export default function NewStudio() {
@@ -75,6 +65,31 @@ export default function NewStudio() {
   // Hook de verificação de disponibilidade
   const { isChecking, isAvailable } = useCheckStudioSlug(slug, isSlugFormatValid);
 
+  // Verificar se usuário já tem estúdio
+  useEffect(() => {
+    const checkExistingStudio = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: existingStudio } = await supabase
+        .from("estudios")
+        .select("id")
+        .eq("criado_por", session.user.id)
+        .maybeSingle();
+
+      if (existingStudio) {
+        toast({
+          title: "Você já tem um estúdio",
+          description: "Redirecionando para o dashboard...",
+        });
+        navigate("/studio/manage/dashboard");
+      }
+    };
+
+    checkExistingStudio();
+  }, [navigate, toast]);
 
   // Quando o nome muda, gerar slug automaticamente (se usuário não editou manualmente)
   useEffect(() => {
@@ -85,7 +100,7 @@ export default function NewStudio() {
 
   // Handler para quando usuário edita o slug manualmente
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
     setSlug(value);
     setSlugTouched(true);
   };
@@ -125,7 +140,9 @@ export default function NewStudio() {
     setIsSubmitting(true);
 
     // Buscar ID do usuário
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
       toast({
         title: "Erro",
@@ -137,16 +154,14 @@ export default function NewStudio() {
     }
 
     // Inserir estúdio
-    const { error: insertError } = await supabase
-      .from("estudios")
-      .insert({
-        nome: nome,
-        slug: slug,
-        estado: estado,
-        cidade: cidade,
-        tamanho: tamanho as "micro" | "pequeno" | "medio" | "grande",
-        criado_por: session.user.id,
-      });
+    const { error: insertError } = await supabase.from("estudios").insert({
+      nome: nome,
+      slug: slug,
+      estado: estado,
+      cidade: cidade,
+      tamanho: tamanho as "micro" | "pequeno" | "medio" | "grande",
+      criado_por: session.user.id,
+    });
 
     setIsSubmitting(false);
 
@@ -225,12 +240,8 @@ export default function NewStudio() {
             </Link>
           </Button>
 
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Criar Estúdio
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure a página do seu estúdio para começar a publicar vagas
-          </p>
+          <h1 className="font-display text-3xl font-bold text-foreground">Criar Estúdio</h1>
+          <p className="text-muted-foreground mt-2">Configure a página do seu estúdio para começar a publicar vagas</p>
         </div>
 
         {/* Form Card */}
@@ -246,15 +257,13 @@ export default function NewStudio() {
                     id="nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    placeholder="Ex: Kokku Games"
+                    placeholder="Ex: Nebula Game Studio"
                     className="pl-10 h-11"
                     maxLength={100}
                     disabled={isSubmitting}
                   />
                 </div>
-                {validationErrors.nome && (
-                  <p className="text-sm text-destructive">{validationErrors.nome}</p>
-                )}
+                {validationErrors.nome && <p className="text-sm text-destructive">{validationErrors.nome}</p>}
               </div>
 
               {/* Slug (URL) */}
@@ -275,12 +284,8 @@ export default function NewStudio() {
                   />
                   <div className="px-3">{renderSlugStatus()}</div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Este será o endereço público do seu estúdio
-                </p>
-                {validationErrors.slug && (
-                  <p className="text-sm text-destructive">{validationErrors.slug}</p>
-                )}
+                <p className="text-xs text-muted-foreground">Este será o endereço público do seu estúdio</p>
+                {validationErrors.slug && <p className="text-sm text-destructive">{validationErrors.slug}</p>}
                 {!validationErrors.slug && isSlugFormatValid && isAvailable === false && (
                   <p className="text-sm text-destructive">Este slug já está em uso</p>
                 )}
@@ -293,11 +298,7 @@ export default function NewStudio() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Estado *</Label>
-                  <Select 
-                    value={estado} 
-                    onValueChange={handleEstadoChange}
-                    disabled={loadingEstados || isSubmitting}
-                  >
+                  <Select value={estado} onValueChange={handleEstadoChange} disabled={loadingEstados || isSubmitting}>
                     <SelectTrigger className="h-11">
                       {loadingEstados ? (
                         <div className="flex items-center gap-2">
@@ -316,9 +317,7 @@ export default function NewStudio() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {validationErrors.estado && (
-                    <p className="text-sm text-destructive">{validationErrors.estado}</p>
-                  )}
+                  {validationErrors.estado && <p className="text-sm text-destructive">{validationErrors.estado}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -346,9 +345,7 @@ export default function NewStudio() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {validationErrors.cidade && (
-                    <p className="text-sm text-destructive">{validationErrors.cidade}</p>
-                  )}
+                  {validationErrors.cidade && <p className="text-sm text-destructive">{validationErrors.cidade}</p>}
                 </div>
               </div>
 
@@ -393,17 +390,11 @@ export default function NewStudio() {
                     </Label>
                   </div>
                 </RadioGroup>
-                {validationErrors.tamanho && (
-                  <p className="text-sm text-destructive">{validationErrors.tamanho}</p>
-                )}
+                {validationErrors.tamanho && <p className="text-sm text-destructive">{validationErrors.tamanho}</p>}
               </div>
 
               {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={isButtonDisabled}
-                className="w-full h-12 text-base font-semibold"
-              >
+              <Button type="submit" disabled={isButtonDisabled} className="w-full h-12 text-base font-semibold">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
