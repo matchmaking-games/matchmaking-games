@@ -1321,7 +1321,7 @@ export type Database = {
         | "entrevista"
         | "contratado"
       status_jogo: "lancado" | "em_desenvolvimento" | "cancelado"
-      status_projeto: "em_andamento" | "concluido"
+      status_projeto: "em_andamento" | "concluido" | "pausado"
       tamanho_estudio: "micro" | "pequeno" | "medio" | "grande"
       tipo_educacao:
         | "graduacao"
@@ -1477,7 +1477,7 @@ export const Constants = {
         "contratado",
       ],
       status_jogo: ["lancado", "em_desenvolvimento", "cancelado"],
-      status_projeto: ["em_andamento", "concluido"],
+      status_projeto: ["em_andamento", "concluido", "pausado"],
       tamanho_estudio: ["micro", "pequeno", "medio", "grande"],
       tipo_educacao: [
         "graduacao",
