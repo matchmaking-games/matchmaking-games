@@ -4,6 +4,8 @@ import type { Database } from "@/integrations/supabase/types";
 
 type NivelHabilidade = Database["public"]["Enums"]["nivel_habilidade"];
 
+type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
+
 export interface UserSkill {
   id: string;
   nivel: NivelHabilidade;
@@ -11,7 +13,7 @@ export interface UserSkill {
   habilidade: {
     id: string;
     nome: string;
-    categoria: "engine" | "linguagem" | "ferramenta" | "soft_skill";
+    categoria: CategoriaHabilidade;
   };
 }
 

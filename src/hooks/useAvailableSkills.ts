@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+import type { Database } from "@/integrations/supabase/types";
+
 export interface Habilidade {
   id: string;
   nome: string;
-  categoria: "engine" | "linguagem" | "ferramenta" | "soft_skill";
+  categoria: Database["public"]["Enums"]["categoria_habilidade"];
 }
 
 interface UseAvailableSkillsReturn {

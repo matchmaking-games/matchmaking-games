@@ -468,7 +468,6 @@ export default function ProjectFormPage() {
                   selectedSkillIds={selectedSkillIds}
                   onSkillsChange={setSelectedSkillIds}
                   disabled={isSubmitting}
-                  maxSkills={20}
                 />
 
                 {/* Highlight */}

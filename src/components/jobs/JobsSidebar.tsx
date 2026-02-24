@@ -28,10 +28,8 @@ interface JobsSidebarProps {
 
 function groupSkillsByCategory(skills: Habilidade[]) {
   return {
-    engine: skills.filter((s) => s.categoria === "engine"),
-    linguagem: skills.filter((s) => s.categoria === "linguagem"),
-    ferramenta: skills.filter((s) => s.categoria === "ferramenta"),
-    soft_skill: skills.filter((s) => s.categoria === "soft_skill"),
+    habilidades: skills.filter((s) => s.categoria === "habilidades"),
+    softwares: skills.filter((s) => s.categoria === "softwares"),
   };
 }
 
@@ -67,20 +65,16 @@ export function JobsSidebar({
 
   // Convert skills to combobox options format
   const skillOptions = useMemo(() => ({
-    engine: groupedSkills.engine.map((s) => ({ value: s.id, label: s.nome })),
-    linguagem: groupedSkills.linguagem.map((s) => ({ value: s.id, label: s.nome })),
-    ferramenta: groupedSkills.ferramenta.map((s) => ({ value: s.id, label: s.nome })),
-    soft_skill: groupedSkills.soft_skill.map((s) => ({ value: s.id, label: s.nome })),
+    habilidades: groupedSkills.habilidades.map((s) => ({ value: s.id, label: s.nome })),
+    softwares: groupedSkills.softwares.map((s) => ({ value: s.id, label: s.nome })),
   }), [groupedSkills]);
 
   // Get selected skills per category
   const selectedByCategory = useMemo(() => {
     const selected = filters.habilidades || [];
     return {
-      engine: selected.filter((id) => groupedSkills.engine.some((s) => s.id === id)),
-      linguagem: selected.filter((id) => groupedSkills.linguagem.some((s) => s.id === id)),
-      ferramenta: selected.filter((id) => groupedSkills.ferramenta.some((s) => s.id === id)),
-      soft_skill: selected.filter((id) => groupedSkills.soft_skill.some((s) => s.id === id)),
+      habilidades: selected.filter((id) => groupedSkills.habilidades.some((s) => s.id === id)),
+      softwares: selected.filter((id) => groupedSkills.softwares.some((s) => s.id === id)),
     };
   }, [filters.habilidades, groupedSkills]);
 
@@ -245,62 +239,32 @@ export function JobsSidebar({
           <p className="text-xs text-muted-foreground">Carregando...</p>
         ) : (
           <div className="space-y-3">
-            {/* Engines */}
-            {skillOptions.engine.length > 0 && (
+            {/* Habilidades */}
+            {skillOptions.habilidades.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Engines</Label>
+                <Label className="text-xs text-muted-foreground">Habilidades</Label>
                 <MultiSelectCombobox
-                  options={skillOptions.engine}
-                  selected={selectedByCategory.engine}
-                  onSelectionChange={(ids) => handleCategorySelection("engine", ids)}
-                  placeholder="Selecione engines..."
-                  searchPlaceholder="Buscar engine..."
-                  emptyMessage="Nenhuma engine encontrada"
+                  options={skillOptions.habilidades}
+                  selected={selectedByCategory.habilidades}
+                  onSelectionChange={(ids) => handleCategorySelection("habilidades", ids)}
+                  placeholder="Selecione habilidades..."
+                  searchPlaceholder="Buscar habilidade..."
+                  emptyMessage="Nenhuma habilidade encontrada"
                 />
               </div>
             )}
 
-            {/* Linguagens */}
-            {skillOptions.linguagem.length > 0 && (
+            {/* Softwares */}
+            {skillOptions.softwares.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Linguagens</Label>
+                <Label className="text-xs text-muted-foreground">Softwares</Label>
                 <MultiSelectCombobox
-                  options={skillOptions.linguagem}
-                  selected={selectedByCategory.linguagem}
-                  onSelectionChange={(ids) => handleCategorySelection("linguagem", ids)}
-                  placeholder="Selecione linguagens..."
-                  searchPlaceholder="Buscar linguagem..."
-                  emptyMessage="Nenhuma linguagem encontrada"
-                />
-              </div>
-            )}
-
-            {/* Ferramentas */}
-            {skillOptions.ferramenta.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Ferramentas</Label>
-                <MultiSelectCombobox
-                  options={skillOptions.ferramenta}
-                  selected={selectedByCategory.ferramenta}
-                  onSelectionChange={(ids) => handleCategorySelection("ferramenta", ids)}
-                  placeholder="Selecione ferramentas..."
-                  searchPlaceholder="Buscar ferramenta..."
-                  emptyMessage="Nenhuma ferramenta encontrada"
-                />
-              </div>
-            )}
-
-            {/* Soft Skills */}
-            {skillOptions.soft_skill.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Soft Skills</Label>
-                <MultiSelectCombobox
-                  options={skillOptions.soft_skill}
-                  selected={selectedByCategory.soft_skill}
-                  onSelectionChange={(ids) => handleCategorySelection("soft_skill", ids)}
-                  placeholder="Selecione soft skills..."
-                  searchPlaceholder="Buscar soft skill..."
-                  emptyMessage="Nenhuma soft skill encontrada"
+                  options={skillOptions.softwares}
+                  selected={selectedByCategory.softwares}
+                  onSelectionChange={(ids) => handleCategorySelection("softwares", ids)}
+                  placeholder="Selecione softwares..."
+                  searchPlaceholder="Buscar software..."
+                  emptyMessage="Nenhum software encontrado"
                 />
               </div>
             )}
