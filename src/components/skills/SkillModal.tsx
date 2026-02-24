@@ -116,8 +116,8 @@ export function SkillModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="flex flex-col h-[90dvh] sm:h-[85vh] sm:max-w-[425px] overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}
           </DialogTitle>
@@ -128,7 +128,7 @@ export function SkillModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea type="always" className="flex-1 min-h-0">
           <div className="space-y-6 py-4 pr-4">
           {/* Tabs + Command selector */}
           <div className="space-y-2">
@@ -235,7 +235,7 @@ export function SkillModal({
           </div>
         </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0 border-t p-6 pt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
