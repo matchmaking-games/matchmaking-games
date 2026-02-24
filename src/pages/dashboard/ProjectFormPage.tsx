@@ -22,13 +22,14 @@ import { ProjectSkillsSelect } from "@/components/projects/ProjectSkillsSelect";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
 
+// Fix 8: added "pausado" to status enum
 const projectSchema = z.object({
   titulo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   slug: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   descricao: z.string().max(300, "Máximo 300 caracteres").optional().or(z.literal("")),
-  status: z.enum(["em_andamento", "concluido"]),
+  status: z.enum(["em_andamento", "concluido", "pausado"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   destaque: z.boolean().default(false),
@@ -64,6 +65,8 @@ export default function ProjectFormPage() {
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const tempProjectIdRef = useRef<string | null>(null);
   const [richContent, setRichContent] = useState<string | null>(null);
+  // Fix 6: track rich content dirty state
+  const [richContentDirty, setRichContentDirty] = useState(false);
 
   // Fetch user info
   useEffect(() => {
@@ -115,6 +118,7 @@ export default function ProjectFormPage() {
       const skillIds = editingProject.projeto_habilidades?.map((ph) => ph.habilidade_id) || [];
       setSelectedSkillIds(skillIds);
       setRichContent(editingProject.descricao_rich ? JSON.stringify(editingProject.descricao_rich) : null);
+      setRichContentDirty(false);
     }
   }, [editingProject, form]);
 
@@ -150,7 +154,29 @@ export default function ProjectFormPage() {
     [editingProject, form],
   );
 
+  // Fix 6: unsaved changes warning
+  const handleNavigateBack = useCallback(() => {
+    const isDirty = form.formState.isDirty || richContentDirty;
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "Você tem alterações não salvas. Se sair agora, elas serão perdidas. Deseja continuar?"
+      );
+      if (!confirmed) return;
+    }
+    navigate("/dashboard/profile/projects");
+  }, [form.formState.isDirty, richContentDirty, navigate]);
+
   const onSubmit = async (values: ProjectFormValues) => {
+    // Fix 4: validate rich content is not empty
+    if (!richContent || richContent === JSON.stringify([{ type: "paragraph", content: [] }])) {
+      toast({
+        title: "Descrição obrigatória",
+        description: "Escreva a descrição do projeto antes de salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const projectData = {
@@ -181,6 +207,9 @@ export default function ProjectFormPage() {
       }
 
       toast({ title: editingProject ? "Projeto atualizado com sucesso!" : "Projeto criado com sucesso!" });
+      // Fix 6: reset dirty states before navigating
+      setRichContentDirty(false);
+      form.reset(values);
       navigate("/dashboard/profile/projects");
     } catch {
       toast({
@@ -203,7 +232,8 @@ export default function ProjectFormPage() {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
-          <Button variant="ghost" onClick={() => navigate("/dashboard/profile/projects")} className="mb-4">
+          {/* Fix 6: use handleNavigateBack */}
+          <Button variant="ghost" onClick={handleNavigateBack} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para projetos
           </Button>
@@ -220,18 +250,21 @@ export default function ProjectFormPage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate("/dashboard/profile/projects")} className="mb-4">
+        {/* Fix 6: use handleNavigateBack */}
+        <Button variant="ghost" onClick={handleNavigateBack} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar para projetos
         </Button>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-display text-2xl">{isEditing ? "Editar Projeto" : "Novo Projeto"}</CardTitle>
-              </CardHeader>
+          {/* Fix 1: Card wraps both form and editor separately */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-2xl">{isEditing ? "Editar Projeto" : "Novo Projeto"}</CardTitle>
+            </CardHeader>
 
+            {/* Form fields inside <form> */}
+            <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-4">
                 {/* Title */}
                 <FormField
@@ -255,7 +288,7 @@ export default function ProjectFormPage() {
                   )}
                 />
 
-                {/* Slug */}
+                {/* Slug — Fix 5: corrected URL preview */}
                 <FormField
                   control={form.control}
                   name="slug"
@@ -269,7 +302,7 @@ export default function ProjectFormPage() {
                       </FormControl>
                       {slugValue && userSlug && (
                         <p className="text-xs text-muted-foreground">
-                          matchmaking.games/p/{userSlug}#{slugValue}
+                          matchmaking.games/p/{userSlug}/project/{slugValue}
                         </p>
                       )}
                       <FormMessage />
@@ -357,22 +390,7 @@ export default function ProjectFormPage() {
                   )}
                 />
 
-                {/* Rich Text Editor */}
-                <div className="space-y-2">
-                  <Label>Descreva seu projeto/jogo com detalhes</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Use este espaço para detalhar o projeto. Suporta texto formatado, listas, imagens e vídeos do
-                    YouTube.
-                  </p>
-                  <div className="min-h-[300px] rounded-md border border-border">
-                    <RichTextEditor
-                      initialContent={richContent ?? undefined}
-                      onChange={(json) => setRichContent(json)}
-                    />
-                  </div>
-                </div>
-
-                {/* Status */}
+                {/* Status — Fix 8: added "Pausado" option */}
                 <FormField
                   control={form.control}
                   name="status"
@@ -397,6 +415,12 @@ export default function ProjectFormPage() {
                             <RadioGroupItem value="concluido" id="concluido" />
                             <Label htmlFor="concluido" className="font-normal">
                               Concluído
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="pausado" id="pausado" />
+                            <Label htmlFor="pausado" className="font-normal">
+                              Pausado
                             </Label>
                           </div>
                         </RadioGroup>
@@ -439,12 +463,12 @@ export default function ProjectFormPage() {
                   />
                 </div>
 
-                {/* Skills */}
+                {/* Skills — Fix 7: maxSkills 20 */}
                 <ProjectSkillsSelect
                   selectedSkillIds={selectedSkillIds}
                   onSkillsChange={setSelectedSkillIds}
                   disabled={isSubmitting}
-                  maxSkills={10}
+                  maxSkills={20}
                 />
 
                 {/* Highlight */}
@@ -473,31 +497,56 @@ export default function ProjectFormPage() {
                   )}
                 />
               </CardContent>
+            </form>
 
-              <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end border-t pt-6">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => navigate("/dashboard/profile/projects")}
-                  className="w-full sm:w-auto"
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : isEditing ? (
-                    "Salvar Alterações"
-                  ) : (
-                    "Salvar Projeto"
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
+            {/* Fix 1+2+3: Rich Text Editor OUTSIDE <form>, at the end, no border */}
+            <CardContent className="space-y-2">
+              <Label>
+                Descrição do Projeto <span className="text-destructive">*</span>
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Descreva o projeto com detalhes. Suporta texto formatado, listas, imagens e vídeos do YouTube.
+              </p>
+              <div className="min-h-[300px]">
+                <RichTextEditor
+                  initialContent={richContent ?? undefined}
+                  onChange={(json) => {
+                    setRichContent(json);
+                    setRichContentDirty(true);
+                  }}
+                />
+              </div>
+            </CardContent>
+
+            {/* Fix 1: buttons outside form, Salvar uses onClick */}
+            <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end border-t pt-6">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleNavigateBack}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => form.handleSubmit(onSubmit)()}
+                className="w-full sm:w-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : isEditing ? (
+                  "Salvar Alterações"
+                ) : (
+                  "Salvar Projeto"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
         </Form>
       </div>
     </DashboardLayout>

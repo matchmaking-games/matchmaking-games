@@ -27,7 +27,7 @@ const projectSchema = z.object({
   tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   descricao: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
-  status: z.enum(["em_andamento", "concluido"]),
+  status: z.enum(["em_andamento", "concluido", "pausado"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   video_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
