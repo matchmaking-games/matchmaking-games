@@ -27,7 +27,6 @@ const projectSchema = z.object({
   tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   descricao: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
-  descricao_rich: z.unknown().optional(),
   status: z.enum(["em_andamento", "concluido"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   video_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
@@ -71,7 +70,7 @@ export function ProjectForm({
   const [previousGeneratedSlug, setPreviousGeneratedSlug] = useState("");
   const [userSlug, setUserSlug] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  
+
   // State for skills and temp project ID
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
   const tempProjectIdRef = useRef<string | null>(null);
@@ -99,7 +98,6 @@ export function ProjectForm({
       tipo: "profissional",
       papel: "",
       descricao: "",
-      descricao_rich: undefined,
       status: "em_andamento",
       demo_url: "",
       video_url: "",
@@ -176,13 +174,16 @@ export function ProjectForm({
     [debouncedGenerateSlug],
   );
 
-  const handleImageUploaded = useCallback((url: string | null, usedProjectId: string) => {
-    form.setValue("imagem_capa_url", url);
-    // Store the project ID used for upload (for new projects)
-    if (!editingProject) {
-      tempProjectIdRef.current = usedProjectId;
-    }
-  }, [editingProject, form]);
+  const handleImageUploaded = useCallback(
+    (url: string | null, usedProjectId: string) => {
+      form.setValue("imagem_capa_url", url);
+      // Store the project ID used for upload (for new projects)
+      if (!editingProject) {
+        tempProjectIdRef.current = usedProjectId;
+      }
+    },
+    [editingProject, form],
+  );
 
   const onSubmit = async (values: ProjectFormValues) => {
     setIsSubmitting(true);
@@ -196,7 +197,6 @@ export function ProjectForm({
         tipo: values.tipo,
         papel: values.papel || null,
         descricao: values.descricao || null,
-        descricao_rich: (values.descricao_rich as import("@/integrations/supabase/types").Json) ?? null,
         status: values.status,
         demo_url: values.demo_url || null,
         video_url: values.video_url || null,
@@ -209,9 +209,7 @@ export function ProjectForm({
         project = await updateProject(editingProject.id, projectData);
       } else {
         // Use temp project ID if image was uploaded
-        const createData = tempProjectIdRef.current
-          ? { ...projectData, id: tempProjectIdRef.current }
-          : projectData;
+        const createData = tempProjectIdRef.current ? { ...projectData, id: tempProjectIdRef.current } : projectData;
         project = await createProject(createData);
       }
 
@@ -355,7 +353,7 @@ export function ProjectForm({
                   name="descricao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>Descrição breve</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Jogo de nave arcade com mecânicas roguelike..."
@@ -367,9 +365,7 @@ export function ProjectForm({
                       </FormControl>
                       <div className="flex justify-between">
                         <FormMessage />
-                        <span className="text-xs text-muted-foreground">
-                          {descricaoValue.length}/1000 caracteres
-                        </span>
+                        <span className="text-xs text-muted-foreground">{descricaoValue.length}/1000 caracteres</span>
                       </div>
                     </FormItem>
                   )}
