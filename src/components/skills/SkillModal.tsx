@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Check, ChevronsUpDown, Gamepad2, Code, Wrench, Brain } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import type { UserSkill } from "@/hooks/useSkills";
 import type { Database } from "@/integrations/supabase/types";
 
 type NivelHabilidade = Database["public"]["Enums"]["nivel_habilidade"];
+type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
 
 interface SkillModalProps {
   open: boolean;
@@ -40,24 +41,99 @@ interface SkillModalProps {
   onSave: (habilidadeId: string, nivel: NivelHabilidade) => Promise<void>;
 }
 
-const skillFormSchema = z.object({
-  habilidade_id: z.string().uuid("Selecione uma habilidade"),
-  nivel: z.enum(["basico", "intermediario", "avancado", "expert"]),
-});
-
-const categoryConfig = {
-  engine: { label: "Engines", icon: Gamepad2 },
-  linguagem: { label: "Linguagens", icon: Code },
-  ferramenta: { label: "Ferramentas", icon: Wrench },
-  soft_skill: { label: "Soft Skills", icon: Brain },
-};
-
 const levelOptions = [
   { value: "basico", label: "Básico", description: "Conhecimento básico, ainda aprendendo" },
   { value: "intermediario", label: "Intermediário", description: "Uso frequentemente, confortável" },
   { value: "avancado", label: "Avançado", description: "Domínio profissional, posso ensinar" },
   { value: "expert", label: "Expert", description: "Referência na área, anos de experiência" },
 ] as const;
+
+interface CategoryComboboxProps {
+  label: string;
+  placeholder: string;
+  skills: Habilidade[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+  existingSkillIds: string[];
+  isEditMode: boolean;
+  loading: boolean;
+}
+
+function CategoryCombobox({
+  label,
+  placeholder,
+  skills,
+  selectedId,
+  onSelect,
+  existingSkillIds,
+  isEditMode,
+  loading,
+}: CategoryComboboxProps) {
+  const [open, setOpen] = useState(false);
+  const selected = skills.find((s) => s.id === selectedId);
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Popover open={open} onOpenChange={setOpen} modal>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between"
+            disabled={isEditMode || loading}
+          >
+            <span className="truncate">
+              {selected ? selected.nome : placeholder}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar..." />
+            <CommandList>
+              <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
+              <CommandGroup>
+                {skills.map((skill) => {
+                  const isDisabled = !isEditMode && existingSkillIds.includes(skill.id);
+                  return (
+                    <CommandItem
+                      key={skill.id}
+                      value={skill.nome}
+                      disabled={isDisabled}
+                      onSelect={() => {
+                        if (!isDisabled) {
+                          onSelect(skill.id);
+                          setOpen(false);
+                        }
+                      }}
+                      className={cn(isDisabled && "opacity-50")}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedId === skill.id ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {skill.nome}
+                      {isDisabled && (
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          Já adicionada
+                        </span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 export function SkillModal({
   open,
@@ -69,13 +145,22 @@ export function SkillModal({
   const { availableSkills, loading: loadingSkills } = useAvailableSkills();
   const [selectedSkillId, setSelectedSkillId] = useState<string>("");
   const [selectedLevel, setSelectedLevel] = useState<NivelHabilidade>("intermediario");
-  const [comboboxOpen, setComboboxOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<{ habilidade_id?: string; nivel?: string }>({});
+  const [error, setError] = useState<string | null>(null);
 
   const isEditMode = !!editingSkill;
 
-  // Reset form when modal opens/closes or editing skill changes
+  const habilidadeSkills = availableSkills.filter((s) => s.categoria === "habilidades");
+  const softwareSkills = availableSkills.filter((s) => s.categoria === "softwares");
+
+  // Determine which category the selected skill belongs to
+  const selectedSkill = availableSkills.find((s) => s.id === selectedSkillId);
+  const selectedCategory = selectedSkill?.categoria;
+
+  // Separate IDs per combobox based on selected skill's category
+  const habilidadeSelectedId = selectedCategory === "habilidades" ? selectedSkillId : "";
+  const softwareSelectedId = selectedCategory === "softwares" ? selectedSkillId : "";
+
   useEffect(() => {
     if (open) {
       if (editingSkill) {
@@ -85,41 +170,33 @@ export function SkillModal({
         setSelectedSkillId("");
         setSelectedLevel("intermediario");
       }
-      setErrors({});
+      setError(null);
     }
   }, [open, editingSkill]);
 
-  // Group skills by category
-  const groupedSkills = availableSkills.reduce((acc, skill) => {
-    if (!acc[skill.categoria]) {
-      acc[skill.categoria] = [];
-    }
-    acc[skill.categoria].push(skill);
-    return acc;
-  }, {} as Record<string, Habilidade[]>);
+  const handleSelectSkill = (id: string) => {
+    setSelectedSkillId(id);
+    setError(null);
+  };
 
-  const selectedSkill = availableSkills.find((s) => s.id === selectedSkillId);
+  const handleClearAndSelect = (id: string, categoria: CategoriaHabilidade) => {
+    // If user selects from the other category, clear previous selection
+    if (selectedCategory && selectedCategory !== categoria) {
+      setSelectedSkillId(id);
+    } else {
+      setSelectedSkillId(id);
+    }
+    setError(null);
+  };
 
   const handleSave = async () => {
-    // Validate
-    const result = skillFormSchema.safeParse({
-      habilidade_id: selectedSkillId,
-      nivel: selectedLevel,
-    });
-
-    if (!result.success) {
-      const fieldErrors: { habilidade_id?: string; nivel?: string } = {};
-      result.error.errors.forEach((err) => {
-        const field = err.path[0] as string;
-        fieldErrors[field as keyof typeof fieldErrors] = err.message;
-      });
-      setErrors(fieldErrors);
+    if (!selectedSkillId) {
+      setError("Selecione pelo menos uma habilidade ou software.");
       return;
     }
 
-    // Check for duplicates (only in create mode)
     if (!isEditMode && existingSkillIds.includes(selectedSkillId)) {
-      setErrors({ habilidade_id: "Você já adicionou esta habilidade" });
+      setError("Você já adicionou esta habilidade.");
       return;
     }
 
@@ -144,95 +221,35 @@ export function SkillModal({
           <DialogDescription>
             {isEditMode
               ? "Atualize o nível de proficiência desta habilidade."
-              : "Selecione uma habilidade e seu nível de proficiência."}
+              : "Selecione uma habilidade ou software e seu nível de proficiência."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Skill Combobox */}
-          <div className="space-y-2">
-            <Label>Habilidade</Label>
-            <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={comboboxOpen}
-                  className="w-full justify-between"
-                  disabled={isEditMode || loadingSkills}
-                >
-                  {selectedSkill ? selectedSkill.nome : "Selecione uma habilidade..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                <Command>
-                  <CommandInput placeholder="Buscar habilidade..." />
-                  <CommandList>
-                    <CommandEmpty>Nenhuma habilidade encontrada.</CommandEmpty>
-                    {(Object.keys(categoryConfig) as Array<keyof typeof categoryConfig>).map(
-                      (category) => {
-                        const skills = groupedSkills[category] || [];
-                        if (skills.length === 0) return null;
-
-                        const config = categoryConfig[category];
-                        const CategoryIcon = config.icon;
-
-                        return (
-                          <CommandGroup
-                            key={category}
-                            heading={
-                              <span className="flex items-center gap-2">
-                                <CategoryIcon className="h-4 w-4" />
-                                {config.label}
-                              </span>
-                            }
-                          >
-                            {skills.map((skill) => {
-                              const isDisabled =
-                                !isEditMode && existingSkillIds.includes(skill.id);
-
-                              return (
-                                <CommandItem
-                                  key={skill.id}
-                                  value={skill.nome}
-                                  disabled={isDisabled}
-                                  onSelect={() => {
-                                    if (!isDisabled) {
-                                      setSelectedSkillId(skill.id);
-                                      setComboboxOpen(false);
-                                      setErrors((prev) => ({ ...prev, habilidade_id: undefined }));
-                                    }
-                                  }}
-                                  className={cn(isDisabled && "opacity-50")}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      selectedSkillId === skill.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  {skill.nome}
-                                  {isDisabled && (
-                                    <span className="ml-auto text-xs text-muted-foreground">
-                                      Já adicionada
-                                    </span>
-                                  )}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        );
-                      }
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {errors.habilidade_id && (
-              <p className="text-sm text-destructive">{errors.habilidade_id}</p>
-            )}
+        <div className="space-y-6 py-4 overflow-y-auto">
+          {/* Two category inputs side by side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CategoryCombobox
+              label="Habilidade"
+              placeholder="Selecione..."
+              skills={habilidadeSkills}
+              selectedId={habilidadeSelectedId}
+              onSelect={(id) => handleClearAndSelect(id, "habilidades")}
+              existingSkillIds={existingSkillIds}
+              isEditMode={isEditMode && selectedCategory === "softwares"}
+              loading={loadingSkills}
+            />
+            <CategoryCombobox
+              label="Software"
+              placeholder="Selecione..."
+              skills={softwareSkills}
+              selectedId={softwareSelectedId}
+              onSelect={(id) => handleClearAndSelect(id, "softwares")}
+              existingSkillIds={existingSkillIds}
+              isEditMode={isEditMode && selectedCategory === "habilidades"}
+              loading={loadingSkills}
+            />
           </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           {/* Level Radio Group */}
           <div className="space-y-3">
@@ -258,7 +275,6 @@ export function SkillModal({
                 </div>
               ))}
             </RadioGroup>
-            {errors.nivel && <p className="text-sm text-destructive">{errors.nivel}</p>}
           </div>
         </div>
 
