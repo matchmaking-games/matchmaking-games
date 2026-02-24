@@ -1344,6 +1344,7 @@ export type Database = {
     }
     Functions: {
       accept_studio_invite: { Args: { invite_token: string }; Returns: Json }
+      check_email_exists: { Args: { email_to_check: string }; Returns: boolean }
       check_slug_availability: {
         Args: { slug_to_check: string }
         Returns: boolean
