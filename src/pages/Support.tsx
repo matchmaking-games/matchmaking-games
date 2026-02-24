@@ -3,6 +3,7 @@ import { Loader2, ImagePlus, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +20,7 @@ export default function Support() {
   const { toast } = useToast();
   const { submitForm, isSubmitting, isSuccess, resetSuccess, tipos } = useSupportForm();
 
+  const [assunto, setAssunto] = useState("");
   const [tipo, setTipo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [imagem, setImagem] = useState<File | null>(null);
@@ -54,6 +56,7 @@ export default function Support() {
   };
 
   const resetForm = () => {
+    setAssunto("");
     setTipo("");
     setMensagem("");
     removeImage();
@@ -65,7 +68,7 @@ export default function Support() {
     e.preventDefault();
     setErrors({});
 
-    const result = supportFormSchema.safeParse({ tipo, mensagem });
+    const result = supportFormSchema.safeParse({ assunto, tipo, mensagem });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
@@ -105,6 +108,21 @@ export default function Support() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Assunto */}
+              <div className="space-y-2">
+                <Label htmlFor="assunto">Assunto</Label>
+                <Input
+                  id="assunto"
+                  value={assunto}
+                  onChange={(e) => setAssunto(e.target.value)}
+                  placeholder="Descreva brevemente o motivo do contato"
+                  maxLength={100}
+                />
+                {errors.assunto && (
+                  <p className="text-sm text-destructive">{errors.assunto}</p>
+                )}
+              </div>
+
               {/* Tipo */}
               <div className="space-y-2">
                 <Label htmlFor="tipo">Tipo</Label>
