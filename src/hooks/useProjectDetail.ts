@@ -45,13 +45,10 @@ export interface ProjectDetailData {
   studios: ProjectStudio[];
 }
 
-async function fetchProjectDetail(
-  userSlug: string,
-  projectSlug: string
-): Promise<ProjectDetailData | null> {
+async function fetchProjectDetail(userSlug: string, projectSlug: string): Promise<ProjectDetailData | null> {
   // 1. Fetch user by slug
   const { data: user, error: userError } = await supabase
-    .from("users")
+    .from("public_profiles")
     .select("id, nome_completo, titulo_profissional, avatar_url, slug")
     .eq("slug", userSlug)
     .single();
@@ -61,20 +58,22 @@ async function fetchProjectDetail(
   // 2. Fetch project by slug (fallback to id)
   let projectQuery = supabase
     .from("projetos")
-    .select("id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
+    .select(
+      "id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug",
+    )
     .eq("user_id", user.id);
 
   // Try slug first, fallback to id
-  const { data: projectBySlug } = await projectQuery
-    .eq("slug", projectSlug)
-    .maybeSingle();
+  const { data: projectBySlug } = await projectQuery.eq("slug", projectSlug).maybeSingle();
 
   let project = projectBySlug;
 
   if (!project) {
     const { data: projectById } = await supabase
       .from("projetos")
-      .select("id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
+      .select(
+        "id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug",
+      )
       .eq("user_id", user.id)
       .eq("id", projectSlug)
       .maybeSingle();
@@ -90,9 +89,7 @@ async function fetchProjectDetail(
     .select("habilidade_id, habilidades(id, nome, categoria, icone_url)")
     .eq("projeto_id", project.id);
 
-  const skills: ProjectSkill[] = (skillLinks || [])
-    .map((link: any) => link.habilidades)
-    .filter(Boolean);
+  const skills: ProjectSkill[] = (skillLinks || []).map((link: any) => link.habilidades).filter(Boolean);
 
   // 4. Fetch studios
   const { data: studioLinks } = await supabase
@@ -100,9 +97,7 @@ async function fetchProjectDetail(
     .select("estudio_id, estudios(id, nome, slug, logo_url)")
     .eq("projeto_id", project.id);
 
-  const studios: ProjectStudio[] = (studioLinks || [])
-    .map((link: any) => link.estudios)
-    .filter(Boolean);
+  const studios: ProjectStudio[] = (studioLinks || []).map((link: any) => link.estudios).filter(Boolean);
 
   return {
     project,
