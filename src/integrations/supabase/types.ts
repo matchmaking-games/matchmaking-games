@@ -837,6 +837,7 @@ export type Database = {
           criado_em: string | null
           demo_url: string | null
           descricao: string | null
+          descricao_rich: Json | null
           destaque: boolean | null
           fim: string | null
           id: string
@@ -858,6 +859,7 @@ export type Database = {
           criado_em?: string | null
           demo_url?: string | null
           descricao?: string | null
+          descricao_rich?: Json | null
           destaque?: boolean | null
           fim?: string | null
           id?: string
@@ -879,6 +881,7 @@ export type Database = {
           criado_em?: string | null
           demo_url?: string | null
           descricao?: string | null
+          descricao_rich?: Json | null
           destaque?: boolean | null
           fim?: string | null
           id?: string
