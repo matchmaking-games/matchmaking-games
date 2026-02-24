@@ -35,7 +35,7 @@ export default function Dashboard() {
         { label: "Título profissional", complete: !!user.titulo_profissional?.trim(), href: "/dashboard/profile" },
         { label: "Bio", complete: !!user.bio_curta?.trim(), href: "/dashboard/profile" },
         { label: "Localização", complete: !!user.cidade?.trim(), href: "/dashboard/profile" },
-        { label: "Habilidades", complete: skillsCount > 0, href: "/dashboard/skills" },
+        { label: "Habilidades", complete: skillsCount > 0, href: "/dashboard/profile/skills" },
       ]
     : [];
 
@@ -60,9 +60,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">
-                      {percentage}% completo
-                    </span>
+                    <span className="text-sm font-medium text-foreground">{percentage}% completo</span>
                   </div>
                   <Progress value={percentage} className="h-2" />
 
@@ -107,16 +105,8 @@ export default function Dashboard() {
           <h2 className="font-display text-2xl font-bold text-foreground mb-4">Ações rápidas</h2>
           <Card>
             <CardContent className="pt-6 grid gap-3 sm:grid-cols-3">
-              <Button
-                variant="outline"
-                className="h-auto py-4 flex flex-col items-center gap-2"
-                asChild
-              >
-                <a
-                  href={user ? `/p/${user.slug}` : "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+              <Button variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" asChild>
+                <a href={user ? `/p/${user.slug}` : "#"} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-5 w-5" />
                   <span className="text-sm font-medium">Ver meu portfólio</span>
                 </a>
