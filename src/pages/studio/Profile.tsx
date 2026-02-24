@@ -254,6 +254,15 @@ export default function StudioProfile() {
   const handleLogoUpload = async (file: File) => {
     if (!membership?.estudio.id) return;
 
+    if (membership.role !== "super_admin") {
+      toast({
+        title: "Sem permissão",
+        description: "Apenas o administrador do estúdio pode alterar o logo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       toast({
@@ -424,27 +433,29 @@ export default function StudioProfile() {
                     </div>
                   )}
                 </div>
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingLogo}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    Alterar foto
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    JPG, PNG ou WebP. Máximo 3MB.
-                  </p>
-                </div>
+                {membership?.role === "super_admin" && (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingLogo}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Alterar foto
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      JPG, PNG ou WebP. Máximo 3MB.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Basic Info Section */}
