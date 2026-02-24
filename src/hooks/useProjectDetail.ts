@@ -38,6 +38,7 @@ export interface ProjectDetailData {
     demo_url: string | null;
     codigo_url: string | null;
     slug: string | null;
+    descricao_rich: any | null;
   };
   owner: ProjectOwner;
   skills: ProjectSkill[];
@@ -60,7 +61,7 @@ async function fetchProjectDetail(
   // 2. Fetch project by slug (fallback to id)
   let projectQuery = supabase
     .from("projetos")
-    .select("id, titulo, descricao, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
+    .select("id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
     .eq("user_id", user.id);
 
   // Try slug first, fallback to id
@@ -73,7 +74,7 @@ async function fetchProjectDetail(
   if (!project) {
     const { data: projectById } = await supabase
       .from("projetos")
-      .select("id, titulo, descricao, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
+      .select("id, titulo, descricao, descricao_rich, tipo, status, papel, inicio, fim, imagem_capa_url, video_url, demo_url, codigo_url, slug")
       .eq("user_id", user.id)
       .eq("id", projectSlug)
       .maybeSingle();
