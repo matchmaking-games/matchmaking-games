@@ -6,6 +6,10 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 const TIPOS = ["Bugs", "Sugestões", "Dúvidas", "Parcerias", "Outros"] as const;
 
 export const supportFormSchema = z.object({
+  assunto: z
+    .string()
+    .min(5, "O assunto deve ter pelo menos 5 caracteres.")
+    .max(100, "O assunto deve ter no máximo 100 caracteres."),
   tipo: z.enum(TIPOS, { required_error: "Selecione o tipo da mensagem." }),
   mensagem: z
     .string()
@@ -45,6 +49,7 @@ export function useSupportForm() {
       const email = sessionData.session?.user?.email ?? "";
 
       const formData = new FormData();
+      formData.append("assunto", data.assunto);
       formData.append("tipo", data.tipo);
       formData.append("mensagem", data.mensagem);
       formData.append("nome", user.nome_completo);

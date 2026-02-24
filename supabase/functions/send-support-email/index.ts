@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
   try {
     const formData = await req.formData();
 
+    const assunto = formData.get("assunto") as string;
     const tipo = formData.get("tipo") as string;
     const mensagem = formData.get("mensagem") as string;
     const nome = formData.get("nome") as string;
@@ -49,6 +50,9 @@ Deno.serve(async (req) => {
         <h3 style="margin-top: 24px;">📋 Tipo</h3>
         <p>${tipo}</p>
 
+        <h3 style="margin-top: 24px;">📝 Assunto</h3>
+        <p>${assunto}</p>
+
         <h3 style="margin-top: 24px;">👤 Remetente</h3>
         <p>
           <strong>Nome:</strong> ${nome}<br/>
@@ -73,7 +77,7 @@ Deno.serve(async (req) => {
       from: "Matchmaking <noreply@matchmaking.games>",
       to: ["lucas.pimenta@matchmaking.games"],
       reply_to: email,
-      subject: `[${tipo}] Novo ticket de suporte — ${nome}`,
+      subject: `[${tipo}] ${assunto}`,
       html: htmlBody,
     };
 
