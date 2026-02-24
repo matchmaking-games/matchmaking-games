@@ -1229,67 +1229,115 @@ export type Database = {
     Views: {
       public_profiles: {
         Row: {
+          artstation_url: string | null
           avatar_url: string | null
           banner_url: string | null
+          behance_url: string | null
           bio_curta: string | null
           cidade: string | null
           disponivel_para_trabalho: boolean | null
+          dribbble_url: string | null
           email: string | null
           estado: string | null
+          facebook_url: string | null
           github_url: string | null
           id: string | null
+          instagram_url: string | null
+          itch_url: string | null
           linkedin_url: string | null
+          mostrar_email: boolean | null
+          mostrar_telefone: boolean | null
           nome_completo: string | null
+          pinterest_url: string | null
           portfolio_url: string | null
           pronomes: string | null
           slug: string | null
+          sobre: string | null
+          steam_url: string | null
+          telefone: string | null
+          telegram_url: string | null
           tipo_trabalho_preferido:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional: string | null
+          twitch_url: string | null
+          twitter_url: string | null
           website: string | null
+          youtube_url: string | null
         }
         Insert: {
+          artstation_url?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          behance_url?: string | null
           bio_curta?: string | null
           cidade?: string | null
           disponivel_para_trabalho?: boolean | null
-          email?: string | null
+          dribbble_url?: string | null
+          email?: never
           estado?: string | null
+          facebook_url?: string | null
           github_url?: string | null
           id?: string | null
+          instagram_url?: string | null
+          itch_url?: string | null
           linkedin_url?: string | null
+          mostrar_email?: boolean | null
+          mostrar_telefone?: boolean | null
           nome_completo?: string | null
+          pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
           slug?: string | null
+          sobre?: string | null
+          steam_url?: string | null
+          telefone?: never
+          telegram_url?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          artstation_url?: string | null
           avatar_url?: string | null
           banner_url?: string | null
+          behance_url?: string | null
           bio_curta?: string | null
           cidade?: string | null
           disponivel_para_trabalho?: boolean | null
-          email?: string | null
+          dribbble_url?: string | null
+          email?: never
           estado?: string | null
+          facebook_url?: string | null
           github_url?: string | null
           id?: string | null
+          instagram_url?: string | null
+          itch_url?: string | null
           linkedin_url?: string | null
+          mostrar_email?: boolean | null
+          mostrar_telefone?: boolean | null
           nome_completo?: string | null
+          pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
           slug?: string | null
+          sobre?: string | null
+          steam_url?: string | null
+          telefone?: never
+          telegram_url?: string | null
           tipo_trabalho_preferido?:
             | Database["public"]["Enums"]["tipo_trabalho"][]
             | null
           titulo_profissional?: string | null
+          twitch_url?: string | null
+          twitter_url?: string | null
           website?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

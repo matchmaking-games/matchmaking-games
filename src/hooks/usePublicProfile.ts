@@ -133,7 +133,7 @@ export interface PublicProfileData {
 async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   // 1. Buscar usuário pelo slug
   const { data: user, error: userError } = await supabase
-    .from("users")
+    .from("public_profiles")
     .select(`
       id, nome_completo, titulo_profissional,
       bio_curta, sobre, estado, cidade, avatar_url, banner_url,
