@@ -10,14 +10,18 @@ interface SkillCardProps {
   onDelete: (skill: UserSkill) => void;
 }
 
-const categoryIcons = {
+const categoryIcons: Record<string, typeof Gamepad2> = {
+  habilidades: Brain,
+  softwares: Wrench,
   engine: Gamepad2,
   linguagem: Code,
   ferramenta: Wrench,
   soft_skill: Brain,
 };
 
-const categoryLabels = {
+const categoryLabels: Record<string, string> = {
+  habilidades: "Habilidade",
+  softwares: "Software",
   engine: "Engine",
   linguagem: "Linguagem",
   ferramenta: "Ferramenta",
