@@ -1,59 +1,111 @@
 
 
-## TASK-907: Integrar RichTextViewer no ProjectDetail
+## Fix: Correcoes no ProjectFormPage
 
-Duas alteracoes em arquivos existentes. Nenhum arquivo novo.
-
----
-
-### Arquivo 1: `src/hooks/useProjectDetail.ts`
-
-**Adicionar `descricao_rich` ao tipo e aos SELECTs.**
-
-- Na interface `ProjectDetailData.project`, adicionar `descricao_rich: any | null`
-- Nas duas queries SELECT (linhas 63 e 76), adicionar `descricao_rich` a lista de colunas
+Oito correcoes no arquivo `src/pages/dashboard/ProjectFormPage.tsx`. Uma correcao menor no `src/components/projects/ProjectSkillsSelect.tsx`.
 
 ---
 
-### Arquivo 2: `src/pages/ProjectDetail.tsx`
+### Correcao 1 — Botao "+" do editor faz submit do formulario
 
-**Passo 1 — Remover logica de embed legada:**
-
-- Remover funcoes `extractYouTubeId` (linhas 46-57) e `extractVimeoId` (linhas 59-62)
-- Remover variaveis `youtubeId` e `vimeoId` (linhas 187-193)
-- Remover os dois blocos de Card com iframe de YouTube e Vimeo no JSX (linhas 291-321)
-- Remover `Video` do import de lucide-react (linha 9)
-- Remover o botao "Assistir Video" do card de Links (linhas 432-443)
-- Atualizar `hasLinks` para nao incluir `video_url`: `const hasLinks = project.demo_url || project.codigo_url`
-
-**Passo 2 — Adicionar RichTextViewer:**
-
-- Adicionar import: `import { RichTextViewer } from "@/components/editor/RichTextViewer"`
-- Apos o Card "Sobre o Projeto" (linha 289) e antes do Card de Skills, adicionar o bloco condicional:
+Reestruturar o JSX para que o `RichTextEditor` fique **fora** do elemento `<form>`, mas ainda dentro do `<Card>`:
 
 ```text
-{project.descricao_rich && (
-  <Card>
-    <CardHeader className="pb-3">
-      <CardTitle className="text-base">Descricao Completa</CardTitle>
-    </CardHeader>
+<Card>
+  <CardHeader>...</CardHeader>
+
+  <form onSubmit={form.handleSubmit(onSubmit)}>
     <CardContent>
-      <RichTextViewer content={JSON.stringify(project.descricao_rich)} />
+      ... todos os campos do react-hook-form ...
     </CardContent>
-  </Card>
-)}
+  </form>
+
+  <CardContent>
+    ... bloco do RichTextEditor (fora do form) ...
+  </CardContent>
+
+  <CardFooter>
+    ... botoes Cancelar e Salvar ...
+  </CardFooter>
+</Card>
 ```
 
-**Limpeza de imports nao utilizados:**
-- Remover `AspectRatio` se nao for mais usado em nenhum outro lugar (ainda e usado no hero image, entao permanece)
-- Remover `ExternalLink` do import de lucide-react (ja nao e usado)
+O botao "Salvar" muda de `type="submit"` para `type="button"` com `onClick={() => form.handleSubmit(onSubmit)()}`.
 
 ---
+
+### Correcao 2 — Dois fundos diferentes no editor
+
+Remover `rounded-md border border-border` do container do editor. Fica apenas `min-h-[300px]`.
+
+---
+
+### Correcao 3 — Mover editor para o final
+
+O bloco do editor (Label + texto de ajuda + RichTextEditor) sera movido para **apos** o campo "Destaque", tornando-se o ultimo elemento antes dos botoes. Ordem final:
+
+1. Titulo
+2. Slug
+3. Imagem de capa
+4. Tipo + Papel
+5. Descricao breve
+6. Status
+7. Links
+8. Habilidades
+9. Destaque
+10. Editor rich text
+
+---
+
+### Correcao 4 — Editor obrigatorio com validacao
+
+- Label com asterisco vermelho: `Descricao do Projeto <span class="text-destructive">*</span>`
+- Texto de ajuda atualizado: "Descreva o projeto com detalhes. Suporta texto formatado, listas, imagens e videos do YouTube."
+- Validacao manual no inicio do `onSubmit`:
+  - Se `richContent` for null ou igual ao JSON de um paragrafo vazio, exibe toast destrutivo e retorna sem salvar
+
+---
+
+### Correcao 5 — URL da slug errada
+
+Trocar `matchmaking.games/p/{userSlug}#{slugValue}` por `matchmaking.games/p/{userSlug}/project/{slugValue}`.
+
+---
+
+### Correcao 6 — Aviso ao sair com dados nao salvos
+
+- Novo estado `richContentDirty` (boolean, default false)
+- No `onChange` do editor: marca `richContentDirty = true`
+- Funcao `handleNavigateBack` que verifica `form.formState.isDirty || richContentDirty` e exibe `window.confirm` antes de navegar
+- Usada nos botoes "Voltar para projetos", "Cancelar" e no bloco "Projeto nao encontrado"
+- Apos submit bem-sucedido: zera `richContentDirty` e faz `form.reset(values)` antes de navegar
+
+---
+
+### Correcao 7 — Limite de habilidades para 20
+
+No `ProjectFormPage.tsx`: trocar `maxSkills={10}` para `maxSkills={20}`.
+
+O texto de ajuda no `ProjectSkillsSelect.tsx` ja usa `{maxSkills}` dinamicamente (linha 198), entao nao precisa de alteracao la.
+
+---
+
+### Correcao 8 — Adicionar status "Pausado"
+
+- Schema Zod: `status: z.enum(["em_andamento", "concluido", "pausado"])`
+- RadioGroup: adicionar terceira opcao com value "pausado" e label "Pausado"
+
+---
+
+### Arquivos alterados
+
+1. `src/pages/dashboard/ProjectFormPage.tsx` — todas as 8 correcoes
+2. Nenhum outro arquivo precisa ser alterado
 
 ### O que NAO muda
 
-- Card "Sobre o Projeto" com `project.descricao` — inalterado
-- Logica de skills e estudios — inalterada
-- Hero image — inalterado
-- Sidebar de detalhes — inalterada (exceto remocao do botao de video)
-- Nenhum outro arquivo do projeto
+- `RichTextEditor.tsx`, `schema.ts`, `YouTubeBlock.tsx`
+- `useProjects` hook
+- `ProjectSkillsSelect.tsx` (o texto de ajuda ja e dinamico)
+- Qualquer outro componente
+
