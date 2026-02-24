@@ -134,7 +134,8 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   // 1. Buscar usuário pelo slug
   const { data: user, error: userError } = await supabase
     .from("public_profiles")
-    .select(`
+    .select(
+      `
       id, nome_completo, titulo_profissional,
       bio_curta, sobre, estado, cidade, avatar_url, banner_url,
       disponivel_para_trabalho, website, linkedin_url, github_url,
@@ -142,7 +143,8 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
       twitch_url, telegram_url, artstation_url, behance_url, dribbble_url,
       itch_url, pinterest_url, steam_url,
       email, telefone, mostrar_email, mostrar_telefone, slug, pronomes
-    `)
+    `,
+    )
     .eq("slug", slug)
     .single();
 
@@ -161,11 +163,13 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   const [projectsRes, skillsRes, experiencesRes, educationsRes] = await Promise.all([
     supabase
       .from("projetos")
-      .select(`
+      .select(
+        `
         id, titulo, slug, descricao, imagem_capa_url, tipo, status,
         destaque, demo_url, video_url, codigo_url, ordem,
         projeto_habilidades(id, habilidade:habilidades(id, nome, categoria))
-      `)
+      `,
+      )
       .eq("user_id", user.id)
       .order("ordem"),
 
@@ -179,39 +183,43 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
     // 4. Buscar experiências (mais recentes primeiro) com cargos
     supabase
       .from("experiencia")
-      .select(`
+      .select(
+        `
         id, titulo_cargo, empresa, tipo_emprego, inicio, fim,
         atualmente_trabalhando, descricao, estado, cidade, remoto, estudio_id,
         cargos:cargos_experiencia(
           id, titulo_cargo, tipo_emprego, inicio, fim,
           atualmente_trabalhando, descricao, ordem
         )
-      `)
+      `,
+      )
       .eq("user_id", user.id)
       .order("inicio", { ascending: false }),
 
     // 5. Buscar educação
     supabase
       .from("educacao")
-      .select(`
+      .select(
+        `
         id, titulo, instituicao, tipo, area, inicio, fim,
         concluido, credencial_url, descricao, ordem
-      `)
+      `,
+      )
       .eq("user_id", user.id)
       .order("ordem"),
   ]);
 
   // Ordenar cargos client-side (mais recente primeiro)
-  const experiencesWithSortedCargos = (experiencesRes.data || []).map(exp => ({
+  const experiencesWithSortedCargos = (experiencesRes.data || []).map((exp) => ({
     ...exp,
-    cargos: (exp.cargos || []).sort((a: PublicCargoData, b: PublicCargoData) => 
-      new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
-    )
+    cargos: (exp.cargos || []).sort(
+      (a: PublicCargoData, b: PublicCargoData) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime(),
+    ),
   }));
 
   const allProjects = (projectsRes.data || []) as PublicProjectData[];
-  const featuredProjects = allProjects.filter(p => p.destaque === true);
-  const otherProjects = allProjects.filter(p => p.destaque !== true);
+  const featuredProjects = allProjects.filter((p) => p.destaque === true);
+  const otherProjects = allProjects.filter((p) => p.destaque !== true);
 
   return {
     user: user as PublicUserData,
