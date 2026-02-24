@@ -3,6 +3,7 @@ import { Loader2, ImagePlus, X } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,8 +11,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue } from
-"@/components/ui/select";
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useSupportForm, supportFormSchema, validateImage } from "@/hooks/useSupportForm";
 
@@ -19,6 +20,7 @@ export default function Support() {
   const { toast } = useToast();
   const { submitForm, isSubmitting, isSuccess, resetSuccess, tipos } = useSupportForm();
 
+  const [assunto, setAssunto] = useState("");
   const [tipo, setTipo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [imagem, setImagem] = useState<File | null>(null);
@@ -54,6 +56,7 @@ export default function Support() {
   };
 
   const resetForm = () => {
+    setAssunto("");
     setTipo("");
     setMensagem("");
     removeImage();
@@ -65,7 +68,7 @@ export default function Support() {
     e.preventDefault();
     setErrors({});
 
-    const result = supportFormSchema.safeParse({ tipo, mensagem });
+    const result = supportFormSchema.safeParse({ assunto, tipo, mensagem });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
@@ -80,14 +83,14 @@ export default function Support() {
       await submitForm(result.data, imagem);
       toast({
         title: "Mensagem enviada!",
-        description: "Entraremos em contato em breve."
+        description: "Entraremos em contato em breve.",
       });
       resetForm();
     } catch {
       toast({
         title: "Erro ao enviar mensagem.",
         description: "Tente novamente.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -105,32 +108,39 @@ export default function Support() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Assunto */}
+              <div className="space-y-2">
+                <Label htmlFor="assunto">Assunto</Label>
+                <Input
+                  id="assunto"
+                  value={assunto}
+                  onChange={(e) => setAssunto(e.target.value)}
+                  placeholder="Descreva brevemente o motivo do contato"
+                  maxLength={100}
+                />
+                {errors.assunto && (
+                  <p className="text-sm text-destructive">{errors.assunto}</p>
+                )}
+              </div>
+
               {/* Tipo */}
               <div className="space-y-2">
-                <Label htmlFor="tipo">Assunto
-Motivo do contato
-Selecione o tipo
-Bugs
-Sugestões
-Dúvidas
-Parcerias
-Outros
-Mensagem
-0/2000
-Imagem (opcional)
-Anexar imagem
-Enviar mensagem</Label>
+                <Label htmlFor="tipo">Tipo</Label>
                 <Select value={tipo} onValueChange={setTipo}>
                   <SelectTrigger id="tipo">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tipos.map((t) => <SelectItem key={t} value={t}>
+                    {tipos.map((t) => (
+                      <SelectItem key={t} value={t}>
                         {t}
-                      </SelectItem>)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {errors.tipo && <p className="text-sm text-destructive">{errors.tipo}</p>}
+                {errors.tipo && (
+                  <p className="text-sm text-destructive">{errors.tipo}</p>
+                )}
               </div>
 
               {/* Mensagem */}
@@ -141,66 +151,76 @@ Enviar mensagem</Label>
                     {mensagem.length}/2000
                   </span>
                 </div>
-                <Textarea id="mensagem" value={mensagem} onChange={(e) => setMensagem(e.target.value)} placeholder="Descreva com detalhes. Se for um bug, inclua o que você estava fazendo antes de acontecer." className="min-h-[160px]" maxLength={2000} />
-                {errors.mensagem && <p className="text-sm text-destructive">{errors.mensagem}</p>
-                }
+                <Textarea
+                  id="mensagem"
+                  value={mensagem}
+                  onChange={(e) => setMensagem(e.target.value)}
+                  placeholder="Descreva com detalhes. Se for um bug, inclua o que você estava fazendo antes de acontecer."
+                  className="min-h-[160px]"
+                  maxLength={2000}
+                />
+                {errors.mensagem && (
+                  <p className="text-sm text-destructive">{errors.mensagem}</p>
+                )}
               </div>
 
               {/* Imagem */}
               <div className="space-y-2">
                 <Label>Imagem (opcional)</Label>
-                {imagemPreview ?
-                <div className="relative inline-block">
+                {imagemPreview ? (
+                  <div className="relative inline-block">
                     <img
-                    src={imagemPreview}
-                    alt="Preview"
-                    className="h-24 w-24 rounded-md object-cover border border-border" />
-
+                      src={imagemPreview}
+                      alt="Preview"
+                      className="h-24 w-24 rounded-md object-cover border border-border"
+                    />
                     <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5">
-
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
-                  </div> :
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}>
-
-                    <ImagePlus className="h-4 w-4 mr-2" />
-                    Anexar imagem
-                  </Button>
-                }
+                  </div>
+                ) : (
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <ImagePlus className="h-4 w-4 mr-2" />
+                      Anexar imagem
+                    </Button>
+                  </div>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/jpeg,image/png,image/gif,image/webp"
                   className="hidden"
-                  onChange={handleImageChange} />
-
-                {imagemError &&
-                <p className="text-sm text-destructive">{imagemError}</p>
-                }
+                  onChange={handleImageChange}
+                />
+                {imagemError && (
+                  <p className="text-sm text-destructive">{imagemError}</p>
+                )}
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                {isSubmitting ?
-                <>
+                {isSubmitting ? (
+                  <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Enviando...
-                  </> :
-
-                "Enviar mensagem"
-                }
+                  </>
+                ) : (
+                  "Enviar mensagem"
+                )}
               </Button>
             </form>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>);
-
+    </DashboardLayout>
+  );
 }
