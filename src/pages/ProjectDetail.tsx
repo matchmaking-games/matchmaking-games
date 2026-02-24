@@ -6,10 +6,8 @@ import {
   ChevronLeft,
   Play,
   Code,
-  Video,
   Calendar,
   Briefcase,
-  ExternalLink,
 } from "lucide-react";
 
 import { Header } from "@/components/layout/Header";
@@ -20,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useProjectDetail } from "@/hooks/useProjectDetail";
+import { RichTextViewer } from "@/components/editor/RichTextViewer";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
 
 // --- Helpers ---
@@ -43,23 +42,6 @@ const categoryColors: Record<string, string> = {
   soft_skill: "bg-green-500/10 text-green-500",
 };
 
-function extractYouTubeId(url: string): string | null {
-  const patterns = [
-    /youtube\.com\/watch\?v=([^&]+)/,
-    /youtu\.be\/([^?]+)/,
-    /youtube\.com\/embed\/([^?]+)/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-function extractVimeoId(url: string): string | null {
-  const match = url.match(/vimeo\.com\/(\d+)/);
-  return match ? match[1] : null;
-}
 
 function formatProjectPeriod(
   inicio: string | null,
@@ -181,16 +163,9 @@ export default function ProjectDetail() {
 
   const { project, owner, skills, studios } = data;
 
-  const hasLinks = project.demo_url || project.codigo_url || project.video_url;
+  const hasLinks = project.demo_url || project.codigo_url;
 
   // Video embed
-  const youtubeId = project.video_url
-    ? extractYouTubeId(project.video_url)
-    : null;
-  const vimeoId =
-    project.video_url && !youtubeId
-      ? extractVimeoId(project.video_url)
-      : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -288,34 +263,16 @@ export default function ProjectDetail() {
                 </Card>
               )}
 
-              {/* Video embed */}
-              {youtubeId && (
+              {/* Rich text description */}
+              {project.descricao_rich && (
                 <Card>
-                  <CardContent className="pt-6">
-                    <AspectRatio ratio={16 / 9}>
-                      <iframe
-                        src={`https://www.youtube.com/embed/${youtubeId}`}
-                        title="Vídeo do projeto"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full rounded-md"
-                      />
-                    </AspectRatio>
-                  </CardContent>
-                </Card>
-              )}
-              {vimeoId && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <AspectRatio ratio={16 / 9}>
-                      <iframe
-                        src={`https://player.vimeo.com/video/${vimeoId}`}
-                        title="Vídeo do projeto"
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full rounded-md"
-                      />
-                    </AspectRatio>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      Descrição Completa
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RichTextViewer content={JSON.stringify(project.descricao_rich)} />
                   </CardContent>
                 </Card>
               )}
@@ -426,18 +383,6 @@ export default function ProjectDetail() {
                         >
                           <Code className="w-4 h-4 mr-2" />
                           Ver Código
-                        </a>
-                      </Button>
-                    )}
-                    {project.video_url && (
-                      <Button variant="secondary" asChild className="w-full">
-                        <a
-                          href={project.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Video className="w-4 h-4 mr-2" />
-                          Assistir Vídeo
                         </a>
                       </Button>
                     )}
