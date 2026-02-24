@@ -99,7 +99,7 @@ const AcceptInvite = () => {
 
       // If not logged in, check if email has account
       // TODO: regenerar tipos do Supabase para incluir check_email_exists
-      // Função existe no banco mas foi criada após a última geração de tipos
+      // Função existe no banco mas foi criada após a última geração de tipos O as any é um cast temporário que ignora a checagem de tipo. Não é elegante mas é seguro aqui — a função existe no banco, o TypeScript só não sabe disso ainda. Para o MVP está OK.
       if (!session?.user) {
         const { data: exists } = await (supabase as any).rpc("check_email_exists", {
           email_to_check: inviteData.email_convidado,
