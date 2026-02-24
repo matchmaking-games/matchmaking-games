@@ -6,6 +6,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAvailableSkills, type Habilidade } from "@/hooks/useAvailableSkills";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/integrations/supabase/types";
+
+type CategoriaHabilidade = Database["public"]["Enums"]["categoria_habilidade"];
 
 interface JobSkillsSelectorProps {
   label: React.ReactNode;
@@ -15,6 +18,8 @@ interface JobSkillsSelectorProps {
   excludeSkillIds?: string[];
   disabled?: boolean;
   maxSkills?: number;
+  /** Filter by category */
+  categoria?: CategoriaHabilidade;
 }
 
 function getSkillBadgeClasses(categoria: Habilidade["categoria"]): string {
@@ -25,17 +30,6 @@ function getSkillBadgeClasses(categoria: Habilidade["categoria"]): string {
   return map[categoria] || "bg-muted text-muted-foreground border-border";
 }
 
-function getCategoryLabel(categoria: Habilidade["categoria"]): string {
-  const map: Record<string, string> = {
-    habilidades: "Habilidades",
-    softwares: "Softwares",
-  };
-  return map[categoria] || categoria;
-}
-
-// Order categories for display
-const categoryOrder: Habilidade["categoria"][] = ["habilidades", "softwares"];
-
 export function JobSkillsSelector({
   label,
   helperText,
@@ -44,36 +38,29 @@ export function JobSkillsSelector({
   excludeSkillIds = [],
   disabled,
   maxSkills = 15,
+  categoria,
 }: JobSkillsSelectorProps) {
   const { availableSkills, loading } = useAvailableSkills();
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get selected skills with full data
+  // Get selected skills filtered by this category
   const selectedSkills = useMemo(() => {
-    return availableSkills.filter((s) => selectedSkillIds.includes(s.id));
-  }, [availableSkills, selectedSkillIds]);
+    const skills = availableSkills.filter((s) => selectedSkillIds.includes(s.id));
+    if (categoria) return skills.filter((s) => s.categoria === categoria);
+    return skills;
+  }, [availableSkills, selectedSkillIds, categoria]);
 
-  // Filter and group available skills (excluding already selected and excluded)
+  // Filter available skills
   const filteredSkills = useMemo(() => {
-    const notSelected = availableSkills.filter(
+    return availableSkills.filter(
       (skill) =>
         !selectedSkillIds.includes(skill.id) &&
         !excludeSkillIds.includes(skill.id) &&
+        (!categoria || skill.categoria === categoria) &&
         skill.nome.toLowerCase().includes(search.toLowerCase()),
     );
-
-    // Group by category
-    const grouped: Record<string, Habilidade[]> = {};
-    for (const skill of notSelected) {
-      if (!grouped[skill.categoria]) {
-        grouped[skill.categoria] = [];
-      }
-      grouped[skill.categoria].push(skill);
-    }
-
-    return grouped;
-  }, [availableSkills, selectedSkillIds, excludeSkillIds, search]);
+  }, [availableSkills, selectedSkillIds, excludeSkillIds, search, categoria]);
 
   const addSkill = (skillId: string) => {
     if (selectedSkillIds.length >= maxSkills) return;
@@ -85,16 +72,12 @@ export function JobSkillsSelector({
     onSkillsChange(selectedSkillIds.filter((id) => id !== skillId));
   };
 
-  const hasAvailableSkills = Object.values(filteredSkills).some((arr) => arr.length > 0);
   const isMaxReached = selectedSkillIds.length >= maxSkills;
+
+  const placeholderText = categoria === "softwares" ? "Buscar software..." : "Buscar habilidade...";
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-foreground">{label}</label>
-
-      {/* Helper text */}
-      {helperText && <p className="text-xs text-muted-foreground">{helperText}</p>}
-
       {/* Skill selector popover */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
@@ -109,18 +92,20 @@ export function JobSkillsSelector({
             {loading
               ? "Carregando..."
               : isMaxReached
-                ? `Máximo de ${maxSkills} habilidades`
-                : "Adicionar habilidade..."}
+                ? `Máximo de ${maxSkills}`
+                : categoria === "softwares"
+                  ? "Softwares"
+                  : "Habilidades"}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[250px] p-0" align="start">
           {/* Search input */}
           <div className="p-2 border-b border-border">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar habilidade..."
+                placeholder={placeholderText}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-8 h-9"
@@ -129,44 +114,32 @@ export function JobSkillsSelector({
           </div>
 
           {/* Skills list */}
-          <ScrollArea className="max-h-[250px]">
-            {hasAvailableSkills ? (
-              <div className="p-2 space-y-3">
-                {categoryOrder.map((categoria) => {
-                  const skills = filteredSkills[categoria];
-                  if (!skills || skills.length === 0) return null;
-
-                  return (
-                    <div key={categoria}>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">
-                        {getCategoryLabel(categoria)}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {skills.map((skill) => (
-                          <button
-                            key={skill.id}
-                            type="button"
-                            onClick={() => {
-                              addSkill(skill.id);
-                              setIsOpen(false);
-                            }}
-                            className={cn(
-                              "px-2 py-1 rounded text-xs border transition-colors",
-                              "hover:opacity-80",
-                              getSkillBadgeClasses(skill.categoria),
-                            )}
-                          >
-                            {skill.nome}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+          <ScrollArea className="max-h-[200px]">
+            {filteredSkills.length > 0 ? (
+              <div className="p-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredSkills.map((skill) => (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      onClick={() => {
+                        addSkill(skill.id);
+                        setIsOpen(false);
+                      }}
+                      className={cn(
+                        "px-2 py-1 rounded text-xs border transition-colors",
+                        "hover:opacity-80",
+                        getSkillBadgeClasses(skill.categoria),
+                      )}
+                    >
+                      {skill.nome}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                {search ? "Nenhuma habilidade encontrada" : "Todas as habilidades já foram selecionadas"}
+                {search ? "Nenhuma encontrada" : "Todas já selecionadas"}
               </div>
             )}
           </ScrollArea>
@@ -175,7 +148,7 @@ export function JobSkillsSelector({
 
       {/* Selected skills badges */}
       {selectedSkills.length > 0 && (
-        <div className="flex flex-wrap gap-2 p-3 rounded-md bg-muted/50 border border-border">
+        <div className="flex flex-wrap gap-2">
           {selectedSkills.map((skill) => (
             <span
               key={skill.id}
