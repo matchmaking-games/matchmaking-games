@@ -98,8 +98,10 @@ const AcceptInvite = () => {
       setInvite(inviteData);
 
       // If not logged in, check if email has account
+      // TODO: regenerar tipos do Supabase para incluir check_email_exists
+      // Função existe no banco mas foi criada após a última geração de tipos
       if (!session?.user) {
-        const { data: exists } = await supabase.rpc("check_email_exists", {
+        const { data: exists } = await (supabase as any).rpc("check_email_exists", {
           email_to_check: inviteData.email_convidado,
         });
         setExistingUser(!!exists);
