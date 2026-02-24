@@ -68,7 +68,9 @@ export default function ProjectFormPage() {
   // Fetch user info
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
         const { data } = await supabase.from("users").select("slug").eq("id", user.id).single();
@@ -138,12 +140,15 @@ export default function ProjectFormPage() {
     [debouncedGenerateSlug],
   );
 
-  const handleImageUploaded = useCallback((url: string | null, usedProjectId: string) => {
-    form.setValue("imagem_capa_url", url);
-    if (!editingProject) {
-      tempProjectIdRef.current = usedProjectId;
-    }
-  }, [editingProject, form]);
+  const handleImageUploaded = useCallback(
+    (url: string | null, usedProjectId: string) => {
+      form.setValue("imagem_capa_url", url);
+      if (!editingProject) {
+        tempProjectIdRef.current = usedProjectId;
+      }
+    },
+    [editingProject, form],
+  );
 
   const onSubmit = async (values: ProjectFormValues) => {
     setIsSubmitting(true);
@@ -165,12 +170,10 @@ export default function ProjectFormPage() {
       let project: ProjectWithSkills;
 
       if (editingProject) {
-        project = await updateProject(editingProject.id, projectData) as ProjectWithSkills;
+        project = (await updateProject(editingProject.id, projectData)) as ProjectWithSkills;
       } else {
-        const createData = tempProjectIdRef.current
-          ? { ...projectData, id: tempProjectIdRef.current }
-          : projectData;
-        project = await createProject(createData) as ProjectWithSkills;
+        const createData = tempProjectIdRef.current ? { ...projectData, id: tempProjectIdRef.current } : projectData;
+        project = (await createProject(createData)) as ProjectWithSkills;
       }
 
       if (saveProjectSkills) {
@@ -226,9 +229,7 @@ export default function ProjectFormPage() {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-2xl">
-                  {isEditing ? "Editar Projeto" : "Novo Projeto"}
-                </CardTitle>
+                <CardTitle className="font-display text-2xl">{isEditing ? "Editar Projeto" : "Novo Projeto"}</CardTitle>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -336,7 +337,7 @@ export default function ProjectFormPage() {
                   name="descricao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>Descrição breve</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Jogo de nave arcade com mecânicas roguelike..."
@@ -358,9 +359,10 @@ export default function ProjectFormPage() {
 
                 {/* Rich Text Editor */}
                 <div className="space-y-2">
-                  <Label>Descrição Completa (Opcional)</Label>
+                  <Label>Descreva seu projeto/jogo com detalhes</Label>
                   <p className="text-sm text-muted-foreground">
-                    Use este espaço para detalhar o projeto. Suporta texto formatado, listas, imagens e vídeos do YouTube.
+                    Use este espaço para detalhar o projeto. Suporta texto formatado, listas, imagens e vídeos do
+                    YouTube.
                   </p>
                   <div className="min-h-[300px] rounded-md border border-border">
                     <RichTextEditor
