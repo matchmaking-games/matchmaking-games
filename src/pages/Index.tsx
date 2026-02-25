@@ -6,15 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import DisplayCards from "@/components/ui/display-cards";
 import { SocialIcon } from "@/components/SocialIcon";
+import { Header } from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
-/* ─── pattern helpers (inline, no new components) ─── */
-const gridPattern = {
-  backgroundImage:
-    "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
-  backgroundSize: "32px 32px",
-};
+/* ─── pattern helpers ─── */
 const dotsPattern = {
   backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)",
   backgroundSize: "24px 24px",
@@ -54,6 +50,8 @@ const Index = () => {
   const [validationError, setValidationError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const validateUsername = (value: string): string => {
@@ -129,51 +127,25 @@ const Index = () => {
   return (
     <div style={{ background: "#0f0f0f", color: "#f0f0f0" }} className="min-h-screen overflow-x-hidden">
 
+      {/* ────────── HEADER ────────── */}
+      <Header />
+
       {/* ────────── SEÇÃO 1 — HERO ────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden" style={{ padding: "80px 24px" }}>
-        {/* grid bg */}
-        <div className="absolute inset-0 z-0" style={{ ...gridPattern, ...fadeRadial }} />
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-16" style={{ padding: "80px 24px" }}>
+        {/* grid bg — using project's bg-grid-pattern for consistency */}
+        <div
+          className="absolute inset-0 bg-grid-pattern pointer-events-none z-0"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+          }}
+        />
 
-        <div className="relative z-10 text-center w-full" style={{ maxWidth: 640 }}>
-          {/* logo */}
-          <motion.img
-            src={matchmakingLogo}
-            alt="Matchmaking"
-            className="h-8 mx-auto mb-12"
-            style={{ opacity: 0.6 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ duration: 0.4 }}
-          />
-
-          {/* badge */}
-          <motion.div
-            className="flex justify-center"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                border: "1px solid rgba(34,228,122,0.20)",
-                background: "rgba(34,228,122,0.08)",
-                borderRadius: 9999,
-                padding: "4px 14px",
-                fontSize: 12,
-                color: "#22e47a",
-                fontWeight: 500,
-                marginBottom: 20,
-              }}
-            >
-              ◆ O portal de games do Brasil
-            </span>
-          </motion.div>
-
+        <div className="relative z-10 text-center w-full" style={{ maxWidth: 800 }}>
           {/* headline */}
           <motion.h1
-            className="font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl leading-tight mb-4"
+            className="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-tight mb-4 mx-auto"
+            style={{ maxWidth: 800 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -198,14 +170,19 @@ const Index = () => {
           <motion.form
             id="hero-input"
             onSubmit={handleSubmit}
-            className="mx-auto w-full"
-            style={{ maxWidth: 480 }}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="mx-auto w-full transition-all duration-200"
+            style={{
+              maxWidth: 480,
+              borderRadius: 12,
+              boxShadow: isFocused ? "0 0 0 2px rgba(34,228,122,0.25)" : "none",
+            }}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <div
-              className="focus-within:border-[rgba(34,228,122,0.40)] transition-colors duration-200"
               style={{
                 background: "#1a1a1a",
                 border: "1px solid rgba(255,255,255,0.10)",
@@ -273,52 +250,15 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ────────── SEÇÃO 2 — SOCIAL PROOF STRIP ────────── */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.015)",
-          padding: "32px 24px",
-        }}
-      >
-        <div className="absolute inset-0 z-0" style={{ ...dotsPattern, ...fadeHorizontal, opacity: 0.5 }} />
-
-        <motion.div
-          className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 mx-auto"
-          style={{ maxWidth: 700 }}
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-        >
-          <img
-            src="https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/532180900_17851812207521685_1627174041059843704_n.jpg"
-            alt="Matchmaking em evento de games"
-            loading="lazy"
-            style={{
-              maxWidth: 180,
-              width: "100%",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.10)",
-              flexShrink: 0,
-            }}
-          />
-          <div style={{ maxWidth: 320 }} className="text-center md:text-left">
-            <p className="font-display font-semibold" style={{ fontSize: 18, color: "#f0f0f0" }}>
-              Presente nos maiores eventos de games do Brasil
-            </p>
-            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.50)", marginTop: 8 }}>
-              Parceira oficial do Games Dev Hub — conectando profissionais e estúdios em eventos reais pelo país.
-            </p>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ────────── SEÇÃO 3 — PARA QUEM É ────────── */}
-      <section className="relative overflow-hidden py-16 md:py-24 px-5 md:px-6">
-        <div className="absolute inset-0 z-0" style={{ ...gridPattern, ...fadeRadial }} />
+      {/* ────────── SEÇÃO 2 — PARA QUEM É ────────── */}
+      <section className="relative overflow-hidden py-16 md:py-24 px-5 md:px-10">
+        <div
+          className="absolute inset-0 bg-grid-pattern pointer-events-none z-0"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 65%)",
+          }}
+        />
 
         <div className="relative z-10">
           {/* header */}
@@ -329,7 +269,7 @@ const Index = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
               PARA QUEM É
             </p>
             <h2 className="font-display font-bold text-4xl md:text-5xl mb-12" style={{ color: "#f0f0f0" }}>
@@ -338,7 +278,7 @@ const Index = () => {
           </motion.div>
 
           {/* 2 cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mx-auto mb-16" style={{ maxWidth: 900 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mx-auto mb-16" style={{ maxWidth: 1080 }}>
             {/* card profissionais */}
             <motion.div
               className="transition-colors duration-300"
@@ -357,7 +297,7 @@ const Index = () => {
               <p className="font-display font-semibold" style={{ fontSize: 20, color: "#f0f0f0", lineHeight: 1.3, marginBottom: 20 }}>
                 Mostre seu trabalho para quem decide
               </p>
-              {["Portfólio público com todos os seus projetos", "Visibilidade direta para estúdios que estão contratando", "Candidatura com um clique, sem enviar currículo"].map((t) => (
+              {["Portfólio público com todos os seus projetos", "Visibilidade direta para estúdios que estão contratando", "Importe seu currículo direto do LinkedIn"].map((t) => (
                 <div key={t} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                   <Check size={14} color="#22e47a" className="flex-shrink-0" style={{ marginTop: 2 }} />
                   <span style={{ fontSize: 14, color: "rgba(255,255,255,0.60)" }}>{t}</span>
@@ -386,7 +326,7 @@ const Index = () => {
               <p className="font-display font-semibold" style={{ fontSize: 20, color: "#f0f0f0", lineHeight: 1.3, marginBottom: 20 }}>
                 Encontre o talento antes da concorrência
               </p>
-              {["Portfólios completos antes de entrar em contato", "Publique sua primeira vaga gratuitamente", "Destaque sua vaga por R$ 199 e alcance mais candidatos"].map((t) => (
+              {["Portfólios completos antes de entrar em contato", "Publique vagas gratuitamente", "Destaque sua vaga por R$ 97 e alcance mais candidatos"].map((t) => (
                 <div key={t} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                   <Check size={14} color="rgba(255,255,255,0.40)" className="flex-shrink-0" style={{ marginTop: 2 }} />
                   <span style={{ fontSize: 14, color: "rgba(255,255,255,0.60)" }}>{t}</span>
@@ -400,23 +340,29 @@ const Index = () => {
 
           {/* DisplayCards */}
           <motion.div
-            className="mx-auto"
-            style={{ maxWidth: 600 }}
+            className="mx-auto relative z-10"
+            style={{ maxWidth: 600, paddingBottom: 120, overflow: "visible" }}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p className="text-center mb-8" style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
-              Veja como ficam os portfólios na plataforma
-            </p>
             <DisplayCards />
           </motion.div>
         </div>
       </section>
 
-      {/* ────────── SEÇÃO 4 — COMO FUNCIONA ────────── */}
-      <section className="relative overflow-hidden py-16 md:py-24 px-5 md:px-6">
+      {/* ────────── SEÇÃO 3 — COMO FUNCIONA ────────── */}
+      <section
+        className="relative overflow-hidden py-16 md:py-24 px-5 md:px-6"
+        style={{
+          position: "relative",
+          zIndex: 20,
+          background: "rgba(255,255,255,0.02)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+        }}
+      >
         <div className="absolute inset-0 z-0" style={{ ...dotsPattern, ...fadeRadial }} />
 
         <div className="relative z-10">
@@ -427,35 +373,43 @@ const Index = () => {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
               O CAMINHO
             </p>
             <h2 className="font-display font-bold text-4xl md:text-5xl mb-16" style={{ color: "#f0f0f0" }}>
-              Três passos. Uma carreira.
+              Três passos. Sua carreira.
             </h2>
           </motion.div>
 
           <motion.div
-            className="relative grid grid-cols-1 md:grid-cols-3 gap-10 mx-auto"
-            style={{ maxWidth: 860 }}
+            className="relative grid grid-cols-1 md:grid-cols-3 gap-6 mx-auto"
+            style={{ maxWidth: 960 }}
             variants={staggerContainer}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
           >
-            {/* dashed line */}
-            <div
-              className="hidden md:block absolute"
-              style={{ top: 20, left: "calc(16.66% + 24px)", right: "calc(16.66% + 24px)", height: 1, borderTop: "1px dashed rgba(255,255,255,0.10)", zIndex: 0 }}
-            />
-
             {[
               { n: "01", title: "Reserve seu username", desc: "Escolha sua URL pública: matchmaking.games/p/seu-nome. É sua identidade permanente na indústria." },
               { n: "02", title: "Monte seu portfólio", desc: "Adicione projetos, skills e experiências. Tudo em um lugar que estúdios vão encontrar." },
               { n: "03", title: "Seja descoberto", desc: "Estúdios buscam talentos ativamente na plataforma. Seu perfil aparece para quem está contratando agora." },
-            ].map((s) => (
-              <motion.div key={s.n} variants={staggerItem} className="relative z-[1] text-left md:text-center">
-                <span className="font-display font-bold block mb-4" style={{ fontSize: 13, color: "#22e47a" }}>{s.n}</span>
+            ].map((s, i) => (
+              <motion.div
+                key={s.n}
+                variants={staggerItem}
+                className="relative z-[1] text-left md:text-center"
+                style={{
+                  background: "#161616",
+                  border: `1px solid ${hoveredStep === i ? "rgba(34,228,122,0.20)" : "rgba(255,255,255,0.07)"}`,
+                  borderRadius: 16,
+                  padding: 32,
+                  transition: "border-color 300ms, transform 300ms",
+                  transform: hoveredStep === i ? "translateY(-4px)" : "none",
+                }}
+                onMouseEnter={() => setHoveredStep(i)}
+                onMouseLeave={() => setHoveredStep(null)}
+              >
+                <span className="font-display font-extrabold block mb-4" style={{ fontSize: 32, color: "#22e47a" }}>{s.n}</span>
                 <p className="font-display font-semibold mb-2" style={{ fontSize: 20, color: "#f0f0f0" }}>{s.title}</p>
                 <p style={{ fontSize: 14, color: "rgba(255,255,255,0.50)", lineHeight: 1.6 }}>{s.desc}</p>
               </motion.div>
@@ -464,26 +418,81 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ────────── SEÇÃO 4 — SOCIAL PROOF STRIP ────────── */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.015)",
+          padding: "48px 20px",
+        }}
+      >
+        <div className="absolute inset-0 z-0" style={{ ...dotsPattern, ...fadeHorizontal, opacity: 0.5 }} />
+
+        <motion.div
+          className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 mx-auto"
+          style={{ maxWidth: 960, padding: "0 20px" }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <img
+            src="https://njyoimhjfqtygnlccjzq.supabase.co/storage/v1/object/public/public-images/532180900_17851812207521685_1627174041059843704_n.jpg"
+            alt="Matchmaking em evento de games"
+            loading="lazy"
+            className="w-full md:w-auto"
+            style={{
+              maxWidth: 320,
+              borderRadius: 16,
+              border: "1px solid rgba(255,255,255,0.10)",
+              flexShrink: 0,
+            }}
+          />
+          <div className="text-center md:text-left" style={{ maxWidth: 420 }}>
+            <p className="font-display font-semibold text-xl md:text-[22px]" style={{ color: "#f0f0f0" }}>
+              A Matchmaking esteve presente no maior evento de empregabilidade do Rio de Janeiro
+            </p>
+            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.50)", marginTop: 10 }}>
+              Parceira oficial do GamesDevHub — conectando profissionais e estúdios em eventos reais pelo país.
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
       {/* ────────── SEÇÃO 5 — FAQ ────────── */}
       <section className="relative overflow-hidden py-16 md:py-24 px-5 md:px-6">
-        <div className="absolute inset-0 z-0" style={{ ...gridPattern, ...fadeHorizontal }} />
+        <div
+          className="absolute inset-0 bg-grid-pattern pointer-events-none z-0"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)",
+          }}
+        />
 
         <motion.div
           className="relative z-10 mx-auto"
-          style={{ maxWidth: 640 }}
+          style={{
+            maxWidth: 720,
+            background: "#161616",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: 20,
+            padding: "48px",
+          }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
+          <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", marginBottom: 12 }}>
             DÚVIDAS
           </p>
           <h2 className="font-display font-bold text-4xl mb-10" style={{ color: "#f0f0f0" }}>
             Perguntas frequentes.
           </h2>
 
-          <Accordion type="single" collapsible className="w-full" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <Accordion type="single" collapsible className="w-full flex flex-col gap-2">
             {[
               { q: "O que é a Matchmaking?", a: "Matchmaking é o portal de empregos feito sob demanda para as necessidades do mercado nacional, com a intenção de conectar estúdios e candidatos." },
               { q: "Sou profissional, como acho as vagas?", a: "Para encontrar uma vaga, basta ir para a página de busca e aplicar os filtros que combinem com seu perfil." },
@@ -493,15 +502,19 @@ const Index = () => {
                 key={i}
                 value={`faq-${i}`}
                 className="border-b-0"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.07)",
+                }}
               >
                 <AccordionTrigger
-                  className="font-display font-medium text-left hover:no-underline py-5 data-[state=open]:text-[#22e47a]"
-                  style={{ fontSize: 16, color: "#f0f0f0" }}
+                  className="font-display font-medium text-left hover:no-underline data-[state=open]:text-[#22e47a]"
+                  style={{ fontSize: 16, color: "#f0f0f0", padding: "20px 16px" }}
                 >
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, paddingBottom: 20 }}>
+                <AccordionContent style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, padding: "0 16px 20px" }}>
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
@@ -515,7 +528,7 @@ const Index = () => {
         className="relative overflow-hidden text-center"
         style={{
           padding: "96px 24px",
-          background: "rgba(34,228,122,0.04)",
+          background: "linear-gradient(to bottom, transparent 0%, rgba(34,228,122,0.06) 100%)",
           borderTop: "1px solid rgba(34,228,122,0.10)",
           borderBottom: "1px solid rgba(34,228,122,0.10)",
         }}
@@ -530,7 +543,7 @@ const Index = () => {
           viewport={{ once: true }}
         >
           <h2 className="font-display font-bold text-3xl md:text-4xl mx-auto mb-8" style={{ color: "#f0f0f0", maxWidth: 480 }}>
-            Sua carreira em games começa com um username.
+            Sua carreira em games começa na Matchmaking.
           </h2>
           <button
             onClick={() => document.getElementById("hero-input")?.scrollIntoView({ behavior: "smooth", block: "center" })}
@@ -546,37 +559,36 @@ const Index = () => {
               cursor: "pointer",
             }}
           >
-            Reservar meu username
+            Começar agora
           </button>
         </motion.div>
       </section>
 
       {/* ────────── FOOTER ────────── */}
-      <footer
-        className="flex flex-col md:flex-row items-center md:justify-between gap-5"
-        style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 24px" }}
-      >
-        <img src={matchmakingLogo} alt="Matchmaking" className="h-6" style={{ opacity: 0.55 }} />
+      <footer style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 24px" }}>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-8">
+          <img src={matchmakingLogo} alt="Matchmaking" className="h-8" style={{ opacity: 0.65 }} />
 
-        <div className="flex items-center gap-5">
-          {socials.map((s) => (
-            <a
-              key={s.network}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="transition-colors duration-200"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}
-            >
-              <SocialIcon network={s.network} size={18} className="fill-current" />
-            </a>
-          ))}
+          <div className="flex items-center gap-5">
+            {socials.map((s) => (
+              <a
+                key={s.network}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors duration-200"
+                style={{ color: "rgba(255,255,255,0.35)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.85)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)"; }}
+              >
+                <SocialIcon network={s.network} size={18} className="fill-current" />
+              </a>
+            ))}
+          </div>
         </div>
 
-        <p className="w-full text-center mt-6 md:mt-0 md:absolute md:bottom-3 md:left-0 md:right-0" style={{ fontSize: 12, color: "rgba(255,255,255,0.20)" }}>
-          © 2025 Matchmaking · Feito para quem vive de games
+        <p className="text-center" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", marginTop: 16 }}>
+          Matchmaking · Feito para quem vive de games
         </p>
       </footer>
     </div>
