@@ -50,7 +50,7 @@ const Index = () => {
   const [validationError, setValidationError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
-  const [isFocused, setIsFocused] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const navigate = useNavigate();
 
@@ -131,7 +131,7 @@ const Index = () => {
       <Header />
 
       {/* ────────── SEÇÃO 1 — HERO ────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-16" style={{ padding: "80px 24px" }}>
+      <section className="relative flex flex-col items-center justify-center overflow-hidden pt-16" style={{ paddingTop: 120, paddingBottom: 80, paddingLeft: 24, paddingRight: 24 }}>
         {/* grid bg — using project's bg-grid-pattern for consistency */}
         <div
           className="absolute inset-0 bg-grid-pattern pointer-events-none z-0"
@@ -170,13 +170,12 @@ const Index = () => {
           <motion.form
             id="hero-input"
             onSubmit={handleSubmit}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             className="mx-auto w-full transition-all duration-200"
             style={{
               maxWidth: 480,
               borderRadius: 12,
-              boxShadow: isFocused ? "0 0 0 2px rgba(34,228,122,0.25)" : "none",
             }}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -185,12 +184,15 @@ const Index = () => {
             <div
               style={{
                 background: "#1a1a1a",
-                border: "1px solid rgba(255,255,255,0.10)",
+                border: isInputFocused
+                  ? "1px solid rgba(34,228,122,0.40)"
+                  : "1px solid rgba(255,255,255,0.10)",
                 borderRadius: 12,
                 height: 56,
                 display: "flex",
                 alignItems: "center",
                 overflow: "hidden",
+                transition: "border-color 200ms",
               }}
             >
               <span
@@ -206,7 +208,7 @@ const Index = () => {
                 onChange={handleUsernameChange}
                 maxLength={30}
                 className="bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm placeholder:text-white/25 h-full px-0"
-                style={{ color: "#f0f0f0" }}
+                style={{ color: "#f0f0f0", outline: "none", boxShadow: "none" }}
               />
               <div className="px-2 flex-shrink-0">{renderStatusIcon()}</div>
               <button
@@ -509,7 +511,7 @@ const Index = () => {
                 }}
               >
                 <AccordionTrigger
-                  className="font-display font-medium text-left hover:no-underline data-[state=open]:text-[#22e47a]"
+                  className="w-full flex justify-between items-center hover:no-underline py-5 font-display font-medium text-left data-[state=open]:text-[#22e47a]"
                   style={{ fontSize: 16, color: "#f0f0f0", padding: "20px 16px" }}
                 >
                   {faq.q}
@@ -529,8 +531,8 @@ const Index = () => {
         style={{
           padding: "96px 24px",
           background: "linear-gradient(to bottom, transparent 0%, rgba(34,228,122,0.06) 100%)",
-          borderTop: "1px solid rgba(34,228,122,0.10)",
-          borderBottom: "1px solid rgba(34,228,122,0.10)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         <div className="absolute inset-0 z-0" style={{ ...dotsPattern, ...fadeRadial, opacity: 0.4 }} />
@@ -566,7 +568,7 @@ const Index = () => {
 
       {/* ────────── FOOTER ────────── */}
       <footer style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 24px" }}>
-        <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-12">
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8" style={{ opacity: 0.65 }} />
 
           <div className="flex items-center gap-5">
