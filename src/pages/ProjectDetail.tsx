@@ -212,7 +212,7 @@ export default function ProjectDetail() {
                       <Button variant="outline" asChild>
                         <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
                           <Play className="h-4 w-4 fill-current mr-2" />
-                          Jogar / Ver Demo
+                          Jogar
                         </a>
                       </Button>
                     )}
