@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProjectDetail } from "@/hooks/useProjectDetail";
 import { RichTextViewer } from "@/components/editor/RichTextViewer";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
+import { Play, Code2 } from "lucide-react";
 
 // --- Skeleton ---
 
@@ -37,9 +38,7 @@ function ProjectNotFound({ userSlug }: { userSlug?: string }) {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <Card>
         <CardContent className="py-12 text-center space-y-4">
-          <p className="text-muted-foreground text-lg">
-            Projeto não encontrado
-          </p>
+          <p className="text-muted-foreground text-lg">Projeto não encontrado</p>
           {userSlug && (
             <Button variant="outline" asChild>
               <Link to={`/p/${userSlug}`}>
@@ -103,10 +102,7 @@ export default function ProjectDetail() {
   const habilidades = skills.filter((s) => s.categoria === "habilidades");
   const softwares = skills.filter((s) => s.categoria === "softwares");
   const hasSkills = habilidades.length > 0 || softwares.length > 0;
-  const skillGridCols =
-    habilidades.length > 0 && softwares.length > 0
-      ? "grid-cols-1 sm:grid-cols-2"
-      : "grid-cols-1";
+  const skillGridCols = habilidades.length > 0 && softwares.length > 0 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1";
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,9 +149,7 @@ export default function ProjectDetail() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{owner.nome_completo}</p>
               {owner.titulo_profissional && (
-                <p className="text-sm text-muted-foreground truncate">
-                  {owner.titulo_profissional}
-                </p>
+                <p className="text-sm text-muted-foreground truncate">{owner.titulo_profissional}</p>
               )}
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -163,9 +157,7 @@ export default function ProjectDetail() {
 
           {/* Short description */}
           {project.descricao && (
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              {project.descricao}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{project.descricao}</p>
           )}
 
           {/* Content section */}
@@ -181,10 +173,7 @@ export default function ProjectDetail() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {habilidades.map((skill) => (
-                          <span
-                            key={skill.id}
-                            className="bg-muted text-foreground text-xs rounded-md px-2 py-1"
-                          >
+                          <span key={skill.id} className="bg-muted text-foreground text-xs rounded-md px-2 py-1">
                             {skill.nome}
                           </span>
                         ))}
@@ -200,10 +189,7 @@ export default function ProjectDetail() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {softwares.map((skill) => (
-                          <span
-                            key={skill.id}
-                            className="bg-muted text-foreground text-xs rounded-md px-2 py-1"
-                          >
+                          <span key={skill.id} className="bg-muted text-foreground text-xs rounded-md px-2 py-1">
                             {skill.nome}
                           </span>
                         ))}
@@ -223,16 +209,18 @@ export default function ProjectDetail() {
                 <CardContent>
                   <div className="flex flex-wrap gap-3">
                     {project.demo_url && (
-                      <Button asChild>
+                      <Button variant="outline" asChild>
                         <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
-                          🎮 Jogar / Ver Demo
+                          <Play className="h-4 w-4 fill-current mr-2" />
+                          Jogar / Ver Demo
                         </a>
                       </Button>
                     )}
                     {project.codigo_url && (
                       <Button variant="outline" asChild>
                         <a href={project.codigo_url} target="_blank" rel="noopener noreferrer">
-                          {"</>"} Ver Código
+                          <Code2 className="h-4 w-4 mr-2" />
+                          Ver Código
                         </a>
                       </Button>
                     )}
