@@ -11,6 +11,8 @@ import {
   siYoutube,
   siGithub,
   siTwitch,
+  siTiktok,
+  siLinktree,
   siX,
 } from "simple-icons";
 
@@ -38,6 +40,8 @@ const icons: Record<string, IconDefinition> = {
   github: { path: siGithub.path, viewBox: SI_VIEWBOX },
   twitch: { path: siTwitch.path, viewBox: SI_VIEWBOX },
   twitter: { path: siX.path, viewBox: SI_VIEWBOX },
+  tiktok: { path: siTiktok.path, viewBox: SI_VIEWBOX },
+  linktree: { path: siLinktree.path, viewBox: SI_VIEWBOX },
   linkedin: { path: LINKEDIN_PATH, viewBox: "0 0 382 382" },
 };
 
