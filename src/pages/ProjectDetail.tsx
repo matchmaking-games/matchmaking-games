@@ -233,7 +233,7 @@ export default function ProjectDetail() {
             {project.descricao_rich && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">Descrição Completa</CardTitle>
+                  <CardTitle className="text-sm font-semibold">Sobre o projeto</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="[&_.bn-editor]:bg-transparent [&_.bn-block-outer]:bg-transparent [&_.bn-editor]:pl-0">
