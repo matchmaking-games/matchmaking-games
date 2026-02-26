@@ -19,11 +19,11 @@ interface EducationCardProps {
 }
 
 const tipoEducacaoStyles: Record<string, string> = {
-  graduacao: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30",
-  pos: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30",
-  tecnico: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30",
-  curso: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
-  certificacao: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30",
+  graduacao: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20",
+  pos: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20",
+  tecnico: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/20",
+  curso: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/20",
+  certificacao: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/20",
 };
 
 export function EducationCard({ education, onEdit, onDelete }: EducationCardProps) {
@@ -43,7 +43,10 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
             {/* Institution + Type */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-muted-foreground">{education.instituicao}</span>
-              <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${tipoEducacaoStyle}`}>
+              <Badge
+                variant="outline"
+                className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${tipoEducacaoStyle}`}
+              >
                 {tipoEducacaoLabel}
               </Badge>
             </div>
@@ -55,9 +58,7 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
             </div>
 
             {/* Area of study */}
-            {education.area && (
-              <p className="text-xs sm:text-sm text-muted-foreground">{education.area}</p>
-            )}
+            {education.area && <p className="text-xs sm:text-sm text-muted-foreground">{education.area}</p>}
 
             {/* Description */}
             {education.descricao && (
