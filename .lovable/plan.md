@@ -1,121 +1,57 @@
 
+# Fix: Suporte a multiplos estudios no useJobForm
 
-# Rebuild Completo da Landing Page (Index.tsx)
+## Problema
+O hook `useJobForm.ts` usa `.maybeSingle()` ao buscar memberships do usuario na tabela `estudio_membros` sem filtrar por `estudio_id`. Quando o usuario pertence a multiplos estudios, a query retorna multiplas linhas, `.maybeSingle()` retorna `null`, e a pagina fica travada no skeleton infinito.
 
-## Objetivo
-Reescrever `src/pages/Index.tsx` criando uma landing page premium com 6 secoes + footer, animacoes Framer Motion, e design dark inspirado no Supabase.
+## Varredura do projeto
+Apos busca em todo o codebase, o unico local com este bug e `src/hooks/useJobForm.ts` (linha 102-107). Os outros usos de `estudio_membros` com `.maybeSingle()` ja filtram por `estudio_id` especifico:
+- `InviteMemberDialog.tsx` -- filtra por `estudio_id` (seguro)
+- `AcceptInvite.tsx` -- filtra por `estudio_id` (seguro)
 
-## Dependencia
-- Instalar `framer-motion`
+## Alteracao
 
-## Arquivo alterado
-- `src/pages/Index.tsx` (unico arquivo)
+**Arquivo unico:** `src/hooks/useJobForm.ts`
 
-## Logica preservada (zero alteracoes)
-- `validateUsername`, `handleUsernameChange`, `useEffect` com debounce, `handleSubmit`
-- `renderStatusIcon`, `getStatusMessage`, `isButtonDisabled`
-- Imports de `supabase`, `matchmakingLogo`, `Input`, `Link`, `useNavigate`
+### 1. Adicionar import de `useSearchParams`
+Adicionar `useSearchParams` ao import de `react-router-dom` (linha 2).
 
-## Novos imports
-- `motion` de `framer-motion`
-- `User`, `Building2`, `Check` de `lucide-react`
-- `Accordion`, `AccordionItem`, `AccordionTrigger`, `AccordionContent` de `@/components/ui/accordion`
-- `DisplayCards` de `@/components/ui/display-cards`
-- `SocialIcon` de `@/components/SocialIcon`
-
-## Estrutura da pagina
-
-```text
-+--------------------------------------------------+
-| HERO (min-h-screen)                              |
-|   Grid pattern + fade radial                     |
-|   Logo > Badge > Headline > Subline > Input      |
-+--------------------------------------------------+
-| SOCIAL PROOF STRIP                               |
-|   Dots pattern + fade horizontal                 |
-|   Imagem evento + Copy lado a lado               |
-+--------------------------------------------------+
-| PARA QUEM E (2 cards + DisplayCards)             |
-|   Grid pattern + fade radial                     |
-|   Card Profissionais | Card Estudios             |
-|   DisplayCards (defaults)                         |
-+--------------------------------------------------+
-| COMO FUNCIONA (3 passos)                         |
-|   Dots pattern + fade radial                     |
-|   01 --- 02 --- 03                               |
-+--------------------------------------------------+
-| FAQ (accordion 3 itens)                          |
-|   Grid pattern + fade horizontal                 |
-+--------------------------------------------------+
-| CTA FINAL                                        |
-|   Headline + Botao scroll-to-hero                |
-+--------------------------------------------------+
-| FOOTER                                           |
-|   Logo + Social Icons + Copyright                |
-+--------------------------------------------------+
+### 2. Ler o parametro `?studio=` da URL
+Dentro do hook, antes dos useEffects, adicionar:
+```ts
+const [searchParams] = useSearchParams();
+const studioIdFromUrl = searchParams.get("studio");
 ```
 
-## Detalhes por secao
+### 3. Reescrever a query de membership (linhas 102-107)
+Substituir a query problematica por logica condicional:
 
-### Secao 1 -- Hero
-- `min-h-screen`, flexbox centralizado, grid pattern absoluto com fade radial
-- Logo `h-8 opacity-60`, `mb-12`
-- Badge pill verde: "◆ O portal de games do Brasil"
-- Headline `font-display` peso 800: "Seu lugar na" (#f0f0f0) + "industria de games" (#22e47a)
-- Responsivo: `text-5xl` / `sm:text-6xl` / `lg:text-7xl`
-- Subline Geist `text-lg`, cor `rgba(255,255,255,0.55)`
-- Form `id="hero-input"` com input restyled: bg `#1a1a1a`, borda `rgba(255,255,255,0.10)`, `borderRadius: 12px`, `height: 56px`
-- Prefixo `matchmaking.games/p/` em `font-mono`
-- Botao submit circular verde `#22e47a`, 40x40px
-- Animacoes sequenciais com delays 0.1s a 0.5s
+**Se `studioIdFromUrl` existe:** filtrar por `estudio_id` especifico + `user_id` + `ativo`, usar `.maybeSingle()` com seguranca (combinacao unica).
 
-### Secao 2 -- Social Proof Strip
-- Faixa com bordas `rgba(255,255,255,0.06)`, bg `rgba(255,255,255,0.015)`
-- Dots pattern com fade horizontal
-- Flex: imagem (max 180px) + copy; empilha em mobile
-- Titulo: "Presente nos maiores eventos de games do Brasil"
+**Se NAO existe:** buscar sem filtro de `estudio_id`, usar `.limit(1)` em vez de `.maybeSingle()`, e pegar o primeiro resultado do array.
 
-### Secao 3 -- Para Profissionais e Estudios
-- Grid pattern + fade radial
-- Label "PARA QUEM E" + headline "Dois lados. Uma conexao."
-- Grid 2 colunas (1 mobile): Card Profissionais (icone User verde, 3 beneficios, badge verde) e Card Estudios (icone Building2 cinza, 3 beneficios, badge cinza)
-- Cards bg `#161616`, borda `rgba(255,255,255,0.07)`, hover muda borda
-- Animacao: entram de lados opostos (x:-40 e x:40)
-- DisplayCards abaixo com label contextual, max-w 600px
+### 4. Garantir isLoading = false
+Adicionar `finally { setIsLoading(false); }` ao bloco try/catch do `checkMembership` para cobrir todos os caminhos, incluindo o caso sem `jobId`.
 
-### Secao 4 -- Como Funciona
-- Dots pattern + fade radial
-- Label "O CAMINHO" + headline "Tres passos. Uma carreira."
-- Grid 3 colunas (1 mobile) com linha tracejada conectora (`hidden md:block`)
-- 3 passos: "Reserve seu username", "Monte seu portfolio", "Seja descoberto"
-- Animacao stagger nos passos
+## Detalhes tecnicos
 
-### Secao 5 -- FAQ
-- Grid pattern + fade horizontal
-- Label "DUVIDAS" + headline "Perguntas frequentes."
-- Accordion shadcn `type="single" collapsible`, 3 itens
-- Bordas customizadas, trigger `font-display`, content Geist
-- Trigger open state: cor `#22e47a`
+```text
+ANTES:
+  query: estudio_membros WHERE user_id = X AND ativo = true → .maybeSingle()
+  Resultado com 2+ estudios: null (bug)
 
-### Secao 6 -- CTA Final
-- Bg `rgba(34,228,122,0.04)`, bordas verdes
-- Dots pattern + fade radial
-- Headline: "Sua carreira em games comeca com um username."
-- Botao scroll-to `#hero-input`
+DEPOIS:
+  Se ?studio=ID na URL:
+    query: estudio_membros WHERE user_id = X AND estudio_id = ID AND ativo = true → .maybeSingle()
+    Resultado: exatamente 0 ou 1 linha (seguro)
 
-### Footer
-- Bg `#0a0a0a`, borda top
-- Logo + 5 icones sociais via SocialIcon (linkedin, instagram, tiktok, youtube, linktree -- todos suportados pelo componente)
-- Copyright: "(c) 2025 Matchmaking . Feito para quem vive de games"
+  Se sem ?studio=:
+    query: estudio_membros WHERE user_id = X AND ativo = true → .limit(1)
+    Resultado: array com 0 ou 1 elemento (seguro)
+```
 
-## Paleta (inline styles)
-- Background: `#0f0f0f`, Cards: `#161616`, Verde: `#22e47a`
-- Texto primario: `#f0f0f0`, secundario: `rgba(255,255,255,0.55)`
-- Labels: `rgba(255,255,255,0.35)`, bordas: `rgba(255,255,255,0.07)`
-
-## Responsividade
-- Mobile-first, grids colapsam para 1 coluna
-- Headline hero minimo `text-5xl`
-- Padding horizontal minimo `px-5`
-- Wrapper geral `overflow-x-hidden`
-
+## O que NAO muda
+- Nenhuma validacao de seguranca (auth, role, ativo, pertencimento da vaga)
+- Nenhum outro hook ou componente
+- Nenhuma logica de criacao/edicao/rascunho de vagas
+- Nenhum arquivo alem de `src/hooks/useJobForm.ts`
