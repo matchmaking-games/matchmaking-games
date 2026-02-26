@@ -11,18 +11,31 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
-  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
-} from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -33,23 +46,32 @@ import type { Database } from "@/integrations/supabase/types";
 type UserRole = Database["public"]["Enums"]["user_role"];
 
 function getInitials(name: string) {
-  return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
   if (role === "super_admin") {
-    return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Super Admin</Badge>;
+    return (
+      <Badge className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/10">Super Admin</Badge>
+    );
   }
-  return <Badge variant="secondary">Membro</Badge>;
+  return (
+    <Badge variant="secondary" className="hover:bg-secondary">
+      Membro
+    </Badge>
+  );
 }
 
 export default function Team() {
   const { activeStudio } = useActiveStudio();
   const estudioId = activeStudio?.estudio.id ?? null;
-  const {
-    members, isLoading, error, currentUserId,
-    superAdminCount, updateMemberRole, removeMember, refetch,
-  } = useStudioMembers(estudioId);
+  const { members, isLoading, error, currentUserId, superAdminCount, updateMemberRole, removeMember, refetch } =
+    useStudioMembers(estudioId);
   const isMobile = useIsMobile();
   const { toast } = useToast();
 
@@ -74,9 +96,17 @@ export default function Team() {
   const handleRoleClick = (member: StudioMember) => {
     if (member.role === "super_admin" && superAdminCount <= 1) {
       if (member.user_id === currentUserId) {
-        toast({ title: "Ação não permitida", description: "Você não pode remover sua própria permissão de Super Admin.", variant: "destructive" });
+        toast({
+          title: "Ação não permitida",
+          description: "Você não pode remover sua própria permissão de Super Admin.",
+          variant: "destructive",
+        });
       } else {
-        toast({ title: "Ação não permitida", description: "O estúdio precisa ter pelo menos um Super Admin.", variant: "destructive" });
+        toast({
+          title: "Ação não permitida",
+          description: "O estúdio precisa ter pelo menos um Super Admin.",
+          variant: "destructive",
+        });
       }
       return;
     }
@@ -85,11 +115,19 @@ export default function Team() {
 
   const handleRemoveClick = (member: StudioMember) => {
     if (member.user_id === currentUserId) {
-      toast({ title: "Ação não permitida", description: "Você não pode remover a si mesmo. Peça para outro Super Admin fazer isso.", variant: "destructive" });
+      toast({
+        title: "Ação não permitida",
+        description: "Você não pode remover a si mesmo. Peça para outro Super Admin fazer isso.",
+        variant: "destructive",
+      });
       return;
     }
     if (member.role === "super_admin" && superAdminCount <= 1) {
-      toast({ title: "Ação não permitida", description: "Não é possível remover. O estúdio precisa ter pelo menos um Super Admin.", variant: "destructive" });
+      toast({
+        title: "Ação não permitida",
+        description: "Não é possível remover. O estúdio precisa ter pelo menos um Super Admin.",
+        variant: "destructive",
+      });
       return;
     }
     openRemoveDialog(member);
@@ -152,7 +190,7 @@ export default function Team() {
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           disabled={!member.user.slug}
-          onClick={() => member.user.slug && window.open(`/p/${member.user.slug}`, '_blank')}
+          onClick={() => member.user.slug && window.open(`/p/${member.user.slug}`, "_blank")}
         >
           <User className="mr-2 h-4 w-4" />
           Ver Perfil Público
@@ -256,7 +294,9 @@ export default function Team() {
                           {renderActions(member)}
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">Adicionado em {formatDate(member.adicionado_em)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        Adicionado em {formatDate(member.adicionado_em)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -278,14 +318,20 @@ export default function Team() {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={member.user.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs">{getInitials(member.user.nome_completo)}</AvatarFallback>
+                              <AvatarFallback className="text-xs">
+                                {getInitials(member.user.nome_completo)}
+                              </AvatarFallback>
                             </Avatar>
                             <span className="font-medium text-sm">{member.user.nome_completo}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{member.user.email}</TableCell>
-                        <TableCell><RoleBadge role={member.role} /></TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{formatDate(member.adicionado_em)}</TableCell>
+                        <TableCell>
+                          <RoleBadge role={member.role} />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatDate(member.adicionado_em)}
+                        </TableCell>
                         <TableCell className="text-right">{renderActions(member)}</TableCell>
                       </TableRow>
                     ))}
@@ -302,15 +348,12 @@ export default function Team() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Alterar Permissão</DialogTitle>
-            <DialogDescription>
-              Altere a permissão deste membro do estúdio.
-            </DialogDescription>
+            <DialogDescription>Altere a permissão deste membro do estúdio.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1">
               <p className="text-sm text-foreground">
-                <span className="text-muted-foreground">Membro:</span>{" "}
-                {selectedMember?.user.nome_completo}
+                <span className="text-muted-foreground">Membro:</span> {selectedMember?.user.nome_completo}
               </p>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Permissão atual:</span>
@@ -323,14 +366,18 @@ export default function Team() {
                 <div className="flex items-start space-x-3 rounded-md border border-border p-3">
                   <RadioGroupItem value="member" id="role-member" className="mt-0.5" />
                   <div className="space-y-1">
-                    <Label htmlFor="role-member" className="font-medium cursor-pointer">Membro</Label>
+                    <Label htmlFor="role-member" className="font-medium cursor-pointer">
+                      Membro
+                    </Label>
                     <p className="text-xs text-muted-foreground">Pode editar perfil do estúdio e gerenciar vagas</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 rounded-md border border-border p-3">
                   <RadioGroupItem value="super_admin" id="role-super-admin" className="mt-0.5" />
                   <div className="space-y-1">
-                    <Label htmlFor="role-super-admin" className="font-medium cursor-pointer">Super Admin</Label>
+                    <Label htmlFor="role-super-admin" className="font-medium cursor-pointer">
+                      Super Admin
+                    </Label>
                     <p className="text-xs text-muted-foreground">Controle total, incluindo gerenciar equipe</p>
                   </div>
                 </div>
@@ -357,7 +404,8 @@ export default function Team() {
               Remover Membro
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja remover <strong>{selectedMember?.user.nome_completo}</strong> do estúdio? Esta ação não pode ser desfeita.
+              Tem certeza que deseja remover <strong>{selectedMember?.user.nome_completo}</strong> do estúdio? Esta ação
+              não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
