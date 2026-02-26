@@ -1,57 +1,45 @@
 
-# Fix: Suporte a multiplos estudios no useJobForm
+# Correcoes no Header Mobile e useAuth
 
-## Problema
-O hook `useJobForm.ts` usa `.maybeSingle()` ao buscar memberships do usuario na tabela `estudio_membros` sem filtrar por `estudio_id`. Quando o usuario pertence a multiplos estudios, a query retorna multiplas linhas, `.maybeSingle()` retorna `null`, e a pagina fica travada no skeleton infinito.
+## Arquivo 1: src/hooks/useAuth.ts
 
-## Varredura do projeto
-Apos busca em todo o codebase, o unico local com este bug e `src/hooks/useJobForm.ts` (linha 102-107). Os outros usos de `estudio_membros` com `.maybeSingle()` ja filtram por `estudio_id` especifico:
-- `InviteMemberDialog.tsx` -- filtra por `estudio_id` (seguro)
-- `AcceptInvite.tsx` -- filtra por `estudio_id` (seguro)
+### Reescrever o useEffect para usar apenas onAuthStateChange
 
-## Alteracao
+Remover a funcao `getSession()` e sua chamada manual. O listener `onAuthStateChange` passa a ser a unica fonte de verdade. Tratar tres eventos:
 
-**Arquivo unico:** `src/hooks/useJobForm.ts`
+- **INITIAL_SESSION**: se `session` existe, buscar usuario na tabela `users` e setar. Se nao, setar `null`. Sempre chamar `setIsLoading(false)` no `finally`.
+- **SIGNED_IN**: mesmo comportamento de buscar usuario. `setIsLoading(false)` no `finally`.
+- **SIGNED_OUT**: setar `user` como `null`. `setIsLoading(false)`.
 
-### 1. Adicionar import de `useSearchParams`
-Adicionar `useSearchParams` ao import de `react-router-dom` (linha 2).
+Qualquer evento nao listado acima sera ignorado (sem alterar estado). A interface `AuthUser`, os campos buscados e o retorno do hook permanecem identicos.
 
-### 2. Ler o parametro `?studio=` da URL
-Dentro do hook, antes dos useEffects, adicionar:
-```ts
-const [searchParams] = useSearchParams();
-const studioIdFromUrl = searchParams.get("studio");
-```
+## Arquivo 2: src/components/layout/Header.tsx
 
-### 3. Reescrever a query de membership (linhas 102-107)
-Substituir a query problematica por logica condicional:
+### Correcao 1 — Remover botao "Entrar" duplicado no mobile (linhas 185-194)
+Remover o bloco `<div className="md:hidden">` que renderiza o Link "/login" fora do Sheet. O botao "Entrar" ja existe dentro do menu hamburguer.
 
-**Se `studioIdFromUrl` existe:** filtrar por `estudio_id` especifico + `user_id` + `ativo`, usar `.maybeSingle()` com seguranca (combinacao unica).
+### Correcao 2 — Normalizar estilo do "Criar Conta" no mobile (linha 107)
+Substituir as classes `bg-primary text-primary-foreground hover:bg-primary/90` por `text-foreground hover:bg-muted` para igualar ao estilo dos outros itens do menu.
 
-**Se NAO existe:** buscar sem filtro de `estudio_id`, usar `.limit(1)` em vez de `.maybeSingle()`, e pegar o primeiro resultado do array.
+### Correcao 3 — Logo com destino seguro durante loading (linha 120)
+Alterar de `to={isAuthenticated ? "/dashboard" : "/"}` para `to={!isAuthenticated && !isLoading ? "/" : "/dashboard"}`.
 
-### 4. Garantir isLoading = false
-Adicionar `finally { setIsLoading(false); }` ao bloco try/catch do `checkMembership` para cobrir todos os caminhos, incluindo o caso sem `jobId`.
+### Correcao 4 — Adicionar icone Briefcase no item "Vagas" do mobile (linhas 54-60)
+Importar `Briefcase` do lucide-react. Adicionar `<Briefcase className="h-4 w-4" />` dentro do Link de "Vagas" no Sheet.
 
-## Detalhes tecnicos
+### Correcao 5 — Mover separator para antes do "Sair" (linhas 62-91)
+Remover o `<div className="my-2 border-t border-border" />` que esta entre "Painel" e "Configuracoes" (linha 72). Adicionar esse mesmo separator imediatamente antes do botao "Sair".
 
-```text
-ANTES:
-  query: estudio_membros WHERE user_id = X AND ativo = true → .maybeSingle()
-  Resultado com 2+ estudios: null (bug)
+Ordem final do menu mobile autenticado:
+1. Vagas (icone Briefcase)
+2. Painel (icone LayoutDashboard)
+3. Configuracoes (icone Settings)
+4. [separator]
+5. Sair (icone LogOut)
 
-DEPOIS:
-  Se ?studio=ID na URL:
-    query: estudio_membros WHERE user_id = X AND estudio_id = ID AND ativo = true → .maybeSingle()
-    Resultado: exatamente 0 ou 1 linha (seguro)
+## Resumo de alteracoes por arquivo
 
-  Se sem ?studio=:
-    query: estudio_membros WHERE user_id = X AND ativo = true → .limit(1)
-    Resultado: array com 0 ou 1 elemento (seguro)
-```
-
-## O que NAO muda
-- Nenhuma validacao de seguranca (auth, role, ativo, pertencimento da vaga)
-- Nenhum outro hook ou componente
-- Nenhuma logica de criacao/edicao/rascunho de vagas
-- Nenhum arquivo alem de `src/hooks/useJobForm.ts`
+| Arquivo | Tipo de alteracao |
+|---|---|
+| `src/hooks/useAuth.ts` | Reescrever useEffect: remover getSession, tratar INITIAL_SESSION/SIGNED_IN/SIGNED_OUT |
+| `src/components/layout/Header.tsx` | 5 correcoes cirurgicas no JSX + 1 import adicionado (Briefcase) |
