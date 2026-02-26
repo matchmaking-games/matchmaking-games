@@ -31,19 +31,19 @@ const categoryLabels: Record<string, string> = {
 const levelConfig = {
   basico: {
     label: "Básico",
-    className: "bg-gray-500/20 text-gray-300 border border-gray-500/30",
+    className: "bg-gray-500/20 text-gray-300 border border-gray-500/30 hover:bg-gray-500/20",
   },
   intermediario: {
     label: "Intermediário",
-    className: "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+    className: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20",
   },
   avancado: {
     label: "Avançado",
-    className: "bg-green-500/20 text-green-300 border border-green-500/30",
+    className: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/20",
   },
   expert: {
     label: "Expert",
-    className: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+    className: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20",
   },
 };
 
@@ -61,9 +61,7 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
             </div>
             <div className="space-y-1.5">
               <h3 className="font-medium text-foreground">{skill.habilidade.nome}</h3>
-              <p className="text-xs text-muted-foreground">
-                {categoryLabels[skill.habilidade.categoria]}
-              </p>
+              <p className="text-xs text-muted-foreground">{categoryLabels[skill.habilidade.categoria]}</p>
               <Badge className={level.className}>
                 <Award className="h-3 w-3 mr-1" />
                 {level.label}
@@ -71,12 +69,7 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
             </div>
           </div>
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onEdit(skill)}
-            >
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(skill)}>
               <Pencil className="h-4 w-4" />
             </Button>
             <Button
