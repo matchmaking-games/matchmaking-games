@@ -71,14 +71,6 @@ export function Header() {
                     </Link>
                     <div className="my-2 border-t border-border" />
                     <Link
-                      to="/dashboard/profile"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                    >
-                      <User className="h-4 w-4" />
-                      Perfil
-                    </Link>
-                    <Link
                       to="/dashboard/settings"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -125,7 +117,7 @@ export function Header() {
 
         {/* Logo - centered on mobile */}
         <Link
-          to="/"
+          to={isAuthenticated ? "/dashboard" : "/"}
           className="flex items-center gap-2 md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
         >
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
@@ -163,12 +155,6 @@ export function Header() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard/profile" className="cursor-pointer">
-                      <User className="h-4 w-4 mr-2" />
-                      Perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link to="/dashboard/settings" className="cursor-pointer">
                       <Settings className="h-4 w-4 mr-2" />
                       Configurações
@@ -196,18 +182,9 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: Auth button/avatar */}
+        {/* Mobile: Login button (only when not authenticated) */}
         <div className="md:hidden">
-          {isLoading ? (
-            <div className="h-9 w-9 bg-muted animate-pulse rounded-full" />
-          ) : isAuthenticated ? (
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.avatar_url || undefined} alt={displayName} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                {displayName ? getInitials(displayName) : "U"}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
+          {!isLoading && !isAuthenticated && (
             <Link to="/login">
               <Button variant="ghost" size="sm">
                 Entrar
