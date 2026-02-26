@@ -16,8 +16,8 @@ import {
   formatNivelVaga,
   formatTipoContrato,
   formatTipoTrabalho,
-  formatTamanhoEstudio,
-} from "@/lib/formatters";
+  formatTamanhoEstudio } from
+"@/lib/formatters";
 
 function formatSalario(min: number | null, max: number | null): string | null {
   if (!min && !max) return null;
@@ -25,7 +25,7 @@ function formatSalario(min: number | null, max: number | null): string | null {
   const formatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 0
   });
 
   if (min && max) {
@@ -77,30 +77,30 @@ function JobDetailSkeleton() {
           </Card>
         </aside>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 export default function JobDetail() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams<{slug: string;}>();
   const { toast } = useToast();
   const { data: vaga, isLoading, error } = useJobDetail(slug);
 
   // Separate skills
   const requiredSkills =
-    vaga?.habilidades
-      .filter((h) => h.obrigatoria && h.habilidade)
-      .map((h) => h.habilidade!) || [];
+  vaga?.habilidades.
+  filter((h) => h.obrigatoria && h.habilidade).
+  map((h) => h.habilidade!) || [];
 
   const optionalSkills =
-    vaga?.habilidades
-      .filter((h) => !h.obrigatoria && h.habilidade)
-      .map((h) => h.habilidade!) || [];
+  vaga?.habilidades.
+  filter((h) => !h.obrigatoria && h.habilidade).
+  map((h) => h.habilidade!) || [];
 
   // Formatted salary
-  const salarioFormatado = vaga?.mostrar_salario
-    ? formatSalario(vaga.salario_min, vaga.salario_max)
-    : null;
+  const salarioFormatado = vaga?.mostrar_salario ?
+  formatSalario(vaga.salario_min, vaga.salario_max) :
+  null;
 
   const handleCopy = async () => {
     if (!vaga?.contato_candidatura) return;
@@ -109,13 +109,13 @@ export default function JobDetail() {
       await navigator.clipboard.writeText(vaga.contato_candidatura);
       toast({
         title: "Copiado!",
-        description: "Copiado para a área de transferência.",
+        description: "Copiado para a área de transferência."
       });
     } catch (err) {
       toast({
         title: "Erro ao copiar",
         description: "Não foi possível copiar o texto.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -127,8 +127,8 @@ export default function JobDetail() {
         <div className="pt-16">
           <JobDetailSkeleton />
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (!vaga || error) {
@@ -138,8 +138,8 @@ export default function JobDetail() {
         <div className="pt-16">
           <JobNotFound />
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -180,11 +180,11 @@ export default function JobDetail() {
                       </Badge>
                     </div>
 
-                    {salarioFormatado && (
-                      <p className="text-lg font-semibold text-primary">
+                    {salarioFormatado &&
+                    <p className="text-lg font-semibold text-primary">
                         {salarioFormatado}
                       </p>
-                    )}
+                    }
                   </div>
 
                   {/* Description */}
@@ -196,55 +196,55 @@ export default function JobDetail() {
                   </section>
 
                   {/* Skills */}
-                  {(requiredSkills.length > 0 || optionalSkills.length > 0) && (
-                    <section className="space-y-4">
+                  {(requiredSkills.length > 0 || optionalSkills.length > 0) &&
+                  <section className="space-y-4">
                       <h2 className="text-lg font-semibold">Habilidades</h2>
 
-                      {requiredSkills.length > 0 && (
-                        <div className="space-y-2">
+                      {requiredSkills.length > 0 &&
+                    <div className="space-y-2">
                           <h3 className="text-sm font-medium text-muted-foreground">
                             Obrigatórias
                           </h3>
                           <div className="flex flex-wrap gap-2">
-                            {requiredSkills.map((skill) => (
-                              <Badge
-                                key={skill.id}
-                                className="bg-primary/10 text-primary border-0"
-                              >
+                            {requiredSkills.map((skill) =>
+                        <Badge
+                          key={skill.id}
+                          className="bg-primary/10 text-primary border-0">
+
                                 {skill.nome}
                               </Badge>
-                            ))}
+                        )}
                           </div>
                         </div>
-                      )}
+                    }
 
-                      {optionalSkills.length > 0 && (
-                        <div className="space-y-2">
+                      {optionalSkills.length > 0 &&
+                    <div className="space-y-2">
                           <h3 className="text-sm font-medium text-muted-foreground">
                             Desejáveis
                           </h3>
                           <div className="flex flex-wrap gap-2">
-                            {optionalSkills.map((skill) => (
-                              <Badge key={skill.id} variant="secondary">
+                            {optionalSkills.map((skill) =>
+                        <Badge key={skill.id} variant="secondary">
                                 {skill.nome}
                               </Badge>
-                            ))}
+                        )}
                           </div>
                         </div>
-                      )}
+                    }
                     </section>
-                  )}
+                  }
 
                   {/* Footer - only publication date */}
-                  {vaga.criada_em && (
-                    <div className="text-sm text-muted-foreground pt-4 border-t">
+                  {vaga.criada_em &&
+                  <div className="text-sm text-muted-foreground pt-4 border-t">
                       Publicada{" "}
                       {formatDistanceToNow(new Date(vaga.criada_em), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
+                      addSuffix: true,
+                      locale: ptBR
+                    })}
                     </div>
-                  )}
+                  }
                 </CardContent>
               </Card>
             </main>
@@ -252,16 +252,16 @@ export default function JobDetail() {
             {/* Sidebar (mobile: first, desktop: right) */}
             <aside className="lg:flex-1 space-y-4 order-first lg:order-last">
               {/* Studio card */}
-              {vaga.estudio?.slug ? (
-                <Link to={`/studio/${vaga.estudio.slug}`} className="block">
+              {vaga.estudio?.slug ?
+              <Link to={`/studio/${vaga.estudio.slug}`} className="block">
                   <Card className="transition-colors duration-200 hover:bg-accent cursor-pointer">
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-4 mb-4">
                         <Avatar className="w-16 h-16 rounded-lg">
                           <AvatarImage
-                            src={vaga.estudio?.logo_url || undefined}
-                            alt={vaga.estudio?.nome}
-                          />
+                          src={vaga.estudio?.logo_url || undefined}
+                          alt={vaga.estudio?.nome} />
+
                           <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-lg">
                             {vaga.estudio?.nome?.charAt(0).toUpperCase() || "E"}
                           </AvatarFallback>
@@ -275,12 +275,12 @@ export default function JobDetail() {
                       </div>
 
                       <div className="space-y-3 text-sm text-muted-foreground">
-                        {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
-                          <div className="flex items-center gap-2">
+                        {vaga.estudio?.cidade && vaga.estudio?.estado &&
+                      <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 flex-shrink-0" />
                             <span>{vaga.estudio.cidade}, {vaga.estudio.estado}</span>
                           </div>
-                        )}
+                      }
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 flex-shrink-0" />
                           <span>
@@ -290,16 +290,16 @@ export default function JobDetail() {
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
-              ) : (
-                <Card>
+                </Link> :
+
+              <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-4 mb-4">
                       <Avatar className="w-16 h-16 rounded-lg">
                         <AvatarImage
-                          src={vaga.estudio?.logo_url || undefined}
-                          alt={vaga.estudio?.nome}
-                        />
+                        src={vaga.estudio?.logo_url || undefined}
+                        alt={vaga.estudio?.nome} />
+
                         <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-lg">
                           {vaga.estudio?.nome?.charAt(0).toUpperCase() || "E"}
                         </AvatarFallback>
@@ -312,12 +312,12 @@ export default function JobDetail() {
                     </div>
 
                     <div className="space-y-3 text-sm text-muted-foreground">
-                      {(vaga.estudio?.cidade && vaga.estudio?.estado) && (
-                        <div className="flex items-center gap-2">
+                      {vaga.estudio?.cidade && vaga.estudio?.estado &&
+                    <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 flex-shrink-0" />
                           <span>{vaga.estudio?.cidade}, {vaga.estudio?.estado}</span>
                         </div>
-                      )}
+                    }
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 flex-shrink-0" />
                         <span>
@@ -327,11 +327,11 @@ export default function JobDetail() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              }
 
               {/* How to apply - only show if contact exists */}
-              {vaga.contato_candidatura && (
-                <Card>
+              {vaga.contato_candidatura &&
+              <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base">
                       Como se candidatar
@@ -339,31 +339,31 @@ export default function JobDetail() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Para se candidatar a esta vaga, entre em contato através do email abaixo:
+                      Para se candidatar a esta vaga, entre em contato através do email ou site abaixo:
                     </p>
                     <div className="flex gap-2">
                       <div
-                        onClick={handleCopy}
-                        className="flex-1 px-3 py-2 bg-muted rounded-md cursor-pointer select-all font-mono text-sm truncate"
-                        title={vaga.contato_candidatura}
-                      >
+                      onClick={handleCopy}
+                      className="flex-1 px-3 py-2 bg-muted rounded-md cursor-pointer select-all font-mono text-sm truncate"
+                      title={vaga.contato_candidatura}>
+
                         {vaga.contato_candidatura}
                       </div>
                       <Button
-                        onClick={handleCopy}
-                        size="icon"
-                        variant="outline"
-                      >
+                      onClick={handleCopy}
+                      size="icon"
+                      variant="outline">
+
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              }
             </aside>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
