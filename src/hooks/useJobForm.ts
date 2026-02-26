@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { generateSlug } from "@/lib/formatters";
@@ -70,11 +70,9 @@ interface UseJobFormReturnComplete extends UseJobFormReturn {
   updateDraft: (id: string, data: VagaFormData) => Promise<void>;
 }
 
-export function useJobForm(jobId?: string): UseJobFormReturnComplete {
+export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): UseJobFormReturnComplete {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const studioIdFromUrl = searchParams.get("studio");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

@@ -81,7 +81,7 @@ export default function JobForm() {
   const isEditing = !!id;
 
   const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft, updateDraft } =
-    useJobForm(id);
+    useJobForm(id, searchParams.get("studio"));
 
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
     useIBGELocations();
