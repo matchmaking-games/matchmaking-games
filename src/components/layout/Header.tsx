@@ -52,7 +52,7 @@ export function Header() {
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
                 <Link
-                  to="/vagas"
+                  to="/jobs"
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
