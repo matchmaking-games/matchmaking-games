@@ -80,18 +80,28 @@ export default function JobForm() {
   const { toast } = useToast();
   const isEditing = !!id;
 
-  const { isLoading, isSaving, error, isAuthorized, existingJob, existingSkills, createJob, updateJob, saveDraft, updateDraft } =
-    useJobForm(id, searchParams.get("studio"));
+  const {
+    isLoading,
+    isSaving,
+    error,
+    isAuthorized,
+    existingJob,
+    existingSkills,
+    createJob,
+    updateJob,
+    saveDraft,
+    updateDraft,
+  } = useJobForm(id);
 
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
     useIBGELocations();
 
   const [habilidadesObrigatorias, setHabilidadesObrigatorias] = useState<string[]>([]);
   const [habilidadesDesejaveis, setHabilidadesDesejaveis] = useState<string[]>([]);
-  
+
   // State for tracking which button is saving
   const [savingAction, setSavingAction] = useState<"draft" | "publish" | null>(null);
-  
+
   // State for unsaved changes protection
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [formSaved, setFormSaved] = useState(false);
@@ -99,14 +109,14 @@ export default function JobForm() {
 
   // Detect payment cancelled return from Stripe
   useEffect(() => {
-    const payment = searchParams.get('payment');
-    
-    if (payment === 'cancelled') {
+    const payment = searchParams.get("payment");
+
+    if (payment === "cancelled") {
       toast({
         title: "Pagamento cancelado",
         description: "Você pode ajustar a vaga e tentar publicar novamente.",
       });
-      
+
       // Clean query param
       navigate(window.location.pathname, { replace: true });
     }
@@ -203,7 +213,7 @@ export default function JobForm() {
       if (existingJob.estado) {
         fetchMunicipios(existingJob.estado);
       }
-      
+
       // Reset unsaved changes after loading existing job
       setHasUnsavedChanges(false);
     }
@@ -312,9 +322,9 @@ export default function JobForm() {
     // Minimal validation for draft - only title is required
     const titulo = form.getValues("titulo");
     if (!titulo || titulo.length < 3) {
-      form.setError("titulo", { 
-        type: "manual", 
-        message: "Mínimo 3 caracteres para salvar rascunho" 
+      form.setError("titulo", {
+        type: "manual",
+        message: "Mínimo 3 caracteres para salvar rascunho",
       });
       toast({
         title: "Erro de validação",
@@ -328,7 +338,7 @@ export default function JobForm() {
     try {
       const formData = transformFormData(form.getValues());
       setFormSaved(true);
-      
+
       // FIX: Use updateDraft when editing, saveDraft when creating new
       if (isEditing && id) {
         await updateDraft(id, formData);
@@ -394,13 +404,13 @@ export default function JobForm() {
       });
       return;
     }
-    
+
     // 5. All validations passed - publish
     setSavingAction("publish");
     try {
       const data = form.getValues();
       const formData = transformFormData(data);
-      
+
       setFormSaved(true);
       if (isEditing && id) {
         await updateJob(id, formData);
@@ -488,7 +498,7 @@ export default function JobForm() {
                       <FormLabel>
                         Tipo de função <span className="text-destructive">*</span>
                       </FormLabel>
-                      
+
                       {/* Selected badges */}
                       {tipoFuncaoValue.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
@@ -510,7 +520,7 @@ export default function JobForm() {
                           ))}
                         </div>
                       )}
-                      
+
                       {/* Dropdown selector */}
                       <Popover open={tipoFuncaoOpen} onOpenChange={setTipoFuncaoOpen}>
                         <PopoverTrigger asChild>
@@ -546,10 +556,8 @@ export default function JobForm() {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      
-                      <p className="text-xs text-muted-foreground">
-                        Selecione uma ou mais funções para esta vaga
-                      </p>
+
+                      <p className="text-xs text-muted-foreground">Selecione uma ou mais funções para esta vaga</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -752,11 +760,11 @@ export default function JobForm() {
                     name="salario_min"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Salário mínimo (R$)</FormLabel>
+                        <FormLabel>Valor mínimo (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Ex: 8000"
+                            placeholder="1000"
                             {...field}
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
@@ -772,11 +780,11 @@ export default function JobForm() {
                     name="salario_max"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Salário máximo (R$)</FormLabel>
+                        <FormLabel>Valor máximo (R$)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="Ex: 15000"
+                            placeholder="Ex: 8000"
                             {...field}
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
@@ -874,10 +882,10 @@ export default function JobForm() {
 
                 {/* Desejáveis */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Habilidades desejáveis (diferenciais)
-                  </label>
-                  <p className="text-xs text-muted-foreground">Habilidades que são um diferencial, mas não obrigatórias.</p>
+                  <label className="text-sm font-medium text-foreground">Habilidades desejáveis (diferenciais)</label>
+                  <p className="text-xs text-muted-foreground">
+                    Habilidades que são um diferencial, mas não obrigatórias.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <JobSkillsSelector
                       label="Habilidades desejáveis"
@@ -902,18 +910,14 @@ export default function JobForm() {
                 <h3 className="text-lg font-semibold">Tipo de Publicação</h3>
                 <Separator />
 
-                {existingJob?.status === 'publicada' ? (
+                {existingJob?.status === "publicada" ? (
                   // Read-only mode for published jobs
                   <div className="rounded-lg border p-4 bg-muted/50">
                     <p className="text-sm font-medium mb-2">Tipo de Publicação</p>
-                    <Badge variant={existingJob.tipo_publicacao === 'destaque' ? 'default' : 'secondary'}>
-                      {existingJob.tipo_publicacao === 'destaque' 
-                        ? 'Destaque (R$ 97)' 
-                        : 'Gratuita'}
+                    <Badge variant={existingJob.tipo_publicacao === "destaque" ? "default" : "secondary"}>
+                      {existingJob.tipo_publicacao === "destaque" ? "Destaque (R$ 97)" : "Gratuita"}
                     </Badge>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Não é possível alterar o tipo após publicação
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">Não é possível alterar o tipo após publicação</p>
                   </div>
                 ) : (
                   // Editable radio buttons
@@ -925,50 +929,48 @@ export default function JobForm() {
                         <FormControl>
                           <div className="space-y-3">
                             {/* Card Gratuita */}
-                            <div 
+                            <div
                               className={cn(
                                 "flex items-start space-x-3 p-3 rounded-md border transition-colors cursor-pointer",
-                                field.value === "gratuita" 
-                                  ? "border-primary bg-primary/5" 
-                                  : "border-border hover:bg-muted/50"
+                                field.value === "gratuita"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:bg-muted/50",
                               )}
                               onClick={() => field.onChange("gratuita")}
                             >
-                              <div className={cn(
-                                "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                                field.value === "gratuita" 
-                                  ? "border-primary" 
-                                  : "border-muted-foreground"
-                              )}>
-                                {field.value === "gratuita" && (
-                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                              <div
+                                className={cn(
+                                  "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                  field.value === "gratuita" ? "border-primary" : "border-muted-foreground",
                                 )}
+                              >
+                                {field.value === "gratuita" && <div className="w-2 h-2 rounded-full bg-primary" />}
                               </div>
                               <div className="flex-1">
                                 <span className="font-medium">Gratuita</span>
-                                <p className="text-sm text-muted-foreground">Visibilidade padrão na listagem de vagas</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Visibilidade padrão na listagem de vagas
+                                </p>
                               </div>
                             </div>
-                            
+
                             {/* Card Destaque */}
-                            <div 
+                            <div
                               className={cn(
                                 "flex items-start space-x-3 p-3 rounded-md border transition-colors cursor-pointer",
-                                field.value === "destaque" 
-                                  ? "border-primary bg-primary/5" 
-                                  : "border-border hover:bg-muted/50"
+                                field.value === "destaque"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:bg-muted/50",
                               )}
                               onClick={() => field.onChange("destaque")}
                             >
-                              <div className={cn(
-                                "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                                field.value === "destaque" 
-                                  ? "border-primary" 
-                                  : "border-muted-foreground"
-                              )}>
-                                {field.value === "destaque" && (
-                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                              <div
+                                className={cn(
+                                  "w-4 h-4 mt-1 rounded-full border-2 flex items-center justify-center flex-shrink-0",
+                                  field.value === "destaque" ? "border-primary" : "border-muted-foreground",
                                 )}
+                              >
+                                {field.value === "destaque" && <div className="w-2 h-2 rounded-full bg-primary" />}
                               </div>
                               <div className="flex-1">
                                 <span className="font-medium flex items-center gap-2">
@@ -996,13 +998,8 @@ export default function JobForm() {
                 </Button>
 
                 {/* Save Draft button - only for new jobs or drafts */}
-                {(!isEditing || existingJob?.status === 'rascunho') && (
-                  <Button 
-                    type="button" 
-                    variant="ghost"
-                    disabled={isSaving}
-                    onClick={handleSaveDraftClick}
-                  >
+                {(!isEditing || existingJob?.status === "rascunho") && (
+                  <Button type="button" variant="ghost" disabled={isSaving} onClick={handleSaveDraftClick}>
                     {savingAction === "draft" ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1013,20 +1010,14 @@ export default function JobForm() {
                     )}
                   </Button>
                 )}
-                
-                <Button 
-                  type="button" 
-                  disabled={isSaving}
-                  onClick={handlePublishClick}
-                >
+
+                <Button type="button" disabled={isSaving} onClick={handlePublishClick}>
                   {savingAction === "publish" ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {form.watch("tipo_publicacao") === "destaque" && !isEditing
-                        ? "Processando..." 
-                        : "Salvando..."}
+                      {form.watch("tipo_publicacao") === "destaque" && !isEditing ? "Processando..." : "Salvando..."}
                     </>
-                  ) : isEditing && existingJob?.status === 'publicada' ? (
+                  ) : isEditing && existingJob?.status === "publicada" ? (
                     "Salvar Alterações"
                   ) : form.watch("tipo_publicacao") === "destaque" ? (
                     "Publicar e Pagar R$ 97"
@@ -1050,9 +1041,7 @@ export default function JobForm() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowExitDialog(false)}>
-              Continuar editando
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setShowExitDialog(false)}>Continuar editando</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={() => navigate("/studio/manage/jobs")}>
               Descartar e sair
             </AlertDialogAction>
