@@ -15,29 +15,29 @@ export function JobCard({ job }: JobCardProps) {
   const isDestaque = job.tipo_publicacao === "destaque";
 
   // Show ALL skills (required + optional), not just required ones
-  const allSkills = job.vaga_habilidades
-    .filter((vh) => vh.habilidade !== null)
-    .map((vh) => vh.habilidade!);
+  const allSkills = job.vaga_habilidades.filter((vh) => vh.habilidade !== null).map((vh) => vh.habilidade!);
 
   const visibleSkills = allSkills.slice(0, 5);
   const extraCount = allSkills.length - 5;
 
   const studioName = job.estudio?.nome || "Estúdio";
-  
+
   // Build location string from estado/cidade
   const getLocationString = () => {
-    const estudioLocation = job.estudio?.cidade && job.estudio?.estado 
-      ? `${job.estudio.cidade}, ${job.estudio.estado}`
-      : null;
-    const jobLocation = job.cidade && job.estado 
-      ? `${job.cidade}, ${job.estado}`
-      : null;
+    const estudioLocation =
+      job.estudio?.cidade && job.estudio?.estado ? `${job.estudio.cidade}, ${job.estudio.estado}` : null;
+    const jobLocation = job.cidade && job.estado ? `${job.cidade}, ${job.estado}` : null;
     return estudioLocation || jobLocation;
   };
   const studioLocation = getLocationString();
 
   const getInitials = (name: string) => {
-    return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
   };
 
   return (
@@ -47,7 +47,7 @@ export function JobCard({ job }: JobCardProps) {
           "p-4 cursor-pointer transition-all duration-200",
           isDestaque
             ? "bg-muted/50 border-border hover:border-primary/40 hover:shadow-[0_0_20px_rgba(34,228,122,0.15)]"
-            : "bg-card/50 border-border/50 hover:border-border/70 hover:bg-card/70"
+            : "bg-card/50 border-border/50 hover:border-border/70 hover:bg-card/70",
         )}
       >
         <div className="flex gap-4">
@@ -64,9 +64,7 @@ export function JobCard({ job }: JobCardProps) {
             {/* Header: Studio name + Destaque badge */}
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <span className="font-medium text-foreground truncate block">
-                  {studioName}
-                </span>
+                <span className="font-medium text-foreground truncate block">{studioName}</span>
                 {studioLocation && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -83,9 +81,7 @@ export function JobCard({ job }: JobCardProps) {
             </div>
 
             {/* Job Title */}
-            <h3 className="font-semibold text-lg text-foreground leading-tight">
-              {job.titulo}
-            </h3>
+            <h3 className="font-semibold text-lg text-foreground leading-tight">{job.titulo}</h3>
 
             {/* Badges: Contract, Level, Work Model */}
             <div className="flex flex-wrap gap-2">
@@ -104,19 +100,12 @@ export function JobCard({ job }: JobCardProps) {
             {allSkills.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {visibleSkills.map((skill, index) => (
-                  <Badge
-                    key={skill.id || index}
-                    variant="secondary"
-                    className="text-xs bg-muted/80"
-                  >
+                  <Badge key={skill.id || index} variant="secondary" className="text-xs bg-muted/80">
                     {skill.nome}
                   </Badge>
                 ))}
                 {extraCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="text-xs bg-muted text-muted-foreground"
-                  >
+                  <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">
                     +{extraCount}
                   </Badge>
                 )}
