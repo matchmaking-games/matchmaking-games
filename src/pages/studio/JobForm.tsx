@@ -764,7 +764,7 @@ export default function JobForm() {
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="1000"
+                            placeholder="Ex: 1000"
                             {...field}
                             value={field.value ?? ""}
                             onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
