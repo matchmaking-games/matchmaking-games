@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { generateSlug } from "@/lib/formatters";
@@ -73,6 +73,8 @@ interface UseJobFormReturnComplete extends UseJobFormReturn {
 export function useJobForm(jobId?: string): UseJobFormReturnComplete {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const studioIdFromUrl = searchParams.get("studio");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -99,18 +101,39 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
           return;
         }
 
-        const { data: membership, error: membershipError } = await supabase
-          .from("estudio_membros")
-          .select("role, estudio_id")
-          .eq("user_id", session.user.id)
-          .eq("ativo", true)
-          .maybeSingle();
+        let membership: { role: string; estudio_id: string } | null = null;
 
-        if (membershipError) {
-          console.error("Error checking membership:", membershipError);
-          setError("Erro ao verificar permissões.");
-          setIsAuthorized(false);
-          return;
+        if (studioIdFromUrl) {
+          const { data, error: membershipError } = await supabase
+            .from("estudio_membros")
+            .select("role, estudio_id")
+            .eq("user_id", session.user.id)
+            .eq("estudio_id", studioIdFromUrl)
+            .eq("ativo", true)
+            .maybeSingle();
+
+          if (membershipError) {
+            console.error("Error checking membership:", membershipError);
+            setError("Erro ao verificar permissões.");
+            setIsAuthorized(false);
+            return;
+          }
+          membership = data;
+        } else {
+          const { data, error: membershipError } = await supabase
+            .from("estudio_membros")
+            .select("role, estudio_id")
+            .eq("user_id", session.user.id)
+            .eq("ativo", true)
+            .limit(1);
+
+          if (membershipError) {
+            console.error("Error checking membership:", membershipError);
+            setError("Erro ao verificar permissões.");
+            setIsAuthorized(false);
+            return;
+          }
+          membership = data?.[0] || null;
         }
 
         if (!membership) {
@@ -131,11 +154,13 @@ export function useJobForm(jobId?: string): UseJobFormReturnComplete {
         console.error("Error checking membership:", err);
         setError("Erro ao verificar permissões.");
         setIsAuthorized(false);
+      } finally {
+        if (!jobId) setIsLoading(false);
       }
     };
 
     checkMembership();
-  }, []);
+  }, [studioIdFromUrl]);
 
   // Effect 2: Fetch existing job data if editing
   useEffect(() => {
