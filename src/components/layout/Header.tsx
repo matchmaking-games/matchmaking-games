@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, Briefcase, Settings, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,6 +56,7 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
+                  <Briefcase className="h-4 w-4" />
                   Vagas
                 </Link>
 
@@ -69,7 +70,6 @@ export function Header() {
                       <LayoutDashboard className="h-4 w-4" />
                       Painel
                     </Link>
-                    <div className="my-2 border-t border-border" />
                     <Link
                       to="/dashboard/settings"
                       onClick={() => setMobileMenuOpen(false)}
@@ -78,6 +78,7 @@ export function Header() {
                       <Settings className="h-4 w-4" />
                       Configurações
                     </Link>
+                    <div className="my-2 border-t border-border" />
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
@@ -104,7 +105,7 @@ export function Header() {
                     <Link
                       to="/signup"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                     >
                       Criar Conta
                     </Link>
@@ -117,7 +118,7 @@ export function Header() {
 
         {/* Logo - centered on mobile */}
         <Link
-          to={isAuthenticated ? "/dashboard" : "/"}
+          to={!isAuthenticated && !isLoading ? "/" : "/dashboard"}
           className="flex items-center gap-2 md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
         >
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
@@ -182,16 +183,8 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: Login button (only when not authenticated) */}
-        <div className="md:hidden">
-          {!isLoading && !isAuthenticated && (
-            <Link to="/login">
-              <Button variant="ghost" size="sm">
-                Entrar
-              </Button>
-            </Link>
-          )}
-        </div>
+        {/* Mobile: placeholder for layout balance */}
+        <div className="md:hidden w-9" />
       </div>
     </header>
   );
