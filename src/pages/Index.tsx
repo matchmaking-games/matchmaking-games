@@ -51,6 +51,7 @@ const Index = () => {
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isInputHovered, setIsInputHovered] = useState(false);
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
   const navigate = useNavigate();
 
