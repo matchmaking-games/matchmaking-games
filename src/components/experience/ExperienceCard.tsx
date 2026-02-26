@@ -21,10 +21,10 @@ interface ExperienceCardProps {
 
 // Badge color configuration for employment types
 const tipoEmpregoStyles: Record<string, string> = {
-  clt: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30",
-  pj: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30",
-  freelance: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30",
-  estagio: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30",
+  clt: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20",
+  pj: "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/20",
+  freelance: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20",
+  estagio: "bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/20",
 };
 
 function CargoTimelineItem({ cargo }: { cargo: CargoExperiencia }) {
@@ -46,7 +46,9 @@ function CargoTimelineItem({ cargo }: { cargo: CargoExperiencia }) {
         </div>
         <p className="text-xs text-muted-foreground">{dateRange}</p>
         {cargo.descricao && (
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{cargo.descricao}</p>
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">
+            {cargo.descricao}
+          </p>
         )}
         {cargo.habilidades_usadas && cargo.habilidades_usadas.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
@@ -168,7 +170,9 @@ export function ExperienceCard({ experience, onEdit, onDelete, onAddCargo }: Exp
 
             {/* Description */}
             {experience.descricao && (
-              <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed pt-1">{experience.descricao}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed pt-1">
+                {experience.descricao}
+              </p>
             )}
 
             {/* Skills used */}
