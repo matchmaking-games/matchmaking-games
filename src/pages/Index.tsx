@@ -186,6 +186,8 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             <div
+              onMouseEnter={() => setIsInputHovered(true)}
+              onMouseLeave={() => setIsInputHovered(false)}
               style={{
                 background: "#1a1a1a",
                 border:
@@ -212,7 +214,7 @@ const Index = () => {
                 value={username}
                 onChange={handleUsernameChange}
                 maxLength={30}
-                className="bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm placeholder:text-white/25 h-full px-0"
+                className="bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 font-mono text-sm placeholder:text-white/25 h-full px-0 hover:bg-transparent"
                 style={{ color: "#f0f0f0", outline: "none", boxShadow: "none" }}
               />
               <div className="px-2 flex-shrink-0">{renderStatusIcon()}</div>
