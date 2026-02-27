@@ -114,7 +114,7 @@ export function JobSkillsSelector({
           </div>
 
           {/* Skills list */}
-          <ScrollArea className="max-h-[200px]">
+          <ScrollArea className="h-[200px]">
             {filteredSkills.length > 0 ? (
               <div className="p-2">
                 <div className="flex flex-wrap gap-1.5">

@@ -914,6 +914,27 @@ export type Database = {
           },
         ]
       }
+      tipos_funcao: {
+        Row: {
+          ativo: boolean
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
       user_habilidades: {
         Row: {
           anos_experiencia: number | null
@@ -1112,6 +1133,39 @@ export type Database = {
           },
           {
             foreignKeyName: "vaga_habilidades_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaga_tipos_funcao: {
+        Row: {
+          id: string
+          tipo_funcao_id: string
+          vaga_id: string
+        }
+        Insert: {
+          id?: string
+          tipo_funcao_id: string
+          vaga_id: string
+        }
+        Update: {
+          id?: string
+          tipo_funcao_id?: string
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaga_tipos_funcao_tipo_funcao_id_fkey"
+            columns: ["tipo_funcao_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_funcao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaga_tipos_funcao_vaga_id_fkey"
             columns: ["vaga_id"]
             isOneToOne: false
             referencedRelation: "vagas"
