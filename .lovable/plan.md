@@ -1,45 +1,85 @@
 
-# Correcoes no Header Mobile e useAuth
 
-## Arquivo 1: src/hooks/useAuth.ts
+# Plano: Migracao de tipo_funcao + Fixes de UX (revisado)
 
-### Reescrever o useEffect para usar apenas onAuthStateChange
+## Arquivos a criar
+- `src/hooks/useTiposFuncao.ts`
 
-Remover a funcao `getSession()` e sua chamada manual. O listener `onAuthStateChange` passa a ser a unica fonte de verdade. Tratar tres eventos:
+## Arquivos a modificar
+- `src/pages/studio/JobForm.tsx`
+- `src/hooks/useJobForm.ts`
+- `src/components/studio/JobSkillsSelector.tsx`
 
-- **INITIAL_SESSION**: se `session` existe, buscar usuario na tabela `users` e setar. Se nao, setar `null`. Sempre chamar `setIsLoading(false)` no `finally`.
-- **SIGNED_IN**: mesmo comportamento de buscar usuario. `setIsLoading(false)` no `finally`.
-- **SIGNED_OUT**: setar `user` como `null`. `setIsLoading(false)`.
+---
 
-Qualquer evento nao listado acima sera ignorado (sem alterar estado). A interface `AuthUser`, os campos buscados e o retorno do hook permanecem identicos.
+## 1. Criar hook `useTiposFuncao`
 
-## Arquivo 2: src/components/layout/Header.tsx
+Novo arquivo `src/hooks/useTiposFuncao.ts`. Busca todos os registros de `tipos_funcao` onde `ativo = true`, ordenados por `ordem`. Retorna `{ tiposFuncao: { id: string, nome: string }[], loading: boolean, error: string | null }`. Query executada uma unica vez no mount via `useState` + `useEffect` (sem React Query, seguindo padrao dos outros hooks do projeto).
 
-### Correcao 1 — Remover botao "Entrar" duplicado no mobile (linhas 185-194)
-Remover o bloco `<div className="md:hidden">` que renderiza o Link "/login" fora do Sheet. O botao "Entrar" ja existe dentro do menu hamburguer.
+---
 
-### Correcao 2 — Normalizar estilo do "Criar Conta" no mobile (linha 107)
-Substituir as classes `bg-primary text-primary-foreground hover:bg-primary/90` por `text-foreground hover:bg-muted` para igualar ao estilo dos outros itens do menu.
+## 2. Corrigir scroll do `JobSkillsSelector.tsx`
 
-### Correcao 3 — Logo com destino seguro durante loading (linha 120)
-Alterar de `to={isAuthenticated ? "/dashboard" : "/"}` para `to={!isAuthenticated && !isLoading ? "/" : "/dashboard"}`.
+Linha 117: trocar `className="max-h-[200px]"` por `className="h-[200px]"` no `ScrollArea`. Isso forca altura fixa e ativa o scroll interno corretamente.
 
-### Correcao 4 — Adicionar icone Briefcase no item "Vagas" do mobile (linhas 54-60)
-Importar `Briefcase` do lucide-react. Adicionar `<Briefcase className="h-4 w-4" />` dentro do Link de "Vagas" no Sheet.
+---
 
-### Correcao 5 — Mover separator para antes do "Sair" (linhas 62-91)
-Remover o `<div className="my-2 border-t border-border" />` que esta entre "Painel" e "Configuracoes" (linha 72). Adicionar esse mesmo separator imediatamente antes do botao "Sair".
+## 3. Modificar `useJobForm.ts`
 
-Ordem final do menu mobile autenticado:
-1. Vagas (icone Briefcase)
-2. Painel (icone LayoutDashboard)
-3. Configuracoes (icone Settings)
-4. [separator]
-5. Sair (icone LogOut)
+### 3.1 Atualizar interfaces
+- Em `VagaFormData`: remover `tipo_funcao: string[]`, adicionar `tipo_funcao_ids: string[]` (array de UUIDs).
+- Em `VagaCompleta`: remover `tipo_funcao: string[]` (campo antigo nao e mais usado).
 
-## Resumo de alteracoes por arquivo
+### 3.2 Criar funcao `insertTiposFuncao`
+Nova funcao interna que recebe `(vagaId: string, tipoFuncaoIds: string[])` e insere registros em `vaga_tipos_funcao`. Padrao identico a `insertSkills`.
 
-| Arquivo | Tipo de alteracao |
-|---|---|
-| `src/hooks/useAuth.ts` | Reescrever useEffect: remover getSession, tratar INITIAL_SESSION/SIGNED_IN/SIGNED_OUT |
-| `src/components/layout/Header.tsx` | 5 correcoes cirurgicas no JSX + 1 import adicionado (Briefcase) |
+### 3.3 Atualizar todos os fluxos de salvamento
+Nos 5 fluxos (`saveDraft`, `updateDraft`, `createJob gratuita`, `createJob destaque`, `updateJob`):
+- Parar de enviar `tipo_funcao` na coluna da tabela `vagas`. O campo `tipo_funcao` da tabela `vagas` e `NOT NULL`, entao enviar um array vazio `[]` como placeholder.
+- Apos inserir/atualizar a vaga, chamar `insertTiposFuncao(vagaId, data.tipo_funcao_ids)`.
+- Em `updateJob` e `updateDraft`: deletar registros existentes em `vaga_tipos_funcao` antes de inserir (mesmo padrao do delete+insert de `vaga_habilidades`).
+
+### 3.4 Carregar tipos de funcao ao editar
+No Effect 2 (fetchJobData), apos carregar habilidades, buscar tambem os registros de `vaga_tipos_funcao` onde `vaga_id = jobId`. Armazenar os `tipo_funcao_id` em novo campo do retorno: `existingTiposFuncao: string[]`.
+
+---
+
+## 4. Modificar `JobForm.tsx`
+
+### 4.1 Remover constante hardcoded
+Remover `tipoFuncaoOptions` (linhas 58-74).
+
+### 4.2 Importar e usar `useTiposFuncao`
+Chamar o hook e usar `tiposFuncao` para popular o seletor.
+
+### 4.3 Adaptar form para UUIDs
+- O campo `tipo_funcao` do Zod schema continua como `z.array(z.string())` (agora armazena UUIDs em vez de nomes).
+- Em `transformFormData`: mapear `tipo_funcao` do form para `tipo_funcao_ids` do `VagaFormData`.
+- Nos badges selecionados: exibir o `nome` da funcao fazendo lookup no array `tiposFuncao` pelo ID.
+- No `handleTipoFuncaoSelect`/`handleTipoFuncaoRemove`: trabalhar com IDs.
+
+### 4.4 Carregar dados existentes
+No useEffect que faz `form.reset` com `existingJob`, popular `tipo_funcao` com os IDs vindos de `existingTiposFuncao`. Sem fallback — se vazio, campo aparece vazio.
+
+### 4.5 Corrigir scroll do CommandList
+Adicionar `className="max-h-[200px] overflow-y-auto"` ao `CommandList` (linha 540).
+
+### 4.6 Loading state no seletor
+Enquanto `useTiposFuncao` estiver carregando, mostrar texto "Carregando..." no botao trigger do Popover e desabilitar o botao.
+
+---
+
+## Ordem de implementacao
+
+1. Criar `useTiposFuncao.ts`
+2. Corrigir `JobSkillsSelector.tsx` (1 linha)
+3. Modificar `useJobForm.ts` (interfaces, insertTiposFuncao, fluxos de save, load)
+4. Modificar `JobForm.tsx` (remover constante, usar hook, adaptar para IDs, corrigir scroll)
+
+## O que NAO muda
+- Layout visual do formulario
+- Fluxo Stripe
+- Validacao Zod (estrutura identica, conteudo muda de texto para UUID)
+- Outros hooks e componentes
+- Coluna `tipo_funcao` da tabela `vagas` (permanece no banco, recebe `[]` como placeholder)
+
