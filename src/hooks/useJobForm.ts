@@ -16,7 +16,6 @@ export interface VagaCompleta {
   titulo: string;
   slug: string;
   descricao: string;
-  tipo_funcao: string[];
   nivel: NivelVaga;
   tipo_emprego: TipoEmprego;
   remoto: TipoTrabalho;
@@ -34,7 +33,7 @@ export interface VagaCompleta {
 
 export interface VagaFormData {
   titulo: string;
-  tipo_funcao: string[];
+  tipo_funcao_ids: string[];
   nivel: NivelVaga;
   tipo_emprego: TipoEmprego;
   remoto: TipoTrabalho;
@@ -61,6 +60,7 @@ interface UseJobFormReturn {
     obrigatorias: string[];
     desejaveis: string[];
   };
+  existingTiposFuncao: string[];
   createJob: (data: VagaFormData) => Promise<void>;
   updateJob: (id: string, data: VagaFormData) => Promise<void>;
   saveDraft: (data: VagaFormData) => Promise<void>;
@@ -84,6 +84,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
     obrigatorias: string[];
     desejaveis: string[];
   }>({ obrigatorias: [], desejaveis: [] });
+  const [existingTiposFuncao, setExistingTiposFuncao] = useState<string[]>([]);
 
   // Effect 1: Check membership and authorization
   useEffect(() => {
@@ -211,6 +212,14 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           obrigatorias: obrigatorias?.map((h) => h.habilidade_id) || [],
           desejaveis: desejaveis?.map((h) => h.habilidade_id) || [],
         });
+
+        // Fetch tipos de função
+        const { data: tiposFuncao } = await supabase
+          .from("vaga_tipos_funcao")
+          .select("tipo_funcao_id")
+          .eq("vaga_id", jobId);
+
+        setExistingTiposFuncao(tiposFuncao?.map((t) => t.tipo_funcao_id) || []);
       } catch (err) {
         console.error("Error fetching job data:", err);
         setError("Erro ao carregar dados da vaga.");
@@ -278,6 +287,25 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
     }
   };
 
+  // Insert tipos de função for a job
+  const insertTiposFuncao = async (vagaId: string, tipoFuncaoIds: string[]) => {
+    if (tipoFuncaoIds.length === 0) return;
+
+    const records = tipoFuncaoIds.map((tipo_funcao_id) => ({
+      vaga_id: vagaId,
+      tipo_funcao_id,
+    }));
+
+    const { error: insertError } = await supabase
+      .from("vaga_tipos_funcao")
+      .insert(records);
+
+    if (insertError) {
+      console.error("Error inserting tipos_funcao:", insertError);
+      throw new Error("Erro ao salvar tipos de função.");
+    }
+  };
+
   // Save as draft
   const saveDraft = useCallback(async (data: VagaFormData) => {
     if (!estudioId) {
@@ -307,7 +335,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           titulo: data.titulo,
           slug,
           descricao: data.descricao,
-          tipo_funcao: data.tipo_funcao,
+          tipo_funcao: [],
           nivel: data.nivel,
           tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
@@ -338,6 +366,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         data.habilidades_obrigatorias,
         data.habilidades_desejaveis
       );
+      await insertTiposFuncao(vaga.id, data.tipo_funcao_ids);
 
       toast({
         title: "Rascunho salvo!",
@@ -384,7 +413,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           titulo: data.titulo,
           slug,
           descricao: data.descricao,
-          tipo_funcao: data.tipo_funcao,
+          tipo_funcao: [],
           nivel: data.nivel,
           tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
@@ -404,9 +433,11 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         throw new Error("Erro ao atualizar rascunho.");
       }
 
-      // Delete old skills and insert new ones
+      // Delete old skills and tipos_funcao, insert new ones
       await supabase.from("vaga_habilidades").delete().eq("vaga_id", id);
       await insertSkills(id, data.habilidades_obrigatorias, data.habilidades_desejaveis);
+      await supabase.from("vaga_tipos_funcao").delete().eq("vaga_id", id);
+      await insertTiposFuncao(id, data.tipo_funcao_ids);
 
       toast({
         title: "Rascunho atualizado!",
@@ -457,7 +488,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
             titulo: data.titulo,
             slug,
             descricao: data.descricao,
-            tipo_funcao: data.tipo_funcao,
+            tipo_funcao: [],
             nivel: data.nivel,
             tipo_emprego: data.tipo_emprego,
             remoto: data.remoto,
@@ -488,6 +519,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           data.habilidades_obrigatorias,
           data.habilidades_desejaveis
         );
+        await insertTiposFuncao(vaga.id, data.tipo_funcao_ids);
 
         toast({
           title: "Vaga publicada!",
@@ -504,7 +536,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
             titulo: data.titulo,
             slug,
             descricao: data.descricao,
-            tipo_funcao: data.tipo_funcao,
+            tipo_funcao: [],
             nivel: data.nivel,
             tipo_emprego: data.tipo_emprego,
             remoto: data.remoto,
@@ -535,6 +567,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           data.habilidades_obrigatorias,
           data.habilidades_desejaveis
         );
+        await insertTiposFuncao(vaga.id, data.tipo_funcao_ids);
 
         // Call Edge Function to create Stripe checkout session
         const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
@@ -595,7 +628,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           titulo: data.titulo,
           slug,
           descricao: data.descricao,
-          tipo_funcao: data.tipo_funcao,
+          tipo_funcao: [],
           nivel: data.nivel,
           tipo_emprego: data.tipo_emprego,
           remoto: data.remoto,
@@ -634,6 +667,10 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         data.habilidades_desejaveis
       );
 
+      // Delete old tipos_funcao and insert new ones
+      await supabase.from("vaga_tipos_funcao").delete().eq("vaga_id", id);
+      await insertTiposFuncao(id, data.tipo_funcao_ids);
+
       toast({
         title: "Vaga atualizada!",
         description: `A vaga "${data.titulo}" foi atualizada com sucesso.`,
@@ -660,6 +697,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
     estudioId,
     existingJob,
     existingSkills,
+    existingTiposFuncao,
     createJob,
     updateJob,
     saveDraft,

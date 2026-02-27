@@ -32,6 +32,7 @@ import {
 import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
 import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/useJobForm";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useTiposFuncao } from "@/hooks/useTiposFuncao";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -54,24 +55,7 @@ const vagaFormSchema = z.object({
 
 type VagaFormSchemaType = z.infer<typeof vagaFormSchema>;
 
-// Function type options
-const tipoFuncaoOptions = [
-  { value: "Programação", label: "Programação" },
-  { value: "Arte 2D", label: "Arte 2D" },
-  { value: "Arte 3D", label: "Arte 3D" },
-  { value: "Game Design", label: "Game Design" },
-  { value: "Level Design", label: "Level Design" },
-  { value: "Narrative Design", label: "Narrative Design" },
-  { value: "UI/UX", label: "UI/UX" },
-  { value: "Audio", label: "Audio" },
-  { value: "QA", label: "QA" },
-  { value: "Producer", label: "Producer" },
-  { value: "Marketing", label: "Marketing" },
-  { value: "Community Manager", label: "Community Manager" },
-  { value: "Technical Artist", label: "Technical Artist" },
-  { value: "VFX", label: "VFX" },
-  { value: "Animation", label: "Animation" },
-];
+// tipoFuncaoOptions removed — now fetched from Supabase via useTiposFuncao
 
 export default function JobForm() {
   const { id } = useParams();
@@ -87,11 +71,14 @@ export default function JobForm() {
     isAuthorized,
     existingJob,
     existingSkills,
+    existingTiposFuncao,
     createJob,
     updateJob,
     saveDraft,
     updateDraft,
   } = useJobForm(id);
+
+  const { tiposFuncao, loading: loadingTiposFuncao } = useTiposFuncao();
 
   const { estados, loadingEstados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } =
     useIBGELocations();
@@ -195,7 +182,7 @@ export default function JobForm() {
     if (existingJob) {
       form.reset({
         titulo: existingJob.titulo,
-        tipo_funcao: existingJob.tipo_funcao || [],
+        tipo_funcao: existingTiposFuncao || [],
         nivel: existingJob.nivel,
         tipo_emprego: existingJob.tipo_emprego,
         remoto: existingJob.remoto,
@@ -271,7 +258,7 @@ export default function JobForm() {
   const transformFormData = (data: Partial<VagaFormSchemaType>): VagaFormData => {
     return {
       titulo: data.titulo || "",
-      tipo_funcao: data.tipo_funcao || [],
+      tipo_funcao_ids: data.tipo_funcao || [],
       nivel: data.nivel || "pleno",
       tipo_emprego: data.tipo_emprego || "clt",
       remoto: data.remoto || "remoto",
@@ -502,22 +489,25 @@ export default function JobForm() {
                       {/* Selected badges */}
                       {tipoFuncaoValue.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
-                          {tipoFuncaoValue.map((funcao) => (
+                          {tipoFuncaoValue.map((funcaoId) => {
+                            const funcao = tiposFuncao.find((t) => t.id === funcaoId);
+                            return (
                             <Badge
-                              key={funcao}
+                              key={funcaoId}
                               variant="secondary"
                               className="bg-secondary/10 text-secondary-foreground"
                             >
-                              {funcao}
+                              {funcao?.nome || funcaoId}
                               <button
                                 type="button"
                                 className="ml-1 rounded-full outline-none hover:bg-secondary/20"
-                                onClick={() => handleTipoFuncaoRemove(funcao)}
+                                onClick={() => handleTipoFuncaoRemove(funcaoId)}
                               >
                                 <X className="h-3 w-3" />
                               </button>
                             </Badge>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
 
@@ -529,26 +519,29 @@ export default function JobForm() {
                             role="combobox"
                             aria-expanded={tipoFuncaoOpen}
                             className="w-full justify-between font-normal"
+                            disabled={loadingTiposFuncao}
                           >
-                            <span className="text-muted-foreground">Adicionar função...</span>
+                            <span className="text-muted-foreground">
+                              {loadingTiposFuncao ? "Carregando..." : "Adicionar função..."}
+                            </span>
                             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-full p-0" align="start">
                           <Command>
                             <CommandInput placeholder="Buscar função..." />
-                            <CommandList>
+                            <CommandList className="max-h-[200px] overflow-y-auto">
                               <CommandEmpty>Nenhuma função encontrada.</CommandEmpty>
                               <CommandGroup>
-                                {tipoFuncaoOptions
-                                  .filter((option) => !tipoFuncaoValue.includes(option.value))
+                                {tiposFuncao
+                                  .filter((option) => !tipoFuncaoValue.includes(option.id))
                                   .map((option) => (
                                     <CommandItem
-                                      key={option.value}
-                                      value={option.value}
-                                      onSelect={() => handleTipoFuncaoSelect(option.value)}
+                                      key={option.id}
+                                      value={option.nome}
+                                      onSelect={() => handleTipoFuncaoSelect(option.id)}
                                     >
-                                      {option.label}
+                                      {option.nome}
                                     </CommandItem>
                                   ))}
                               </CommandGroup>
