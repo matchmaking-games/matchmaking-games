@@ -5,6 +5,7 @@ export interface JobFilters {
   nivel: string | null;
   tipoContrato: string | null;
   modeloTrabalho: string | null;
+  tipoFuncao: string | null;
   estado: string | null;
   cidade: string | null;
   habilidades: string[];
@@ -18,6 +19,7 @@ export function useJobFilters() {
     nivel: searchParams.get("nivel"),
     tipoContrato: searchParams.get("contrato"),
     modeloTrabalho: searchParams.get("modelo"),
+    tipoFuncao: searchParams.get("funcao"),
     estado: searchParams.get("estado"),
     cidade: searchParams.get("cidade"),
     habilidades: searchParams.get("skills")?.split(",").filter(Boolean) || [],
@@ -83,6 +85,7 @@ export function useJobFilters() {
     if (filters.nivel) count++;
     if (filters.tipoContrato) count++;
     if (filters.modeloTrabalho) count++;
+    if (filters.tipoFuncao) count++;
     if (filters.estado) count++;
     if (filters.cidade) count++;
     if (filters.habilidades.length > 0) count++;
