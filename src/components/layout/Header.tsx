@@ -127,7 +127,7 @@ export function Header() {
         {/* Desktop: Right section (Vagas + Auth) */}
         <div className="hidden md:flex items-center gap-3">
           {/* Vagas (desktop only) - same style as "Entrar" */}
-          <Link to="/vagas">
+          <Link to="/jobs">
             <Button variant="ghost" size="sm">
               Vagas
             </Button>
