@@ -47,7 +47,7 @@ export function useImportLinkedIn() {
       }
 
       // 2. Update progress
-      setProgress("Analisando currículo com IA... isso pode levar até 30 segundos");
+      setProgress("Importando currículo... isso pode levar até 30 segundos");
 
       // 3. Get session
       const {
@@ -101,7 +101,7 @@ export function useImportLinkedIn() {
             msg = "Não foi possível processar o PDF. Certifique-se de usar o PDF gerado diretamente pelo LinkedIn.";
             break;
           case 500:
-            msg = "Erro no processamento com IA. Tente novamente em alguns minutos.";
+            msg = "Erro na importação. Tente novamente em alguns minutos.";
             break;
           default:
             msg = "Erro inesperado. Tente novamente.";
@@ -140,9 +140,9 @@ export function useImportLinkedIn() {
 
   const createBackup = async (userId: string): Promise<boolean> => {
     const [expRes, eduRes, skillsRes] = await Promise.all([
-      supabase.from('experiencia').select('*').eq('user_id', userId),
-      supabase.from('educacao').select('*').eq('user_id', userId),
-      supabase.from('user_habilidades').select('*').eq('user_id', userId),
+      supabase.from("experiencia").select("*").eq("user_id", userId),
+      supabase.from("educacao").select("*").eq("user_id", userId),
+      supabase.from("user_habilidades").select("*").eq("user_id", userId),
     ]);
 
     const experiences = expRes.data ?? [];
@@ -159,7 +159,7 @@ export function useImportLinkedIn() {
       },
     };
 
-    const { error: insertError } = await supabase.from('import_backups').insert({
+    const { error: insertError } = await supabase.from("import_backups").insert({
       user_id: userId,
       backup_data: backupData as any,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
