@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from "react";
-import { X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { X, Check, ChevronsUpDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
 import { useAvailableSkills, Habilidade } from "@/hooks/useAvailableSkills";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useTiposFuncao } from "@/hooks/useTiposFuncao";
 import { JobFilters } from "@/hooks/useJobFilters";
+import { cn } from "@/lib/utils";
 
 interface JobsSidebarProps {
   filters: JobFilters;
@@ -231,6 +242,12 @@ export function JobsSidebar({
         </div>
       )}
 
+      {/* Tipo de Função */}
+      <TipoFuncaoFilter
+        value={filters.tipoFuncao}
+        onChange={(v) => onFilterChange("funcao", v)}
+      />
+
       {/* Habilidades - 4 Combobox independentes */}
       <div className="space-y-4">
         <Label className="text-sm">Habilidades</Label>
@@ -272,5 +289,76 @@ export function JobsSidebar({
         )}
       </div>
     </Card>
+  );
+}
+
+// --- Tipo de Função Combobox Filter ---
+
+interface TipoFuncaoFilterProps {
+  value: string | null;
+  onChange: (value: string | null) => void;
+}
+
+function TipoFuncaoFilter({ value, onChange }: TipoFuncaoFilterProps) {
+  const { tiposFuncao, loading } = useTiposFuncao();
+  const [open, setOpen] = useState(false);
+
+  const selectedLabel = value
+    ? tiposFuncao.find((t) => t.id === value)?.nome ?? "Carregando..."
+    : "Todos os tipos";
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm">Tipo de Função</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal"
+            disabled={loading}
+          >
+            <span className="truncate">
+              {loading ? "Carregando..." : selectedLabel}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar função..." />
+            <CommandList className="max-h-[200px] overflow-y-auto">
+              <CommandEmpty>Nenhuma função encontrada</CommandEmpty>
+              <CommandGroup>
+                <CommandItem
+                  value="__all__"
+                  onSelect={() => {
+                    onChange(null);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
+                  Todos os tipos
+                </CommandItem>
+                {tiposFuncao.map((tipo) => (
+                  <CommandItem
+                    key={tipo.id}
+                    value={tipo.nome}
+                    onSelect={() => {
+                      onChange(tipo.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === tipo.id ? "opacity-100" : "opacity-0")} />
+                    {tipo.nome}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

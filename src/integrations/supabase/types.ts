@@ -1194,7 +1194,6 @@ export type Database = {
           slug: string
           status: string | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
-          tipo_funcao: string[]
           tipo_publicacao:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
             | null
@@ -1221,7 +1220,6 @@ export type Database = {
           slug: string
           status?: string | null
           tipo_emprego: Database["public"]["Enums"]["tipo_emprego"]
-          tipo_funcao: string[]
           tipo_publicacao?:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
             | null
@@ -1248,7 +1246,6 @@ export type Database = {
           slug?: string
           status?: string | null
           tipo_emprego?: Database["public"]["Enums"]["tipo_emprego"]
-          tipo_funcao?: string[]
           tipo_publicacao?:
             | Database["public"]["Enums"]["tipo_publicacao_vaga"]
             | null
