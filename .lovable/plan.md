@@ -1,78 +1,106 @@
 
+# Termos de Uso e Politica de Privacidade
 
-# Correcoes de Auth: LinkedIn, Login com Email e Tela de Confirmacao
+## Arquivos a criar
+- `src/pages/Terms.tsx`
+- `src/pages/Privacy.tsx`
 
 ## Arquivos a modificar
-- `src/pages/Login.tsx`
-- `src/pages/Signup.tsx`
-
-Nenhum outro arquivo sera tocado.
-
----
-
-## Correcao 1 — Remover LinkedIn de ambas as paginas
-
-### Login.tsx
-- Remover a funcao `handleLinkedInLogin` (linhas 86-102)
-- Remover o botao "Continuar com LinkedIn" do JSX (linhas 180-191)
-
-### Signup.tsx
-- Remover a funcao `handleLinkedInSignup` (linhas 109-124)
-- Remover o botao "Continuar com LinkedIn" do JSX (linhas 239-250)
-
-Nenhum import precisa ser removido — todos os imports existentes (lucide icons, Button, supabase, etc.) continuam sendo usados por outras partes do codigo.
+- `src/App.tsx` (adicionar 2 rotas)
+- `src/pages/Index.tsx` (adicionar links no footer)
+- `src/pages/Signup.tsx` (adicionar frase de consentimento)
 
 ---
 
-## Correcao 2 — Login com email verifica perfil antes de redirecionar
+## Passo 1 -- Criar `src/pages/Terms.tsx`
 
-### Login.tsx — funcao `handleEmailLogin`
+Pagina estatica na rota `/terms`. Reutiliza o `Header` de `@/components/layout/Header` no topo e replica o mesmo footer inline da `Index.tsx` (logo, socials, frase, e os novos links de termos/privacidade).
 
-Apos o `signInWithPassword` retornar sem erro (linha 118), antes do `navigate`:
+Conteudo dentro de um `Card` centralizado com `max-w-[800px] mx-auto`, fundo `bg-card` (levemente mais claro que o background), padding `p-8 md:p-12`, border-radius padrao do Card. Background da pagina usa o mesmo `#0f0f0f` da landing.
 
-1. Extrair `data` do retorno do `signInWithPassword` (alterar destructuring para incluir `data`)
-2. Consultar tabela `users` com `.select('id').eq('id', data.session.user.id).maybeSingle()`
-3. Se encontrar perfil: `navigate(redirect || "/dashboard")`
-4. Se nao encontrar: `navigate("/onboarding")`
-5. Manter `setIsLoading(false)` implicito (o componente vai desmontar com o navigate)
+Estrutura do conteudo (extraido do PDF):
+- Titulo principal "Termos de Uso" em `font-display font-bold text-3xl`
+- Subtitulo "Matchmaking" 
+- Texto introdutorio
+- Secoes 1-11 cada uma com titulo em `font-display font-semibold text-xl` e texto em `text-base text-muted-foreground` com `leading-relaxed`
+- Listas com marcadores onde aplicavel
+- Espacamento `space-y-8` entre secoes
 
----
-
-## Correcao 3 — Tela de "Verifique seu email" no Signup
-
-### Signup.tsx — Alteracoes
-
-**Novo estado:**
-- Adicionar `const [emailSent, setEmailSent] = useState(false)` junto aos outros estados
-
-**Funcao `handleEmailSignup` (linhas 126-169):**
-Apos o signup bem-sucedido (sem erro), substituir o bloco que faz navigate para onboarding por:
-1. Se `slug` existir, salvar no localStorage como `pending_slug`
-2. Se `redirect` existir, salvar no localStorage como `pending_redirect`
-3. Chamar `setEmailSent(true)`
-4. Nao chamar `navigate`
-
-**JSX — Renderizacao condicional:**
-No return do componente, dentro do card principal (apos o logo), adicionar condicional:
-- Se `emailSent === true`: renderizar tela de confirmacao com:
-  - Icone `Mail` centralizado (tamanho grande, cor primary)
-  - Titulo "Verifique seu email" (font-display, text-2xl, font-bold)
-  - Texto "Enviamos um link de confirmacao para **[email]**. Clique no link para ativar sua conta e continuar." (text-sm, text-muted-foreground)
-  - Texto menor "Nao recebeu? Verifique a pasta de spam." (text-xs, text-muted-foreground)
-  - Sem botoes adicionais, sem timer, sem reenvio
-- Se `emailSent === false`: renderizar o formulario normalmente (codigo existente)
-
-A tela de confirmacao fica dentro do mesmo card visual ja existente, mantendo logo no topo, mesma estrutura de layout.
+Todo o conteudo e hardcoded como JSX (nao carrega do banco).
 
 ---
 
-## Ordem de implementacao
+## Passo 2 -- Criar `src/pages/Privacy.tsx`
 
-1. Editar `Login.tsx` — remover LinkedIn + corrigir handleEmailLogin
-2. Editar `Signup.tsx` — remover LinkedIn + adicionar emailSent + tela de confirmacao
+Identico ao Passo 1, mas com o conteudo da Politica de Privacidade. Rota `/privacy`. Mesma estrutura visual.
+
+Secoes extraidas do PDF:
+- Titulo "Politica de Privacidade"
+- Veracidade das Informacoes
+- O que sao Dados Pessoais e Dados Sensiveis
+- Empresa como Controladora
+- Quais Tipos de Dados Pessoais sao Coletados
+- Por que a Empresa Trata os Dados Pessoais
+- Dados Pessoais Sensiveis
+- Como a Empresa Armazena os Dados Pessoais
+- Processamento Automatico
+- Compartilhamento de Dados com Terceiros
+- Duracao do Tratamento
+- Seguranca das Informacoes
+- Browsers Compativeis
+- Cookies
+- Marketing
+- Compartilhamento com Terceiros (Google Analytics, Vercel, Supabase)
+- Direito do Usuario
+- Alteracao na Politica
+- Encarregado da Empresa
+
+---
+
+## Passo 3 -- Adicionar rotas no `App.tsx`
+
+Duas novas rotas publicas (sem ProtectedRoute):
+
+```text
+<Route path="/terms" element={<Terms />} />
+<Route path="/privacy" element={<Privacy />} />
+```
+
+Adicionadas acima da rota catch-all `*`.
+
+---
+
+## Passo 4 -- Adicionar links no footer da `Index.tsx`
+
+Abaixo da linha "Matchmaking . Feito para quem vive de games" (linha 760-762), adicionar uma nova `<p>` com dois `<Link>`:
+
+```text
+Termos de Uso · Politica de Privacidade
+```
+
+Estilo: `text-xs`, cor `rgba(255,255,255,0.35)`, sem underline por padrao, `hover:underline`. Separados por um ponto centralizado. `marginTop: 8`.
+
+---
+
+## Passo 5 -- Adicionar frase de consentimento no `Signup.tsx`
+
+Abaixo do botao "Criar Perfil" (linha 304) e antes do fechamento do `</form>` (linha 305), adicionar:
+
+```text
+<p className="text-xs text-center text-muted-foreground mt-3">
+  Ao criar uma conta, voce concorda com os{" "}
+  <Link to="/terms" className="text-primary hover:underline">Termos de Uso</Link>
+  {" "}e{" "}
+  <Link to="/privacy" className="text-primary hover:underline">Politica de Privacidade</Link>
+</p>
+```
+
+Fica dentro do `<form>`, logo apos o `<Button>`, antes do `</form>`. Nenhuma outra alteracao na pagina.
+
+---
 
 ## O que NAO muda
-- `AuthCallback.tsx`
-- `Onboarding.tsx`
-- `useAuth.ts`
-- Qualquer outro arquivo
+- Nenhum componente existente alem dos listados
+- Nenhuma logica de autenticacao
+- Layout existente do footer (apenas adicao)
+- Layout existente do signup (apenas adicao)
