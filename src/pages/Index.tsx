@@ -760,6 +760,11 @@ const Index = () => {
         <p className="text-center" style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", marginTop: 16 }}>
           Matchmaking · Feito para quem vive de games
         </p>
+        <p className="text-center" style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
+          <Link to="/terms" className="hover:underline" style={{ color: "inherit" }}>Termos de Uso</Link>
+          {" · "}
+          <Link to="/privacy" className="hover:underline" style={{ color: "inherit" }}>Política de Privacidade</Link>
+        </p>
       </footer>
     </div>
   );
