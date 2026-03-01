@@ -25,7 +25,7 @@ async function fetchPublicStudio(slug: string): Promise<PublicStudioData> {
   const { data: vagas, error: vagasError } = await supabase
     .from("vagas")
     .select(`
-      id, titulo, slug, nivel, remoto, tipo_emprego, tipo_publicacao, tipo_funcao, estado, cidade, criada_em,
+      id, titulo, slug, nivel, remoto, tipo_emprego, tipo_publicacao, estado, cidade, criada_em,
       estudio:estudios(nome, slug, logo_url, estado, cidade),
       vaga_habilidades(id, obrigatoria, habilidade:habilidades(id, nome, categoria))
     `)

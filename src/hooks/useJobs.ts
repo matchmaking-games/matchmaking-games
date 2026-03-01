@@ -34,7 +34,6 @@ export interface VagaListItem {
   remoto: TipoTrabalho;
   tipo_emprego: TipoEmprego;
   tipo_publicacao: TipoPublicacaoVaga | null;
-  tipo_funcao: string[];
   estado: string | null;
   cidade: string | null;
   criada_em: string | null;
@@ -52,6 +51,7 @@ export interface JobFiltersParams {
   nivel?: string | null;
   tipoContrato?: string | null;
   modeloTrabalho?: string | null;
+  tipoFuncao?: string | null;
   estado?: string | null;
   cidade?: string | null;
   habilidades?: string[];
@@ -103,7 +103,7 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
       remoto,
       tipo_emprego,
       tipo_publicacao,
-      tipo_funcao,
+      estado,
       estado,
       cidade,
       criada_em,
@@ -138,6 +138,27 @@ async function fetchJobs(filters: JobFiltersParams): Promise<JobsQueryResult> {
 
   if (vagaIdsWithSkills) {
     query = query.in("id", vagaIdsWithSkills);
+  }
+
+  // Filtro por tipo de função via tabela de relacionamento
+  if (filters.tipoFuncao) {
+    const { data: vagaTipos, error: tiposError } = await supabase
+      .from("vaga_tipos_funcao")
+      .select("vaga_id")
+      .eq("tipo_funcao_id", filters.tipoFuncao);
+
+    if (tiposError) {
+      console.error("Error fetching vaga_tipos_funcao:", tiposError);
+      throw new Error("Erro ao filtrar por tipo de função.");
+    }
+
+    const vagaIdsWithTipo = [...new Set(vagaTipos?.map((vt) => vt.vaga_id) || [])];
+
+    if (vagaIdsWithTipo.length === 0) {
+      return { jobs: [], hasNextPage: false, nextCursor: null };
+    }
+
+    query = query.in("id", vagaIdsWithTipo);
   }
 
   // Aplicar cursor para paginação
