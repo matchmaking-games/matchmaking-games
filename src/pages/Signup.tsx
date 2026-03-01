@@ -302,6 +302,12 @@ const Signup = () => {
                       "Criar Perfil"
                     )}
                   </Button>
+                  <p className="text-xs text-center text-muted-foreground mt-3">
+                    Ao criar uma conta, você concorda com os{" "}
+                    <Link to="/terms" className="text-primary hover:underline">Termos de Uso</Link>
+                    {" "}e{" "}
+                    <Link to="/privacy" className="text-primary hover:underline">Política de Privacidade</Link>
+                  </p>
                 </form>
               </div>
 
