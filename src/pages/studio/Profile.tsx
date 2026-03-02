@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Loader2, Camera, Check, X, AlertTriangle } from "lucide-react";
 import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -392,16 +392,13 @@ export default function StudioProfile() {
 
   if (loadingMembership || isLoading) {
     return (
-      <StudioDashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      </StudioDashboardLayout>
     );
   }
 
   return (
-    <StudioDashboardLayout>
       <div className="w-full max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6">
@@ -666,6 +663,5 @@ export default function StudioProfile() {
           </CardContent>
         </Card>
       </div>
-    </StudioDashboardLayout>
   );
 }

@@ -1,7 +1,7 @@
 import { CreditCard, ExternalLink, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { usePagamentos } from "@/hooks/usePagamentos";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,6 @@ export default function Billing() {
   );
 
   return (
-    <StudioDashboardLayout>
       <div className="max-w-4xl space-y-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -152,6 +151,5 @@ export default function Billing() {
           </div>
         )}
       </div>
-    </StudioDashboardLayout>
   );
 }

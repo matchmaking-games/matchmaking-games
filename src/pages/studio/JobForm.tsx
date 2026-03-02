@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2, Sparkles, X, ChevronDown } from "lucide-react";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -424,7 +424,6 @@ export default function JobForm() {
   // Loading state
   if (isLoading) {
     return (
-      <StudioDashboardLayout>
         <Card className="max-w-4xl mx-auto">
           <CardHeader>
             <Skeleton className="h-8 w-48" />
@@ -435,12 +434,11 @@ export default function JobForm() {
             <Skeleton className="h-32 w-full" />
           </CardContent>
         </Card>
-      </StudioDashboardLayout>
     );
   }
 
   return (
-    <StudioDashboardLayout>
+    <>
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center gap-4">
@@ -1041,6 +1039,6 @@ export default function JobForm() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </StudioDashboardLayout>
+    </>
   );
 }
