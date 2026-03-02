@@ -1,106 +1,53 @@
 
-# Termos de Uso e Politica de Privacidade
+
+# Upload de Imagens no Editor BlockNote
 
 ## Arquivos a criar
-- `src/pages/Terms.tsx`
-- `src/pages/Privacy.tsx`
+- `src/hooks/useProjectImageUpload.ts`
 
 ## Arquivos a modificar
-- `src/App.tsx` (adicionar 2 rotas)
-- `src/pages/Index.tsx` (adicionar links no footer)
-- `src/pages/Signup.tsx` (adicionar frase de consentimento)
+- `src/components/editor/RichTextEditor.tsx` (3 linhas)
+
+## Dependencia a instalar
+- `browser-image-compression`
 
 ---
 
-## Passo 1 -- Criar `src/pages/Terms.tsx`
+## Passo 1 -- Instalar browser-image-compression
 
-Pagina estatica na rota `/terms`. Reutiliza o `Header` de `@/components/layout/Header` no topo e replica o mesmo footer inline da `Index.tsx` (logo, socials, frase, e os novos links de termos/privacidade).
-
-Conteudo dentro de um `Card` centralizado com `max-w-[800px] mx-auto`, fundo `bg-card` (levemente mais claro que o background), padding `p-8 md:p-12`, border-radius padrao do Card. Background da pagina usa o mesmo `#0f0f0f` da landing.
-
-Estrutura do conteudo (extraido do PDF):
-- Titulo principal "Termos de Uso" em `font-display font-bold text-3xl`
-- Subtitulo "Matchmaking" 
-- Texto introdutorio
-- Secoes 1-11 cada uma com titulo em `font-display font-semibold text-xl` e texto em `text-base text-muted-foreground` com `leading-relaxed`
-- Listas com marcadores onde aplicavel
-- Espacamento `space-y-8` entre secoes
-
-Todo o conteudo e hardcoded como JSX (nao carrega do banco).
+Adicionar `browser-image-compression` ao package.json.
 
 ---
 
-## Passo 2 -- Criar `src/pages/Privacy.tsx`
+## Passo 2 -- Criar `src/hooks/useProjectImageUpload.ts`
 
-Identico ao Passo 1, mas com o conteudo da Politica de Privacidade. Rota `/privacy`. Mesma estrutura visual.
+Hook que exporta `{ uploadFile }` onde `uploadFile` recebe um `File` e retorna `Promise<string>`.
 
-Secoes extraidas do PDF:
-- Titulo "Politica de Privacidade"
-- Veracidade das Informacoes
-- O que sao Dados Pessoais e Dados Sensiveis
-- Empresa como Controladora
-- Quais Tipos de Dados Pessoais sao Coletados
-- Por que a Empresa Trata os Dados Pessoais
-- Dados Pessoais Sensiveis
-- Como a Empresa Armazena os Dados Pessoais
-- Processamento Automatico
-- Compartilhamento de Dados com Terceiros
-- Duracao do Tratamento
-- Seguranca das Informacoes
-- Browsers Compativeis
-- Cookies
-- Marketing
-- Compartilhamento com Terceiros (Google Analytics, Vercel, Supabase)
-- Direito do Usuario
-- Alteracao na Politica
-- Encarregado da Empresa
+Fluxo interno:
+1. Validar tipo: aceitar apenas `image/jpeg`, `image/png`, `image/webp`. Erro: "Tipo de arquivo não permitido. Use JPG, PNG ou WebP."
+2. Comprimir com `browser-image-compression`: `maxSizeMB: 3`, `maxWidthOrHeight: 2560`, `useWebWorker: true`, `initialQuality: 0.85`
+3. Obter user via `supabase.auth.getUser()`. Se nao autenticado, erro: "Usuário não autenticado."
+4. Gerar path: `{userId}/{Date.now()}.{extensao}`
+5. Upload para bucket `project-images` com `upsert: false`
+6. Retornar URL publica via `getPublicUrl`
 
 ---
 
-## Passo 3 -- Adicionar rotas no `App.tsx`
+## Passo 3 -- Modificar `RichTextEditor.tsx`
 
-Duas novas rotas publicas (sem ProtectedRoute):
+Tres mudancas cirurgicas:
 
-```text
-<Route path="/terms" element={<Terms />} />
-<Route path="/privacy" element={<Privacy />} />
-```
+1. **Linha 24** (imports): adicionar `import { useProjectImageUpload } from "@/hooks/useProjectImageUpload";`
 
-Adicionadas acima da rota catch-all `*`.
+2. **Linha 102** (antes do `useCreateBlockNote`): adicionar `const { uploadFile } = useProjectImageUpload();`
 
----
+3. **Linha 103-104** (dentro do `useCreateBlockNote`): adicionar `uploadFile,` apos `initialContent: parsedContent,`
 
-## Passo 4 -- Adicionar links no footer da `Index.tsx`
-
-Abaixo da linha "Matchmaking . Feito para quem vive de games" (linha 760-762), adicionar uma nova `<p>` com dois `<Link>`:
-
-```text
-Termos de Uso · Politica de Privacidade
-```
-
-Estilo: `text-xs`, cor `rgba(255,255,255,0.35)`, sem underline por padrao, `hover:underline`. Separados por um ponto centralizado. `marginTop: 8`.
-
----
-
-## Passo 5 -- Adicionar frase de consentimento no `Signup.tsx`
-
-Abaixo do botao "Criar Perfil" (linha 304) e antes do fechamento do `</form>` (linha 305), adicionar:
-
-```text
-<p className="text-xs text-center text-muted-foreground mt-3">
-  Ao criar uma conta, voce concorda com os{" "}
-  <Link to="/terms" className="text-primary hover:underline">Termos de Uso</Link>
-  {" "}e{" "}
-  <Link to="/privacy" className="text-primary hover:underline">Politica de Privacidade</Link>
-</p>
-```
-
-Fica dentro do `<form>`, logo apos o `<Button>`, antes do `</form>`. Nenhuma outra alteracao na pagina.
+Nenhuma outra alteracao no arquivo. O BlockNote detecta automaticamente a presenca de `uploadFile` e habilita o botao de upload no bloco de imagem.
 
 ---
 
 ## O que NAO muda
-- Nenhum componente existente alem dos listados
-- Nenhuma logica de autenticacao
-- Layout existente do footer (apenas adicao)
-- Layout existente do signup (apenas adicao)
+- `schema.ts`, `YouTubeBlock.tsx`, `RichTextViewer.tsx`
+- Nenhuma pagina, rota ou hook existente
+- Nenhum comportamento atual do editor
