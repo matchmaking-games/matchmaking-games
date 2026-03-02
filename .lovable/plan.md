@@ -1,53 +1,128 @@
 
+# Refatoracao: Layout Route + React Query no Painel do Estudio
 
-# Upload de Imagens no Editor BlockNote
+## Visao Geral
 
-## Arquivos a criar
-- `src/hooks/useProjectImageUpload.ts`
-
-## Arquivos a modificar
-- `src/components/editor/RichTextEditor.tsx` (3 linhas)
-
-## Dependencia a instalar
-- `browser-image-compression`
+Quatro mudancas interdependentes para eliminar o remount do layout e o refetch desnecessario ao navegar entre paginas do painel do estudio.
 
 ---
 
-## Passo 1 -- Instalar browser-image-compression
+## Arquivo 1 -- CRIAR `src/components/studio/StudioManageLayout.tsx`
 
-Adicionar `browser-image-compression` ao package.json.
+Componente simples que renderiza `StudioDashboardLayout` com `Outlet` dentro:
+
+```text
+import { Outlet } from "react-router-dom"
+import { StudioDashboardLayout } from "./StudioDashboardLayout"
+
+export function StudioManageLayout() {
+  return (
+    <StudioDashboardLayout>
+      <Outlet />
+    </StudioDashboardLayout>
+  )
+}
+```
+
+Nenhuma prop, nenhuma logica. O `StudioDashboardLayout` continua inalterado internamente.
 
 ---
 
-## Passo 2 -- Criar `src/hooks/useProjectImageUpload.ts`
+## Arquivo 2 -- REESCREVER `src/hooks/useStudioMembership.ts`
 
-Hook que exporta `{ uploadFile }` onde `uploadFile` recebe um `File` e retorna `Promise<string>`.
+Migrar de `useState + useEffect` para `useQuery` do `@tanstack/react-query`.
 
-Fluxo interno:
-1. Validar tipo: aceitar apenas `image/jpeg`, `image/png`, `image/webp`. Erro: "Tipo de arquivo não permitido. Use JPG, PNG ou WebP."
-2. Comprimir com `browser-image-compression`: `maxSizeMB: 3`, `maxWidthOrHeight: 2560`, `useWebWorker: true`, `initialQuality: 0.85`
-3. Obter user via `supabase.auth.getUser()`. Se nao autenticado, erro: "Usuário não autenticado."
-4. Gerar path: `{userId}/{Date.now()}.{extensao}`
-5. Upload para bucket `project-images` com `upsert: false`
-6. Retornar URL publica via `getPublicUrl`
+- Query key: `["studio-memberships"]`
+- `staleTime`: 300000 (5 minutos)
+- `queryFn`: mesma logica de fetch atual (getSession, query estudio_membros, map para StudioMembership[])
+- Retorno: `{ studios: StudioMembership[], isLoading: boolean }` -- mesma interface exata de hoje
+- Se nao houver sessao, retorna array vazio (sem erro)
 
 ---
 
-## Passo 3 -- Modificar `RichTextEditor.tsx`
+## Arquivos 3-9 -- REMOVER `StudioDashboardLayout` de cada pagina
 
-Tres mudancas cirurgicas:
+Para cada pagina abaixo, a unica alteracao e:
+1. Apagar o `import { StudioDashboardLayout }` 
+2. Substituir `<StudioDashboardLayout>...</StudioDashboardLayout>` pelo conteudo interno (fragmento `<>...</>` quando ha multiplos nos raiz)
 
-1. **Linha 24** (imports): adicionar `import { useProjectImageUpload } from "@/hooks/useProjectImageUpload";`
+Nenhuma logica interna, hook, query ou estado e alterado.
 
-2. **Linha 102** (antes do `useCreateBlockNote`): adicionar `const { uploadFile } = useProjectImageUpload();`
+### `src/pages/studio/Dashboard.tsx`
+- 1 return: remover wrapper nas linhas 26 e 107
 
-3. **Linha 103-104** (dentro do `useCreateBlockNote`): adicionar `uploadFile,` apos `initialContent: parsedContent,`
+### `src/pages/studio/Profile.tsx`
+- 2 returns: loading (linhas 395-400) e main (linhas 404-669)
+- Loading: trocar `<StudioDashboardLayout>...</ >` por apenas o div interno
+- Main: trocar `<StudioDashboardLayout>...</ >` por apenas o div interno
 
-Nenhuma outra alteracao no arquivo. O BlockNote detecta automaticamente a presenca de `uploadFile` e habilita o botao de upload no bloco de imagem.
+### `src/pages/studio/Jobs.tsx`
+- 3 returns: loading (linhas 206-220), error (linhas 226-234), main (linhas 239-425)
+- Cada um: remover wrapper, manter conteudo interno
+- Main tem conteudo + dialogs como irmaos -- usar fragmento `<>...</>`
+
+### `src/pages/studio/JobForm.tsx`
+- 2 returns: loading (linhas 427-438) e main (linhas 443-1044)
+- Main tem Card + AlertDialog como irmaos -- usar fragmento `<>...</>`
+
+### `src/pages/studio/Team.tsx`
+- 1 return com conteudo + dialogs como irmaos (linhas 219-429)
+- Usar fragmento `<>...</>`
+
+### `src/pages/studio/Billing.tsx`
+- 1 return (linhas 60-155): remover wrapper, manter div interno
+
+### `src/pages/studio/StudioProfileLinks.tsx`
+- 2 returns: loading (linhas 263-268) e main (linhas 272-351)
+
+---
+
+## Arquivo 10 -- MODIFICAR `src/App.tsx`
+
+Substituir as 8 rotas individuais do painel do estudio por uma rota pai com rotas aninhadas:
+
+```text
+<Route
+  element={
+    <ProtectedRoute>
+      <StudioManageLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route path="/studio/manage/dashboard" element={<StudioDashboard />} />
+  <Route path="/studio/manage/profile" element={<StudioProfile />} />
+  <Route path="/studio/manage/profile/links" element={<StudioProfileLinks />} />
+  <Route path="/studio/manage/jobs" element={<StudioJobs />} />
+  <Route path="/studio/manage/jobs/new" element={<JobForm />} />
+  <Route path="/studio/manage/jobs/:id/edit" element={<JobForm />} />
+  <Route path="/studio/manage/team" element={<Team />} />
+  <Route path="/studio/manage/billing" element={<Billing />} />
+</Route>
+```
+
+A rota `/studio/manage/new` permanece independente com seu proprio `ProtectedRoute`, fora do grupo.
+
+Adicionar import do `StudioManageLayout`. Remover os 8 `ProtectedRoute` individuais que envolviam cada rota.
+
+Nenhuma outra rota do App.tsx e alterada.
+
+---
+
+## Ordem de implementacao
+
+1. Criar `StudioManageLayout.tsx`
+2. Reescrever `useStudioMembership.ts` com React Query
+3. Remover `StudioDashboardLayout` das 7 paginas
+4. Refatorar rotas no `App.tsx`
 
 ---
 
 ## O que NAO muda
-- `schema.ts`, `YouTubeBlock.tsx`, `RichTextViewer.tsx`
-- Nenhuma pagina, rota ou hook existente
-- Nenhum comportamento atual do editor
+
+- `StudioDashboardLayout.tsx` (conteudo interno inalterado)
+- `StudioSidebar.tsx`
+- `ProtectedRoute.tsx`
+- `useActiveStudio.ts`
+- Nenhuma rota fora do painel do estudio
+- Nenhuma logica de negocio dentro das paginas
+- Nenhum CSS ou componente de UI
