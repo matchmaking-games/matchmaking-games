@@ -424,16 +424,16 @@ export default function JobForm() {
   // Loading state
   if (isLoading) {
     return (
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <Skeleton className="h-8 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </CardContent>
-        </Card>
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <Skeleton className="h-8 w-48" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
     );
   }
 
