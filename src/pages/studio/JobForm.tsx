@@ -76,7 +76,7 @@ export default function JobForm() {
     updateJob,
     saveDraft,
     updateDraft,
-  } = useJobForm(id);
+  } = useJobForm(id, searchParams.get("studio"));
 
   const { tiposFuncao, loading: loadingTiposFuncao } = useTiposFuncao();
 
@@ -492,20 +492,20 @@ export default function JobForm() {
                           {tipoFuncaoValue.map((funcaoId) => {
                             const funcao = tiposFuncao.find((t) => t.id === funcaoId);
                             return (
-                            <Badge
-                              key={funcaoId}
-                              variant="secondary"
-                              className="bg-secondary/10 text-secondary-foreground"
-                            >
-                              {funcao?.nome || funcaoId}
-                              <button
-                                type="button"
-                                className="ml-1 rounded-full outline-none hover:bg-secondary/20"
-                                onClick={() => handleTipoFuncaoRemove(funcaoId)}
+                              <Badge
+                                key={funcaoId}
+                                variant="secondary"
+                                className="bg-secondary/10 text-secondary-foreground"
                               >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
+                                {funcao?.nome || funcaoId}
+                                <button
+                                  type="button"
+                                  className="ml-1 rounded-full outline-none hover:bg-secondary/20"
+                                  onClick={() => handleTipoFuncaoRemove(funcaoId)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
                             );
                           })}
                         </div>
