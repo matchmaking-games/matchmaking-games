@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Globe } from "lucide-react";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -260,16 +260,13 @@ export default function StudioProfileLinks() {
 
   if (loadingMembership || isLoading) {
     return (
-      <StudioDashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      </StudioDashboardLayout>
     );
   }
 
   return (
-    <StudioDashboardLayout>
       <div className="w-full max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6">
@@ -347,6 +344,5 @@ export default function StudioProfileLinks() {
           </CardContent>
         </Card>
       </div>
-    </StudioDashboardLayout>
   );
 }

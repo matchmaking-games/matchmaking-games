@@ -23,6 +23,7 @@ import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
 import ProjectDetail from "./pages/ProjectDetail";
 import NewStudio from "./pages/studio/NewStudio";
+import { StudioManageLayout } from "./components/studio/StudioManageLayout";
 import StudioDashboard from "./pages/studio/Dashboard";
 import StudioProfile from "./pages/studio/Profile";
 import StudioJobs from "./pages/studio/Jobs";
@@ -142,69 +143,21 @@ const App = () => (
             }
           />
           <Route
-            path="/studio/manage/dashboard"
             element={
               <ProtectedRoute>
-                <StudioDashboard />
+                <StudioManageLayout />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/studio/manage/profile"
-            element={
-              <ProtectedRoute>
-                <StudioProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/jobs"
-            element={
-              <ProtectedRoute>
-                <StudioJobs />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/jobs/new"
-            element={
-              <ProtectedRoute>
-                <JobForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/jobs/:id/edit"
-            element={
-              <ProtectedRoute>
-                <JobForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/team"
-            element={
-              <ProtectedRoute>
-                <Team />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/billing"
-            element={
-              <ProtectedRoute>
-                <Billing />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/studio/manage/profile/links"
-            element={
-              <ProtectedRoute>
-                <StudioProfileLinks />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route path="/studio/manage/dashboard" element={<StudioDashboard />} />
+            <Route path="/studio/manage/profile" element={<StudioProfile />} />
+            <Route path="/studio/manage/profile/links" element={<StudioProfileLinks />} />
+            <Route path="/studio/manage/jobs" element={<StudioJobs />} />
+            <Route path="/studio/manage/jobs/new" element={<JobForm />} />
+            <Route path="/studio/manage/jobs/:id/edit" element={<JobForm />} />
+            <Route path="/studio/manage/team" element={<Team />} />
+            <Route path="/studio/manage/billing" element={<Billing />} />
+          </Route>
           <Route
             path="/dashboard/settings"
             element={

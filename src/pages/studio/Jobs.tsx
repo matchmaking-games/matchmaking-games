@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Briefcase, AlertTriangle, Loader2, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -203,7 +203,6 @@ export default function StudioJobs() {
   // Loading state
   if (isLoading) {
     return (
-      <StudioDashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Skeleton className="h-8 w-40" />
@@ -216,27 +215,24 @@ export default function StudioJobs() {
             <Skeleton className="h-16 w-full" />
           </div>
         </div>
-      </StudioDashboardLayout>
     );
   }
 
   // Error state (replaces old access denied + error)
   if (error) {
     return (
-      <StudioDashboardLayout>
         <div className="flex flex-col items-center justify-center py-16">
           <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Erro ao carregar vagas</h2>
           <p className="text-muted-foreground mb-4 text-center max-w-md">{error}</p>
           <Button onClick={() => refetch()}>Tentar novamente</Button>
         </div>
-      </StudioDashboardLayout>
     );
   }
 
 
   return (
-    <StudioDashboardLayout>
+    <>
       <div className="w-full max-w-4xl mx-auto">
         <Card>
           <CardContent className="pt-6 space-y-6">
@@ -422,6 +418,6 @@ export default function StudioJobs() {
           </div>
         </DialogContent>
       </Dialog>
-    </StudioDashboardLayout>
+    </>
   );
 }

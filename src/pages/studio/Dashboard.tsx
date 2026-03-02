@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Briefcase, FileText, Clock, Sparkles, Plus, Settings, ExternalLink } from "lucide-react";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,6 @@ export default function StudioDashboard() {
   const hasNoJobs = stats && stats.ativas === 0 && stats.rascunhos === 0 && stats.expiradas === 0 && stats.destaque === 0;
 
   return (
-    <StudioDashboardLayout>
       <div className="w-full max-w-4xl mx-auto space-y-6">
         {/* Bloco 1 — Resumo de vagas */}
         <div>
@@ -104,6 +103,5 @@ export default function StudioDashboard() {
           </Card>
         </div>
       </div>
-    </StudioDashboardLayout>
   );
 }
