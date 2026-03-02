@@ -317,6 +317,7 @@ export default function StudioJobs() {
                 onToggleAtiva={handleToggleAtiva}
                 onDelete={setDeletingVaga}
                 isToggling={isToggling}
+                studioId={activeStudio?.estudio.id ?? ""}
               />
             ) : (
               <JobsTable
@@ -324,6 +325,7 @@ export default function StudioJobs() {
                 onToggleAtiva={handleToggleAtiva}
                 onDelete={setDeletingVaga}
                 isToggling={isToggling}
+                studioId={activeStudio?.estudio.id ?? ""}
               />
             )}
           </CardContent>
