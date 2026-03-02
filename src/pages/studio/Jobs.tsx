@@ -1,6 +1,16 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Briefcase, AlertTriangle, Loader2, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
+import {
+  Plus,
+  Briefcase,
+  AlertTriangle,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +42,7 @@ export default function StudioJobs() {
 
   // Payment verification states
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<'success' | 'timeout' | 'error' | null>(null);
+  const [paymentResult, setPaymentResult] = useState<"success" | "timeout" | "error" | null>(null);
   const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(null);
 
   // Scroll state for tabs navigation
@@ -56,15 +66,15 @@ export default function StudioJobs() {
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       console.log(`[VERIFY-PAYMENT] Attempt ${attempt}/${MAX_ATTEMPTS}`);
-      
+
       try {
-        const { data, error } = await supabase.functions.invoke('verify-payment', {
-          body: { session_id: sessionId }
+        const { data, error } = await supabase.functions.invoke("verify-payment", {
+          body: { session_id: sessionId },
         });
 
         if (error) {
           console.error(`[VERIFY-PAYMENT] Error:`, error);
-          if (attempt === MAX_ATTEMPTS) throw new Error(error.message || 'Erro ao verificar pagamento');
+          if (attempt === MAX_ATTEMPTS) throw new Error(error.message || "Erro ao verificar pagamento");
         }
 
         // Success or already processed
@@ -74,20 +84,19 @@ export default function StudioJobs() {
         }
 
         // Payment not confirmed yet
-        if (data?.status === 'unpaid' && attempt < MAX_ATTEMPTS) {
+        if (data?.status === "unpaid" && attempt < MAX_ATTEMPTS) {
           console.log(`[VERIFY-PAYMENT] Payment not confirmed yet, waiting...`);
-          await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
+          await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
           continue;
         }
 
         if (data?.error) throw new Error(data.error);
-
       } catch (err) {
         if (attempt === MAX_ATTEMPTS) throw err;
       }
 
       if (attempt < MAX_ATTEMPTS) {
-        await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
+        await new Promise((resolve) => setTimeout(resolve, INTERVAL_MS));
       }
     }
 
@@ -95,43 +104,46 @@ export default function StudioJobs() {
   }, []);
 
   // Handle payment success return from Stripe
-  const handlePaymentSuccess = useCallback(async (sessionId: string) => {
-    setIsVerifyingPayment(true);
-    setPaymentResult(null);
-    setPaymentErrorMessage(null);
+  const handlePaymentSuccess = useCallback(
+    async (sessionId: string) => {
+      setIsVerifyingPayment(true);
+      setPaymentResult(null);
+      setPaymentErrorMessage(null);
 
-    try {
-      const success = await verifyPaymentWithPolling(sessionId);
-      
-      if (success) {
-        setPaymentResult('success');
-        await refetch();
-      } else {
-        setPaymentResult('timeout');
+      try {
+        const success = await verifyPaymentWithPolling(sessionId);
+
+        if (success) {
+          setPaymentResult("success");
+          await refetch();
+        } else {
+          setPaymentResult("timeout");
+        }
+      } catch (err) {
+        console.error("[VERIFY-PAYMENT] Error:", err);
+        setPaymentResult("error");
+        setPaymentErrorMessage(err instanceof Error ? err.message : "Erro desconhecido");
+      } finally {
+        setIsVerifyingPayment(false);
       }
-    } catch (err) {
-      console.error('[VERIFY-PAYMENT] Error:', err);
-      setPaymentResult('error');
-      setPaymentErrorMessage(err instanceof Error ? err.message : 'Erro desconhecido');
-    } finally {
-      setIsVerifyingPayment(false);
-    }
 
-    // Clean query params
-    navigate('/studio/manage/jobs', { replace: true });
-  }, [verifyPaymentWithPolling, refetch, navigate]);
+      // Clean query params
+      navigate("/studio/manage/jobs", { replace: true });
+    },
+    [verifyPaymentWithPolling, refetch, navigate],
+  );
 
   // Detect payment return from Stripe
   useEffect(() => {
-    const payment = searchParams.get('payment');
-    const sessionId = searchParams.get('session_id');
+    const payment = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
 
-    if (payment === 'success' && sessionId) {
-      if (sessionId.startsWith('cs_test_') || sessionId.startsWith('cs_live_')) {
+    if (payment === "success" && sessionId) {
+      if (sessionId.startsWith("cs_test_") || sessionId.startsWith("cs_live_")) {
         handlePaymentSuccess(sessionId);
       } else {
-        console.warn('[VERIFY-PAYMENT] Invalid session_id format:', sessionId);
-        navigate('/studio/manage/jobs', { replace: true });
+        console.warn("[VERIFY-PAYMENT] Invalid session_id format:", sessionId);
+        navigate("/studio/manage/jobs", { replace: true });
       }
     }
   }, [searchParams, handlePaymentSuccess, navigate]);
@@ -203,33 +215,32 @@ export default function StudioJobs() {
   // Loading state
   if (isLoading) {
     return (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <Skeleton className="h-10 w-full max-w-md" />
-          <div className="space-y-4">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-10 w-32" />
         </div>
+        <Skeleton className="h-10 w-full max-w-md" />
+        <div className="space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      </div>
     );
   }
 
   // Error state (replaces old access denied + error)
   if (error) {
     return (
-        <div className="flex flex-col items-center justify-center py-16">
-          <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Erro ao carregar vagas</h2>
-          <p className="text-muted-foreground mb-4 text-center max-w-md">{error}</p>
-          <Button onClick={() => refetch()}>Tentar novamente</Button>
-        </div>
+      <div className="flex flex-col items-center justify-center py-16">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Erro ao carregar vagas</h2>
+        <p className="text-muted-foreground mb-4 text-center max-w-md">{error}</p>
+        <Button onClick={() => refetch()}>Tentar novamente</Button>
+      </div>
     );
   }
-
 
   return (
     <>
@@ -239,7 +250,7 @@ export default function StudioJobs() {
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h1 className="text-2xl font-display font-bold">Minhas Vagas</h1>
-              <Button onClick={() => navigate("/studio/manage/jobs/new")}>
+              <Button onClick={() => navigate(`/studio/manage/jobs/new?studio=${activeStudio?.estudio.id}`)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nova Vaga
               </Button>
@@ -258,10 +269,7 @@ export default function StudioJobs() {
                 </div>
 
                 {/* Scroll container with hidden scrollbar */}
-                <div
-                  ref={scrollRef}
-                  className="w-full overflow-x-auto scrollbar-hide"
-                >
+                <div ref={scrollRef} className="w-full overflow-x-auto scrollbar-hide">
                   <TabsList className="inline-flex h-10 items-center justify-start gap-1 rounded-md bg-muted p-1 text-muted-foreground min-w-max">
                     <TabsTrigger value="todas">Todas</TabsTrigger>
                     <TabsTrigger value="ativas">Ativas</TabsTrigger>
@@ -297,7 +305,7 @@ export default function StudioJobs() {
                     : "Não há vagas nesta categoria"}
                 </p>
                 {activeTab === "todas" && (
-                  <Button onClick={() => navigate("/studio/manage/jobs/new")}>
+                  <Button onClick={() => navigate(`/studio/manage/jobs/new?studio=${activeStudio?.estudio.id}`)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Publicar Vaga
                   </Button>
@@ -331,15 +339,13 @@ export default function StudioJobs() {
       />
 
       {/* Payment Verification Modals */}
-      
+
       {/* Loading Modal */}
       <Dialog open={isVerifyingPayment} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
           <div className="flex flex-col items-center justify-center py-8">
             <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-            <DialogTitle className="text-xl font-semibold mb-2">
-              Confirmando pagamento...
-            </DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2">Confirmando pagamento...</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
               Estamos verificando seu pagamento com o Stripe.
               <br />
@@ -350,13 +356,11 @@ export default function StudioJobs() {
       </Dialog>
 
       {/* Success Modal */}
-      <Dialog open={paymentResult === 'success'} onOpenChange={() => setPaymentResult(null)}>
+      <Dialog open={paymentResult === "success"} onOpenChange={() => setPaymentResult(null)}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-6">
             <CheckCircle2 className="h-16 w-16 text-primary mb-4" />
-            <DialogTitle className="text-xl font-semibold mb-2">
-              Pagamento confirmado!
-            </DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2">Pagamento confirmado!</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground mb-6">
               Sua vaga foi publicada com destaque por 30 dias.
             </DialogDescription>
@@ -368,13 +372,11 @@ export default function StudioJobs() {
       </Dialog>
 
       {/* Timeout Modal */}
-      <Dialog open={paymentResult === 'timeout'} onOpenChange={() => setPaymentResult(null)}>
+      <Dialog open={paymentResult === "timeout"} onOpenChange={() => setPaymentResult(null)}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-6">
             <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
-            <DialogTitle className="text-xl font-semibold mb-2">
-              Confirmação pendente
-            </DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2">Confirmação pendente</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground mb-2">
               Seu pagamento está sendo processado. Sua vaga será ativada em alguns minutos.
             </DialogDescription>
@@ -389,20 +391,16 @@ export default function StudioJobs() {
       </Dialog>
 
       {/* Error Modal */}
-      <Dialog open={paymentResult === 'error'} onOpenChange={() => setPaymentResult(null)}>
+      <Dialog open={paymentResult === "error"} onOpenChange={() => setPaymentResult(null)}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-6">
             <XCircle className="h-16 w-16 text-destructive mb-4" />
-            <DialogTitle className="text-xl font-semibold mb-2">
-              Erro ao confirmar pagamento
-            </DialogTitle>
+            <DialogTitle className="text-xl font-semibold mb-2">Erro ao confirmar pagamento</DialogTitle>
             <DialogDescription className="text-center text-muted-foreground mb-2">
               Não conseguimos confirmar seu pagamento no momento.
             </DialogDescription>
             {paymentErrorMessage && (
-              <p className="text-xs text-muted-foreground text-center mb-2">
-                Detalhes: {paymentErrorMessage}
-              </p>
+              <p className="text-xs text-muted-foreground text-center mb-2">Detalhes: {paymentErrorMessage}</p>
             )}
             <p className="text-xs text-muted-foreground text-center mb-6">
               Se o valor foi debitado, entre em contato com o suporte.
