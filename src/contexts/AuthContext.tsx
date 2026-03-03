@@ -33,43 +33,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && currentSession) {
-        setSession(currentSession);
-        try {
-          const { data } = await supabase
-            .from("users")
-            .select("nome_completo, avatar_url")
-            .eq("id", currentSession.user.id)
-            .maybeSingle();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && currentSession) {
+          setSession(currentSession);
 
-          if (data) {
-            setUser({
-              id: currentSession.user.id,
-              nome_completo: data.nome_completo,
-              avatar_url: data.avatar_url,
-            });
-            setHasProfile(true);
-          } else {
-            setUser(null);
-            setHasProfile(false);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
+          // A query ao banco DEVE ficar dentro de setTimeout para evitar deadlock.
+          // Chamadas async dentro de onAuthStateChange causam deadlock no Supabase.
+          // Fonte: https://supabase.com/docs/reference/javascript/auth-onauthstatechange
+          setTimeout(async () => {
+            try {
+              const { data } = await supabase
+                .from("users")
+                .select("nome_completo, avatar_url")
+                .eq("id", currentSession.user.id)
+                .maybeSingle();
+
+              if (data) {
+                setUser({
+                  id: currentSession.user.id,
+                  nome_completo: data.nome_completo,
+                  avatar_url: data.avatar_url,
+                });
+                setHasProfile(true);
+              } else {
+                setUser(null);
+                setHasProfile(false);
+              }
+            } catch (error) {
+              console.error("Error fetching user profile:", error);
+              setUser(null);
+              setHasProfile(false);
+            } finally {
+              setIsLoading(false);
+            }
+          }, 0);
+
+        } else if (event === "SIGNED_OUT" || !currentSession) {
+          setSession(null);
           setUser(null);
           setHasProfile(false);
-        } finally {
           setIsLoading(false);
         }
-      } else if (event === "SIGNED_OUT" || !currentSession) {
-        setSession(null);
-        setUser(null);
-        setHasProfile(false);
-        setIsLoading(false);
+        // Outros eventos como TOKEN_REFRESHED e USER_UPDATED são ignorados intencionalmente
       }
-    });
+    );
 
     return () => subscription.unsubscribe();
   }, []);
