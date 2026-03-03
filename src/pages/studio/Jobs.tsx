@@ -128,7 +128,7 @@ export default function StudioJobs() {
       }
 
       // Clean query params
-      navigate("/studio/manage/jobs", { replace: true });
+      navigate(`/studio/manage/jobs?studio=${activeStudio?.estudio.id}`, { replace: true });
     },
     [verifyPaymentWithPolling, refetch, navigate],
   );
