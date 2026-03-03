@@ -36,8 +36,8 @@ async function createStripeCheckoutSession(params: {
     "invoice_creation[enabled]": "true",
     "metadata[vaga_id]": vagaId,
     "metadata[estudio_id]": estudioId,
-    success_url: `${siteUrl}/studio/jobs?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/studio/jobs/${vagaId}/edit?payment=cancelled`,
+    success_url: `${siteUrl}/studio/manage/dashboard?studio=${estudioId}&payment=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}/studio/manage/dashboard?studio=${estudioId}&payment=cancelled`,
   });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
