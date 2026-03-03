@@ -143,7 +143,7 @@ export default function StudioJobs() {
         handlePaymentSuccess(sessionId);
       } else {
         console.warn("[VERIFY-PAYMENT] Invalid session_id format:", sessionId);
-        navigate("/studio/manage/jobs", { replace: true });
+        navigate(`/studio/manage/jobs?studio=${activeStudio?.estudio.id}`, { replace: true });
       }
     }
   }, [searchParams, handlePaymentSuccess, navigate]);
