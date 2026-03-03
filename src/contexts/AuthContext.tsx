@@ -33,43 +33,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasProfile, setHasProfile] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && currentSession) {
-          setSession(currentSession);
-          try {
-            const { data } = await supabase
-              .from("users")
-              .select("nome_completo, avatar_url")
-              .eq("id", currentSession.user.id)
-              .maybeSingle();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if ((event === "INITIAL_SESSION" || event === "SIGNED_IN") && currentSession) {
+        setSession(currentSession);
+        try {
+          const { data } = await supabase
+            .from("users")
+            .select("nome_completo, avatar_url")
+            .eq("id", currentSession.user.id)
+            .maybeSingle();
 
-            if (data) {
-              setUser({
-                id: currentSession.user.id,
-                nome_completo: data.nome_completo,
-                avatar_url: data.avatar_url,
-              });
-              setHasProfile(true);
-            } else {
-              setUser(null);
-              setHasProfile(false);
-            }
-          } catch (error) {
-            console.error("Error fetching user profile:", error);
+          if (data) {
+            setUser({
+              id: currentSession.user.id,
+              nome_completo: data.nome_completo,
+              avatar_url: data.avatar_url,
+            });
+            setHasProfile(true);
+          } else {
             setUser(null);
             setHasProfile(false);
-          } finally {
-            setIsLoading(false);
           }
-        } else {
-          setSession(null);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
           setUser(null);
           setHasProfile(false);
+        } finally {
           setIsLoading(false);
         }
+      } else if (event === "SIGNED_OUT" || !currentSession) {
+        setSession(null);
+        setUser(null);
+        setHasProfile(false);
+        setIsLoading(false);
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, []);
