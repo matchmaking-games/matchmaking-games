@@ -129,6 +129,7 @@ export function useImportLinkedIn() {
       return result;
     } catch {
       const msg = "Erro ao processar PDF. Verifique sua conexão e tente novamente.";
+      console.error("IMPORT ERROR:", err);
       setError(msg);
       errorRef.current = msg;
       return null;
