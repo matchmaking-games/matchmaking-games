@@ -1,7 +1,14 @@
-import { Gamepad2, Code, Wrench, Brain, Award, Pencil, Trash2 } from "lucide-react";
+import { Gamepad2, Code, Wrench, Brain, Award, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { UserSkill } from "@/hooks/useSkills";
 
 interface SkillCardProps {
@@ -51,10 +58,31 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
   const CategoryIcon = categoryIcons[skill.habilidade.categoria];
   const level = levelConfig[skill.nivel];
 
+  const ActionsDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+          <EllipsisVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(skill)}>
+          <Pencil className="h-4 w-4 mr-2" />
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onDelete(skill)} className="text-destructive focus:text-destructive">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
-    <Card className="group hover:shadow-lg transition-all duration-200">
+    <Card className="transition-all hover:border-primary/30">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-md bg-muted">
               <CategoryIcon className="h-5 w-5 text-muted-foreground" />
@@ -68,19 +96,7 @@ export function SkillCard({ skill, onEdit, onDelete }: SkillCardProps) {
               </Badge>
             </div>
           </div>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(skill)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => onDelete(skill)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <ActionsDropdown />
         </div>
       </CardContent>
     </Card>
