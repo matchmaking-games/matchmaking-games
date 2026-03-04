@@ -156,14 +156,16 @@ export function SkillModal({
                   >
                     {selectedSkill
                       ? selectedSkill.nome
-                      : "Selecionar habilidade..."}
+                      : activeTab === "habilidades"
+                        ? "Selecionar habilidade..."
+                        : "Selecionar software..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command shouldFilter={true}>
                     <CommandInput placeholder="Buscar..." />
-                    <CommandList className="max-h-60">
+                    <CommandList className="overflow-y-auto max-h-60">
                       <CommandEmpty>Nenhuma habilidade encontrada.</CommandEmpty>
                       <CommandGroup>
                         {filteredSkills.map((skill) => {
