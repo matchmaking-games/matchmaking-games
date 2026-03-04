@@ -25,10 +25,10 @@ Deno.serve(async (req) => {
     const imagem = formData.get("imagem") as File | null;
 
     if (!tipo || !mensagem) {
-      return new Response(
-        JSON.stringify({ error: "Campos 'tipo' e 'mensagem' são obrigatórios." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Campos 'tipo' e 'mensagem' são obrigatórios." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Timestamp em horário de Brasília
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
     // Build Resend payload
     const resendPayload: Record<string, unknown> = {
-      from: "Matchmaking <noreply@matchmaking.games>",
+      from: "Matchmaking <contato@matchmaking.games>",
       to: ["lucas.pimenta@matchmaking.games"],
       reply_to: email,
       subject: `[${tipo}] ${assunto}`,
@@ -126,9 +126,9 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in send-support-email:", error);
-    return new Response(
-      JSON.stringify({ error: "Erro interno ao enviar email." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Erro interno ao enviar email." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
