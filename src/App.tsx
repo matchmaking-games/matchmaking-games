@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -45,6 +46,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <AuthProvider>
+    <Sentry.ErrorBoundary fallback={<p>Algo deu errado. Por favor, recarregue a página.</p>}>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
       <Toaster />
@@ -184,6 +186,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    </Sentry.ErrorBoundary>
   </AuthProvider>
 );
 
