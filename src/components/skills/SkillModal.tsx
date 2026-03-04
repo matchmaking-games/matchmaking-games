@@ -25,7 +25,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { cn } from "@/lib/utils";
 import { useAvailableSkills } from "@/hooks/useAvailableSkills";
 import type { UserSkill } from "@/hooks/useSkills";
@@ -128,7 +128,7 @@ export function SkillModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea type="always" className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="space-y-6 py-4 pr-4">
             {/* Tabs + Combobox selector */}
             <div className="space-y-2">
@@ -240,7 +240,7 @@ export function SkillModal({
               </RadioGroup>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="shrink-0 border-t p-6 pt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
