@@ -983,8 +983,16 @@ export default function JobForm() {
               </div>
 
               {/* ACTION BUTTONS */}
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={handleCancelClick}>
+              <div className="flex flex-wrap justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancelClick}
+                  className="sm:hidden w-full text-right text-sm text-muted-foreground underline"
+                >
+                  Cancelar
+                </button>
+
+                <Button type="button" variant="ghost" onClick={handleCancelClick} className="hidden sm:inline-flex">
                   Cancelar
                 </Button>
 
