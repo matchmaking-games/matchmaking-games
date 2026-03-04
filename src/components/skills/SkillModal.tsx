@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -55,10 +60,9 @@ export function SkillModal({
   const [selectedSkillId, setSelectedSkillId] = useState<string>("");
   const [selectedLevel, setSelectedLevel] = useState<NivelHabilidade>("intermediario");
   const [activeTab, setActiveTab] = useState<CategoriaHabilidade>("habilidades");
-  const [searchValue, setSearchValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const commandInputRef = useRef<HTMLInputElement>(null);
+  const [comboboxOpen, setComboboxOpen] = useState(false);
 
   const isEditMode = !!editingSkill;
 
@@ -77,18 +81,14 @@ export function SkillModal({
         setSelectedLevel("intermediario");
         setActiveTab("habilidades");
       }
-      setSearchValue("");
       setError(null);
+      setComboboxOpen(false);
     }
   }, [open, editingSkill, availableSkills]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as CategoriaHabilidade);
-    setSearchValue("");
-  };
-
-  const handleSelect = (id: string) => {
-    setSelectedSkillId(id);
+    setSelectedSkillId("");
     setError(null);
   };
 
@@ -130,34 +130,41 @@ export function SkillModal({
 
         <ScrollArea type="always" className="flex-1 min-h-0">
           <div className="space-y-6 py-4 pr-4">
-          {/* Tabs + Command selector */}
-          <div className="space-y-2">
-            <Label>Habilidade ou Software</Label>
+            {/* Tabs + Combobox selector */}
+            <div className="space-y-2">
+              <Label>Habilidade ou Software</Label>
 
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full">
-                <TabsTrigger value="habilidades" className="flex-1" disabled={isEditMode}>
-                  Habilidades
-                </TabsTrigger>
-                <TabsTrigger value="softwares" className="flex-1" disabled={isEditMode}>
-                  Softwares
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="habilidades" className="flex-1" disabled={isEditMode}>
+                    Habilidades
+                  </TabsTrigger>
+                  <TabsTrigger value="softwares" className="flex-1" disabled={isEditMode}>
+                    Softwares
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-            <div className="rounded-md border border-border overflow-hidden">
-              <Command shouldFilter={true}>
-                <CommandInput
-                  ref={commandInputRef}
-                  placeholder="Buscar..."
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                  disabled={isEditMode}
-                />
-                {!isEditMode && (
-                  <ScrollArea className="h-[180px]">
-                    <CommandList className="max-h-none overflow-visible">
-                      <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between font-normal"
+                    disabled={isEditMode}
+                  >
+                    {selectedSkill
+                      ? selectedSkill.nome
+                      : "Selecionar habilidade..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command shouldFilter={true}>
+                    <CommandInput placeholder="Buscar..." />
+                    <CommandList className="max-h-60">
+                      <CommandEmpty>Nenhuma habilidade encontrada.</CommandEmpty>
                       <CommandGroup>
                         {filteredSkills.map((skill) => {
                           const isAlreadyAdded = existingSkillIds.includes(skill.id);
@@ -167,7 +174,11 @@ export function SkillModal({
                               value={skill.nome}
                               disabled={isAlreadyAdded}
                               onSelect={() => {
-                                if (!isAlreadyAdded) handleSelect(skill.id);
+                                if (!isAlreadyAdded) {
+                                  setSelectedSkillId(skill.id === selectedSkillId ? "" : skill.id);
+                                  setError(null);
+                                  setComboboxOpen(false);
+                                }
                               }}
                               className={cn(isAlreadyAdded && "opacity-50")}
                             >
@@ -188,50 +199,44 @@ export function SkillModal({
                         })}
                       </CommandGroup>
                     </CommandList>
-                  </ScrollArea>
-                )}
-                {isEditMode && selectedSkill && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
-                    {selectedSkill.nome}
-                  </div>
-                )}
-              </Command>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {isEditMode && selectedSkill && (
+                <p className="text-sm text-muted-foreground">
+                  Selecionado: <span className="text-foreground font-medium">{selectedSkill.nome}</span>
+                </p>
+              )}
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
-            {selectedSkill && !isEditMode && (
-              <p className="text-sm text-muted-foreground">
-                Selecionado: <span className="text-foreground font-medium">{selectedSkill.nome}</span>
-              </p>
-            )}
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </div>
-
-          {/* Level Radio Group */}
-          <div className="space-y-3">
-            <Label>Nível de Proficiência</Label>
-            <RadioGroup
-              value={selectedLevel}
-              onValueChange={(value) => setSelectedLevel(value as NivelHabilidade)}
-              className="space-y-2"
-            >
-              {levelOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => setSelectedLevel(option.value)}
-                >
-                  <RadioGroupItem value={option.value} id={option.value} className="mt-0.5" />
-                  <div className="space-y-1">
-                    <Label htmlFor={option.value} className="font-medium cursor-pointer">
-                      {option.label}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+            {/* Level Radio Group */}
+            <div className="space-y-3">
+              <Label>Nível de Proficiência</Label>
+              <RadioGroup
+                value={selectedLevel}
+                onValueChange={(value) => setSelectedLevel(value as NivelHabilidade)}
+                className="space-y-2"
+              >
+                {levelOptions.map((option) => (
+                  <div
+                    key={option.value}
+                    className="flex items-start space-x-3 p-3 rounded-md border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => setSelectedLevel(option.value)}
+                  >
+                    <RadioGroupItem value={option.value} id={option.value} className="mt-0.5" />
+                    <div className="space-y-1">
+                      <Label htmlFor={option.value} className="font-medium cursor-pointer">
+                        {option.label}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">{option.description}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
+                ))}
+              </RadioGroup>
+            </div>
           </div>
         </ScrollArea>
 
