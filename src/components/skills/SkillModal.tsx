@@ -1,31 +1,12 @@
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAvailableSkills } from "@/hooks/useAvailableSkills";
 import type { UserSkill } from "@/hooks/useSkills";
@@ -49,13 +30,7 @@ const levelOptions = [
   { value: "expert", label: "Expert", description: "Referência na área, anos de experiência" },
 ] as const;
 
-export function SkillModal({
-  open,
-  onOpenChange,
-  editingSkill,
-  existingSkillIds,
-  onSave,
-}: SkillModalProps) {
+export function SkillModal({ open, onOpenChange, editingSkill, existingSkillIds, onSave }: SkillModalProps) {
   const { availableSkills, loading: loadingSkills } = useAvailableSkills();
   const [selectedSkillId, setSelectedSkillId] = useState<string>("");
   const [selectedLevel, setSelectedLevel] = useState<NivelHabilidade>("intermediario");
@@ -115,22 +90,20 @@ export function SkillModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col h-[90dvh] sm:h-[85vh] sm:max-w-[425px] overflow-hidden">
-        <DialogHeader className="shrink-0">
-          <DialogTitle>
-            {isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}
-          </DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="flex flex-col w-full sm:max-w-[425px] p-0 gap-0">
+        <SheetHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
+          <SheetTitle>{isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}</SheetTitle>
+          <SheetDescription>
             {isEditMode
               ? "Atualize o nível de proficiência desta habilidade."
               : "Selecione uma habilidade ou software e seu nível de proficiência."}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
-        <ScrollArea type="always" className="flex-1 min-h-0">
-          <div className="space-y-6 py-4 pr-4">
-            {/* Tabs + Combobox selector */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+          <div className="space-y-6">
+            {/* Tabs + Combobox */}
             <div className="space-y-2">
               <Label>Habilidade ou Software</Label>
 
@@ -165,7 +138,7 @@ export function SkillModal({
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command shouldFilter={true}>
                     <CommandInput placeholder="Buscar..." />
-                    <CommandList className="overflow-y-auto max-h-60">
+                    <CommandList className="max-h-60 overflow-y-auto">
                       <CommandEmpty>Nenhuma habilidade encontrada.</CommandEmpty>
                       <CommandGroup>
                         {filteredSkills.map((skill) => {
@@ -187,14 +160,12 @@ export function SkillModal({
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4 shrink-0",
-                                  selectedSkillId === skill.id ? "opacity-100" : "opacity-0"
+                                  selectedSkillId === skill.id ? "opacity-100" : "opacity-0",
                                 )}
                               />
                               {skill.nome}
                               {isAlreadyAdded && (
-                                <span className="ml-auto text-xs text-muted-foreground">
-                                  Já adicionada
-                                </span>
+                                <span className="ml-auto text-xs text-muted-foreground">Já adicionada</span>
                               )}
                             </CommandItem>
                           );
@@ -214,7 +185,7 @@ export function SkillModal({
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
-            {/* Level Radio Group */}
+            {/* Nível de Proficiência */}
             <div className="space-y-3">
               <Label>Nível de Proficiência</Label>
               <RadioGroup
@@ -240,17 +211,17 @@ export function SkillModal({
               </RadioGroup>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="shrink-0 border-t p-6 pt-4">
+        <SheetFooter className="shrink-0 border-t px-6 py-4 flex-row justify-end gap-2">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Salvando..." : "Salvar"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
