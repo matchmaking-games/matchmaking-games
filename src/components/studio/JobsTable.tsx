@@ -2,14 +2,7 @@ import { format, differenceInDays, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MoreVertical, Pencil, ExternalLink, Power, Trash2, Sparkles, EyeOff, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +19,7 @@ interface JobsTableProps {
   onToggleAtiva: (vaga: StudioVaga) => Promise<void>;
   onDelete: (vaga: StudioVaga) => void;
   isToggling: boolean;
+  studioId: string;
 }
 
 const nivelConfig: Record<string, { label: string; className: string }> = {
@@ -39,8 +33,8 @@ const nivelConfig: Record<string, { label: string; className: string }> = {
 // Updated to include "oculta" status
 function getJobStatus(vaga: StudioVaga): "ativa" | "oculta" | "expirada" | "rascunho" {
   // Check if draft first
-  if (vaga.status === 'rascunho') return "rascunho";
-  
+  if (vaga.status === "rascunho") return "rascunho";
+
   const now = new Date();
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
@@ -82,7 +76,7 @@ function renderExpiraEm(vaga: StudioVaga) {
   );
 }
 
-export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTableProps) {
+export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling, studioId }: JobsTableProps) {
   const navigate = useNavigate();
 
   const handleViewPublic = (slug: string) => {
@@ -97,7 +91,7 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
             <TableHead className="min-w-[200px]">Título</TableHead>
             <TableHead>Nível</TableHead>
             <TableHead>Status</TableHead>
-            
+
             <TableHead>Expira em</TableHead>
             <TableHead className="w-[60px]"></TableHead>
           </TableRow>
@@ -112,11 +106,12 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
               <TableRow key={vaga.id}>
                 <TableCell className="max-w-[300px]">
                   <div className="flex items-center gap-2">
-                    <span className="text-foreground/90 break-words">
-                      {vaga.titulo}
-                    </span>
+                    <span className="text-foreground/90 break-words">{vaga.titulo}</span>
                     {vaga.tipo_publicacao === "destaque" && (
-                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400 shrink-0" title="Destaque">
+                      <Badge
+                        className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400 shrink-0"
+                        title="Destaque"
+                      >
                         <Sparkles className="h-3 w-3" />
                       </Badge>
                     )}
@@ -144,12 +139,14 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                     <DropdownMenuContent align="end">
                       {/* Editar - available for ATIVA, OCULTA, RASCUNHO (not EXPIRADA) */}
                       {status !== "expirada" && (
-                        <DropdownMenuItem onClick={() => navigate(`/studio/manage/jobs/${vaga.id}/edit`)}>
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/studio/manage/jobs/${vaga.id}/edit?studio=${studioId}`)}
+                        >
                           <Pencil className="h-4 w-4 mr-2" />
                           Editar
                         </DropdownMenuItem>
                       )}
-                      
+
                       {/* Ver página pública - only for ATIVA and OCULTA */}
                       {(status === "ativa" || status === "oculta") && (
                         <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
@@ -157,15 +154,12 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                           Ver página pública
                         </DropdownMenuItem>
                       )}
-                      
+
                       {/* Toggle visibility - only for ATIVA and OCULTA */}
                       {(status === "ativa" || status === "oculta") && (
                         <>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onToggleAtiva(vaga)}
-                            disabled={isToggling}
-                          >
+                          <DropdownMenuItem onClick={() => onToggleAtiva(vaga)} disabled={isToggling}>
                             {vaga.ativa ? (
                               <>
                                 <EyeOff className="h-4 w-4 mr-2" />
@@ -180,7 +174,7 @@ export function JobsTable({ vagas, onToggleAtiva, onDelete, isToggling }: JobsTa
                           </DropdownMenuItem>
                         </>
                       )}
-                      
+
                       {/* Excluir - always available */}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

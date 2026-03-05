@@ -24,7 +24,7 @@ import type { ProjectWithSkills, ProjectInsert, ProjectUpdate } from "@/hooks/us
 const projectSchema = z.object({
   titulo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   slug: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
-  tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
+  tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source", "jogo"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   descricao: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
   status: z.enum(["em_andamento", "concluido", "pausado"]),

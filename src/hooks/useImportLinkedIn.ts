@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.5.207/build/pdf.worker.min.mjs`;
 
 interface ImportResult {
   extracted_data: Record<string, unknown>;
@@ -127,7 +127,8 @@ export function useImportLinkedIn() {
       }
 
       return result;
-    } catch {
+    } catch (err: unknown) {
+      console.error("IMPORT ERROR:", err);
       const msg = "Erro ao processar PDF. Verifique sua conexão e tente novamente.";
       setError(msg);
       errorRef.current = msg;

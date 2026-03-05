@@ -19,6 +19,7 @@ interface JobsMobileCardProps {
   onToggleAtiva: (vaga: StudioVaga) => Promise<void>;
   onDelete: (vaga: StudioVaga) => void;
   isToggling: boolean;
+  studioId: string;
 }
 
 const nivelConfig: Record<string, { label: string; className: string }> = {
@@ -31,8 +32,8 @@ const nivelConfig: Record<string, { label: string; className: string }> = {
 
 // Updated to include "oculta" status
 function getJobStatus(vaga: StudioVaga): "ativa" | "oculta" | "expirada" | "rascunho" {
-  if (vaga.status === 'rascunho') return "rascunho";
-  
+  if (vaga.status === "rascunho") return "rascunho";
+
   const now = new Date();
   const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
 
@@ -49,7 +50,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   rascunho: { label: "Rascunho", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 };
 
-export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: JobsMobileCardProps) {
+export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling, studioId }: JobsMobileCardProps) {
   const navigate = useNavigate();
 
   const handleViewPublic = (slug: string) => {
@@ -66,7 +67,8 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
         const expiraEm = vaga.expira_em ? new Date(vaga.expira_em) : null;
         const diasRestantes = expiraEm ? differenceInDays(expiraEm, new Date()) : null;
         const isExpired = expiraEm ? isPast(expiraEm) : false;
-        const showCounter = vaga.ativa && !isExpired && diasRestantes !== null && diasRestantes < 7 && diasRestantes >= 0;
+        const showCounter =
+          vaga.ativa && !isExpired && diasRestantes !== null && diasRestantes < 7 && diasRestantes >= 0;
 
         return (
           <Card key={vaga.id}>
@@ -74,11 +76,12 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-foreground/90 break-words">
-                      {vaga.titulo}
-                    </h3>
+                    <h3 className="text-foreground/90 break-words">{vaga.titulo}</h3>
                     {vaga.tipo_publicacao === "destaque" && (
-                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400" title="Destaque">
+                      <Badge
+                        className="bg-amber-500/10 text-amber-600 border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-400"
+                        title="Destaque"
+                      >
                         <Sparkles className="h-3 w-3" />
                       </Badge>
                     )}
@@ -97,9 +100,7 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       <span>
-                        {vaga.criada_em
-                          ? format(new Date(vaga.criada_em), "dd/MM/yyyy", { locale: ptBR })
-                          : "-"}
+                        {vaga.criada_em ? format(new Date(vaga.criada_em), "dd/MM/yyyy", { locale: ptBR }) : "-"}
                       </span>
                     </div>
                     {expiraEm && (
@@ -126,12 +127,14 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                   <DropdownMenuContent align="end">
                     {/* Editar - available for ATIVA, OCULTA, RASCUNHO (not EXPIRADA) */}
                     {status !== "expirada" && (
-                      <DropdownMenuItem onClick={() => navigate(`/studio/manage/jobs/${vaga.id}/edit`)}>
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/studio/manage/jobs/${vaga.id}/edit?studio=${studioId}`)}
+                      >
                         <Pencil className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
                     )}
-                    
+
                     {/* Ver página pública - only for ATIVA and OCULTA */}
                     {(status === "ativa" || status === "oculta") && (
                       <DropdownMenuItem onClick={() => handleViewPublic(vaga.slug)}>
@@ -139,15 +142,12 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                         Ver página pública
                       </DropdownMenuItem>
                     )}
-                    
+
                     {/* Toggle visibility - only for ATIVA and OCULTA */}
                     {(status === "ativa" || status === "oculta") && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onToggleAtiva(vaga)}
-                          disabled={isToggling}
-                        >
+                        <DropdownMenuItem onClick={() => onToggleAtiva(vaga)} disabled={isToggling}>
                           {vaga.ativa ? (
                             <>
                               <EyeOff className="h-4 w-4 mr-2" />
@@ -162,7 +162,7 @@ export function JobsMobileCard({ vagas, onToggleAtiva, onDelete, isToggling }: J
                         </DropdownMenuItem>
                       </>
                     )}
-                    
+
                     {/* Excluir - always available */}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

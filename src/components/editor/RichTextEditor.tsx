@@ -22,6 +22,7 @@ import {
 import { Plus, Youtube } from "lucide-react";
 import React from "react";
 import { schema } from "./schema";
+import { useProjectImageUpload } from "@/hooks/useProjectImageUpload";
 
 // --- Item customizado do YouTube para o slash menu ---
 const insertYouTube = (
@@ -99,9 +100,12 @@ export function RichTextEditor({ initialContent, onChange }: RichTextEditorProps
     }
   }, [initialContent]);
 
+  const { uploadFile } = useProjectImageUpload();
+
   const editor = useCreateBlockNote({
     schema,
     initialContent: parsedContent,
+    uploadFile,
     placeholders: {
       default: "Escreva algo ou digite '/' para ver os comandos...",
     },

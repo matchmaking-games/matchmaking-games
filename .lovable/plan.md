@@ -1,106 +1,33 @@
 
-# Termos de Uso e Politica de Privacidade
 
-## Arquivos a criar
-- `src/pages/Terms.tsx`
-- `src/pages/Privacy.tsx`
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-## Arquivos a modificar
-- `src/App.tsx` (adicionar 2 rotas)
-- `src/pages/Index.tsx` (adicionar links no footer)
-- `src/pages/Signup.tsx` (adicionar frase de consentimento)
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
----
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-## Passo 1 -- Criar `src/pages/Terms.tsx`
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-Pagina estatica na rota `/terms`. Reutiliza o `Header` de `@/components/layout/Header` no topo e replica o mesmo footer inline da `Index.tsx` (logo, socials, frase, e os novos links de termos/privacidade).
+### Change 2 — `src/lib/formatters.ts`
 
-Conteudo dentro de um `Card` centralizado com `max-w-[800px] mx-auto`, fundo `bg-card` (levemente mais claro que o background), padding `p-8 md:p-12`, border-radius padrao do Card. Background da pagina usa o mesmo `#0f0f0f` da landing.
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-Estrutura do conteudo (extraido do PDF):
-- Titulo principal "Termos de Uso" em `font-display font-bold text-3xl`
-- Subtitulo "Matchmaking" 
-- Texto introdutorio
-- Secoes 1-11 cada uma com titulo em `font-display font-semibold text-xl` e texto em `text-base text-muted-foreground` com `leading-relaxed`
-- Listas com marcadores onde aplicavel
-- Espacamento `space-y-8` entre secoes
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-Todo o conteudo e hardcoded como JSX (nao carrega do banco).
-
----
-
-## Passo 2 -- Criar `src/pages/Privacy.tsx`
-
-Identico ao Passo 1, mas com o conteudo da Politica de Privacidade. Rota `/privacy`. Mesma estrutura visual.
-
-Secoes extraidas do PDF:
-- Titulo "Politica de Privacidade"
-- Veracidade das Informacoes
-- O que sao Dados Pessoais e Dados Sensiveis
-- Empresa como Controladora
-- Quais Tipos de Dados Pessoais sao Coletados
-- Por que a Empresa Trata os Dados Pessoais
-- Dados Pessoais Sensiveis
-- Como a Empresa Armazena os Dados Pessoais
-- Processamento Automatico
-- Compartilhamento de Dados com Terceiros
-- Duracao do Tratamento
-- Seguranca das Informacoes
-- Browsers Compativeis
-- Cookies
-- Marketing
-- Compartilhamento com Terceiros (Google Analytics, Vercel, Supabase)
-- Direito do Usuario
-- Alteracao na Politica
-- Encarregado da Empresa
-
----
-
-## Passo 3 -- Adicionar rotas no `App.tsx`
-
-Duas novas rotas publicas (sem ProtectedRoute):
-
-```text
-<Route path="/terms" element={<Terms />} />
-<Route path="/privacy" element={<Privacy />} />
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Adicionadas acima da rota catch-all `*`.
+No other files are touched.
 
----
-
-## Passo 4 -- Adicionar links no footer da `Index.tsx`
-
-Abaixo da linha "Matchmaking . Feito para quem vive de games" (linha 760-762), adicionar uma nova `<p>` com dois `<Link>`:
-
-```text
-Termos de Uso · Politica de Privacidade
-```
-
-Estilo: `text-xs`, cor `rgba(255,255,255,0.35)`, sem underline por padrao, `hover:underline`. Separados por um ponto centralizado. `marginTop: 8`.
-
----
-
-## Passo 5 -- Adicionar frase de consentimento no `Signup.tsx`
-
-Abaixo do botao "Criar Perfil" (linha 304) e antes do fechamento do `</form>` (linha 305), adicionar:
-
-```text
-<p className="text-xs text-center text-muted-foreground mt-3">
-  Ao criar uma conta, voce concorda com os{" "}
-  <Link to="/terms" className="text-primary hover:underline">Termos de Uso</Link>
-  {" "}e{" "}
-  <Link to="/privacy" className="text-primary hover:underline">Politica de Privacidade</Link>
-</p>
-```
-
-Fica dentro do `<form>`, logo apos o `<Button>`, antes do `</form>`. Nenhuma outra alteracao na pagina.
-
----
-
-## O que NAO muda
-- Nenhum componente existente alem dos listados
-- Nenhuma logica de autenticacao
-- Layout existente do footer (apenas adicao)
-- Layout existente do signup (apenas adicao)

@@ -26,7 +26,7 @@ import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
 const projectSchema = z.object({
   titulo: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
   slug: z.string().min(2, "Mínimo 2 caracteres").max(100, "Máximo 100 caracteres"),
-  tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source"]),
+  tipo: z.enum(["profissional", "pessoal", "game_jam", "open_source", "jogo"]),
   papel: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
   descricao: z.string().max(300, "Máximo 300 caracteres").optional().or(z.literal("")),
   status: z.enum(["em_andamento", "concluido", "pausado"]),
@@ -159,7 +159,7 @@ export default function ProjectFormPage() {
     const isDirty = form.formState.isDirty || richContentDirty;
     if (isDirty) {
       const confirmed = window.confirm(
-        "Você tem alterações não salvas. Se sair agora, elas serão perdidas. Deseja continuar?"
+        "Você tem alterações não salvas. Se sair agora, elas serão perdidas. Deseja continuar?",
       );
       if (!confirmed) return;
     }
@@ -301,7 +301,7 @@ export default function ProjectFormPage() {
                         <Input placeholder="space-shooter-indie" maxLength={100} {...field} />
                       </FormControl>
                       {slugValue && userSlug && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground break-all">
                           matchmaking.games/p/{userSlug}/project/{slugValue}
                         </p>
                       )}
@@ -519,12 +519,7 @@ export default function ProjectFormPage() {
 
             {/* Fix 1: buttons outside form, Salvar uses onClick */}
             <CardFooter className="flex flex-col sm:flex-row gap-2 justify-end border-t pt-6">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleNavigateBack}
-                className="w-full sm:w-auto"
-              >
+              <Button type="button" variant="ghost" onClick={handleNavigateBack} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button

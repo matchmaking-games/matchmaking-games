@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useAvailableSkills } from "@/hooks/useAvailableSkills";
 import type { UserSkill } from "@/hooks/useSkills";
@@ -44,26 +35,24 @@ const levelOptions = [
   { value: "expert", label: "Expert", description: "Referência na área, anos de experiência" },
 ] as const;
 
-export function SkillModal({
-  open,
-  onOpenChange,
-  editingSkill,
-  existingSkillIds,
-  onSave,
-}: SkillModalProps) {
-  const { availableSkills, loading: loadingSkills } = useAvailableSkills();
+export function SkillModal({ open, onOpenChange, editingSkill, existingSkillIds, onSave }: SkillModalProps) {
+  const { availableSkills } = useAvailableSkills();
   const [selectedSkillId, setSelectedSkillId] = useState<string>("");
   const [selectedLevel, setSelectedLevel] = useState<NivelHabilidade>("intermediario");
   const [activeTab, setActiveTab] = useState<CategoriaHabilidade>("habilidades");
-  const [searchValue, setSearchValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const commandInputRef = useRef<HTMLInputElement>(null);
+  const [listOpen, setListOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isEditMode = !!editingSkill;
 
-  const filteredSkills = availableSkills.filter((s) => s.categoria === activeTab);
   const selectedSkill = availableSkills.find((s) => s.id === selectedSkillId);
+
+  const filteredSkills = availableSkills
+    .filter((s) => s.categoria === activeTab)
+    .filter((s) => s.nome.toLowerCase().includes(searchQuery.toLowerCase()));
 
   useEffect(() => {
     if (open) {
@@ -77,18 +66,39 @@ export function SkillModal({
         setSelectedLevel("intermediario");
         setActiveTab("habilidades");
       }
-      setSearchValue("");
       setError(null);
+      setListOpen(false);
+      setSearchQuery("");
     }
   }, [open, editingSkill, availableSkills]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as CategoriaHabilidade);
-    setSearchValue("");
+    setSelectedSkillId("");
+    setSearchQuery("");
+    setError(null);
   };
 
-  const handleSelect = (id: string) => {
-    setSelectedSkillId(id);
+  const handleToggleList = () => {
+    if (isEditMode) return;
+    const next = !listOpen;
+    setListOpen(next);
+    if (next) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    }
+  };
+
+  const handleSelectSkill = (skillId: string) => {
+    setSelectedSkillId(skillId);
+    setListOpen(false);
+    setSearchQuery("");
+    setError(null);
+  };
+
+  const handleClearSkill = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedSkillId("");
+    setSearchQuery("");
     setError(null);
   };
 
@@ -116,11 +126,9 @@ export function SkillModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col h-[90dvh] sm:h-[85vh] sm:max-w-[425px] overflow-hidden">
+      <DialogContent className="flex flex-col sm:max-w-[425px] max-h-[90dvh] overflow-y-auto">
         <DialogHeader className="shrink-0">
-          <DialogTitle>
-            {isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}
-          </DialogTitle>
+          <DialogTitle>{isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? "Atualize o nível de proficiência desta habilidade."
@@ -128,9 +136,8 @@ export function SkillModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea type="always" className="flex-1 min-h-0">
-          <div className="space-y-6 py-4 pr-4">
-          {/* Tabs + Command selector */}
+        <div className="space-y-6 py-2">
+          {/* Seleção de habilidade */}
           <div className="space-y-2">
             <Label>Habilidade ou Software</Label>
 
@@ -145,69 +152,112 @@ export function SkillModal({
               </TabsList>
             </Tabs>
 
-            <div className="rounded-md border border-border overflow-hidden">
-              <Command shouldFilter={true}>
-                <CommandInput
-                  ref={commandInputRef}
-                  placeholder="Buscar..."
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                  disabled={isEditMode}
+            {/* Trigger */}
+            <button
+              type="button"
+              onClick={handleToggleList}
+              disabled={isEditMode}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2 rounded-md border border-input bg-background text-sm transition-colors",
+                "hover:bg-accent hover:text-accent-foreground",
+                isEditMode && "opacity-50 cursor-not-allowed",
+                listOpen && "border-ring ring-1 ring-ring",
+              )}
+            >
+              <span className={cn(!selectedSkill && "text-muted-foreground")}>
+                {selectedSkill
+                  ? selectedSkill.nome
+                  : activeTab === "habilidades"
+                    ? "Selecionar habilidade..."
+                    : "Selecionar software..."}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                {selectedSkill && !isEditMode && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={handleClearSkill}
+                    onKeyDown={(e) => e.key === "Enter" && handleClearSkill(e as any)}
+                    className="p-0.5 rounded hover:bg-muted"
+                  >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </span>
+                )}
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform duration-200",
+                    listOpen && "rotate-180",
+                  )}
                 />
-                {!isEditMode && (
-                  <ScrollArea className="h-[180px]">
-                    <CommandList className="max-h-none overflow-visible">
-                      <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
-                      <CommandGroup>
-                        {filteredSkills.map((skill) => {
-                          const isAlreadyAdded = existingSkillIds.includes(skill.id);
-                          return (
-                            <CommandItem
-                              key={skill.id}
-                              value={skill.nome}
-                              disabled={isAlreadyAdded}
-                              onSelect={() => {
-                                if (!isAlreadyAdded) handleSelect(skill.id);
-                              }}
-                              className={cn(isAlreadyAdded && "opacity-50")}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4 shrink-0",
-                                  selectedSkillId === skill.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {skill.nome}
-                              {isAlreadyAdded && (
-                                <span className="ml-auto text-xs text-muted-foreground">
-                                  Já adicionada
-                                </span>
-                              )}
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </ScrollArea>
-                )}
-                {isEditMode && selectedSkill && (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
-                    {selectedSkill.nome}
-                  </div>
-                )}
-              </Command>
-            </div>
+              </div>
+            </button>
 
-            {selectedSkill && !isEditMode && (
-              <p className="text-sm text-muted-foreground">
-                Selecionado: <span className="text-foreground font-medium">{selectedSkill.nome}</span>
-              </p>
+            {/* Lista inline expansível */}
+            {listOpen && (
+              <div className="border border-input rounded-md overflow-hidden">
+                {/* Campo de busca */}
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-input">
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar..."
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Lista de itens */}
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredSkills.length === 0 ? (
+                    <p className="px-3 py-4 text-sm text-center text-muted-foreground">
+                      Nenhuma habilidade encontrada.
+                    </p>
+                  ) : (
+                    filteredSkills.map((skill) => {
+                      const isAlreadyAdded = existingSkillIds.includes(skill.id);
+                      const isSelected = selectedSkillId === skill.id;
+                      return (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          disabled={isAlreadyAdded}
+                          onClick={() => !isAlreadyAdded && handleSelectSkill(skill.id)}
+                          className={cn(
+                            "w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors",
+                            isAlreadyAdded
+                              ? "opacity-50 cursor-not-allowed"
+                              : "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                            isSelected && "bg-accent",
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Check className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
+                            {skill.nome}
+                          </span>
+                          {isAlreadyAdded && <span className="text-xs text-muted-foreground">Já adicionada</span>}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             )}
 
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
 
-          {/* Level Radio Group */}
+          {/* Nível de Proficiência */}
           <div className="space-y-3">
             <Label>Nível de Proficiência</Label>
             <RadioGroup
@@ -232,10 +282,9 @@ export function SkillModal({
               ))}
             </RadioGroup>
           </div>
-          </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="shrink-0 border-t p-6 pt-4">
+        <DialogFooter className="shrink-0 border-t pt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>

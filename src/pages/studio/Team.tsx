@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Users, Shield, Trash2, UserPlus, MoreVertical, User, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { StudioDashboardLayout } from "@/components/studio/StudioDashboardLayout";
+
 import { useStudioMembers, type StudioMember } from "@/hooks/useStudioMembers";
 import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -216,7 +216,7 @@ export default function Team() {
   );
 
   return (
-    <StudioDashboardLayout>
+    <>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -426,6 +426,6 @@ export default function Team() {
           onSuccess={refetch}
         />
       )}
-    </StudioDashboardLayout>
+    </>
   );
 }

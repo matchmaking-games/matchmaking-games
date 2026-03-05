@@ -466,8 +466,8 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
           instituicao: edu.institution || "",
           tipo: edu.tipo || ("curso" as const),
           titulo: edu.field || "",
-          inicio: edu.start_year || "",
-          fim: edu.end_year || null,
+          inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+          fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
         }),
       );
 
