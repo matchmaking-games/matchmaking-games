@@ -1,42 +1,33 @@
 
 
-# Instalar e Configurar Sentry
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-## Questao sobre as variaveis de ambiente
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-As DSNs do Sentry sao chaves publicas (ficam expostas no JavaScript do cliente em qualquer app que use Sentry). Como o Lovable nao suporta arquivos `.env` e os secrets do Supabase so funcionam em edge functions (nao no frontend), a abordagem correta e determinar a DSN no codigo com base em `import.meta.env.MODE`:
+### Change 1 — `src/components/education/EducationModal.tsx`
 
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+
+### Change 2 — `src/lib/formatters.ts`
+
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-const dsn = import.meta.env.MODE === "production"
-  ? "https://fa8a7b09738d...@...sentry.io/4510984306688000"
-  : "https://e51266dd8e06...@...sentry.io/4510984328577024";
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Isso e seguro porque DSNs do Sentry sao projetadas para serem publicas.
-
----
-
-## Alteracoes
-
-### 1. Instalar `@sentry/react`
-
-Adicionar ao package.json.
-
-### 2. Criar `src/instrument.ts`
-
-- Importa `* as Sentry` de `@sentry/react`
-- Seleciona a DSN com base em `import.meta.env.MODE`
-- Chama `Sentry.init()` com: dsn, environment (`import.meta.env.MODE`), sendDefaultPii false, integrations com apenas `browserTracingIntegration()`, tracesSampleRate 1.0, tracePropagationTargets `["localhost"]`
-
-### 3. Modificar `src/main.tsx`
-
-Adicionar `import "./instrument"` como primeira linha, antes de todos os outros imports. Resto do arquivo inalterado.
-
-### 4. Modificar `src/App.tsx`
-
-- Importar `* as Sentry` de `@sentry/react`
-- Envolver todo o conteudo do `AuthProvider` com `<Sentry.ErrorBoundary fallback={...}>` usando a mensagem "Algo deu errado. Por favor, recarregue a pagina."
-- Nenhuma outra alteracao no arquivo
-
-### Nenhum outro arquivo alterado
+No other files are touched.
 
