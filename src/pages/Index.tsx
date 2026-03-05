@@ -4,7 +4,6 @@ import { ArrowRight, Check, X, AlertTriangle, Loader2, User, Building2 } from "l
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import DisplayCards from "@/components/ui/display-cards";
 import { SocialIcon } from "@/components/SocialIcon";
 import { Header } from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
@@ -453,19 +452,6 @@ const Index = () => {
               </span>
             </motion.div>
           </div>
-
-          {/* DisplayCards */}
-          <motion.div
-            className="mx-auto relative z-10"
-            style={{ maxWidth: 600, paddingBottom: 120, overflow: "visible" }}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <DisplayCards />
-          </motion.div>
-        </div>
       </section>
 
       {/* ────────── SEÇÃO 3 — COMO FUNCIONA ────────── */}
