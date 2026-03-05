@@ -13,7 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useEducations, type Education } from "@/hooks/useEducations";
-import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
+
+const currentYear = new Date().getFullYear();
+
+const yearValidator = z.string().refine(
+  (val) => val === "" || (/^\d{4}$/.test(val) && Number(val) >= 1900 && Number(val) <= currentYear),
+  { message: "Informe um ano válido (ex: 2020)" },
+);
 
 // Zod validation schema
 const educationSchema = z
@@ -24,15 +30,14 @@ const educationSchema = z
     }),
     titulo: z.string().min(2, "Mínimo 2 caracteres").max(200, "Máximo 200 caracteres"),
     area: z.string().max(100, "Máximo 100 caracteres").optional().or(z.literal("")),
-    inicio: z.string().optional().or(z.literal("")),
-    fim: z.string().optional().or(z.literal("")),
+    inicio: yearValidator,
+    fim: yearValidator,
     concluido: z.boolean().default(false),
     descricao: z.string().max(1000, "Máximo 1000 caracteres").optional().or(z.literal("")),
     credencial_url: z.string().url("URL inválida").optional().or(z.literal("")),
   })
   .refine(
     (data) => {
-      // End date must be >= start date if both are set
       if (data.fim && data.inicio && data.inicio > data.fim) {
         return false;
       }
@@ -106,8 +111,8 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
           instituicao: editingEducation.instituicao,
           tipo: editingEducation.tipo as EducationFormData["tipo"],
           titulo: editingEducation.titulo,
-          inicio: editingEducation.inicio?.substring(0, 7) || "",
-          fim: editingEducation.fim?.substring(0, 7) || "",
+          inicio: editingEducation.inicio?.substring(0, 4) || "",
+          fim: editingEducation.fim?.substring(0, 4) || "",
           concluido: editingEducation.concluido || false,
           descricao: editingEducation.descricao || "",
           credencial_url: editingEducation.credencial_url || "",
@@ -172,8 +177,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
     }
   };
 
-  // Get current month in YYYY-MM format for max date validation
-  const currentMonth = new Date().toISOString().substring(0, 7);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -259,11 +262,11 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
                       <FormItem>
                         <FormLabel>Data de início</FormLabel>
                         <FormControl>
-                          <MonthYearPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            maxDate={currentMonth}
-                            placeholder="Selecione a data"
+                          <Input
+                            placeholder="Ex: 2020"
+                            type="text"
+                            maxLength={4}
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -279,11 +282,11 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
                         <FormItem>
                           <FormLabel>Data de conclusão</FormLabel>
                           <FormControl>
-                            <MonthYearPicker
-                              value={field.value}
-                              onChange={field.onChange}
-                              maxDate={currentMonth}
-                              placeholder="Selecione a data"
+                            <Input
+                              placeholder="Ex: 2024"
+                              type="text"
+                              maxLength={4}
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />

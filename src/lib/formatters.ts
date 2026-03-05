@@ -107,27 +107,22 @@ export function formatEducationPeriod(
   fim: string | null,
   concluido: boolean | null
 ): string {
-  if (!inicio && !fim) {
+  const startYear = inicio ? inicio.substring(0, 4) : null;
+  const endYear = fim ? fim.substring(0, 4) : null;
+
+  if (!startYear && !endYear) {
     return concluido ? "Concluído" : "Em andamento";
   }
 
-  if (fim) {
-    const endDate = new Date(fim);
-    const endFormatted = capitalize(format(endDate, "MMM yyyy", { locale: ptBR }));
-    
-    if (!inicio) {
-      return concluido ? `Concluído em ${endFormatted}` : endFormatted;
-    }
-    
-    const startDate = new Date(inicio);
-    const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
-    return `${startFormatted} - ${endFormatted}`;
+  if (startYear && endYear) {
+    return startYear === endYear ? startYear : `${startYear} - ${endYear}`;
   }
 
-  // Has start but no end
-  const startDate = new Date(inicio!);
-  const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
-  return `${startFormatted} - Em andamento`;
+  if (startYear) {
+    return concluido ? `Concluído em ${startYear}` : `${startYear} - Em andamento`;
+  }
+
+  return endYear!;
 }
 
 /**
