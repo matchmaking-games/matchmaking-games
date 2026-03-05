@@ -4,6 +4,7 @@ import { ArrowRight, Check, X, AlertTriangle, Loader2, User, Building2 } from "l
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import DisplayCards from "@/components/ui/display-cards";
 import { SocialIcon } from "@/components/SocialIcon";
 import { Header } from "@/components/layout/Header";
 import { supabase } from "@/integrations/supabase/client";
@@ -452,6 +453,7 @@ const Index = () => {
               </span>
             </motion.div>
           </div>
+        </div>
       </section>
 
       {/* ────────── SEÇÃO 3 — COMO FUNCIONA ────────── */}
@@ -747,9 +749,13 @@ const Index = () => {
           Matchmaking · Feito para quem vive de games
         </p>
         <p className="text-center" style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
-          <Link to="/terms" className="hover:underline" style={{ color: "inherit" }}>Termos de Uso</Link>
+          <Link to="/terms" className="hover:underline" style={{ color: "inherit" }}>
+            Termos de Uso
+          </Link>
           {" · "}
-          <Link to="/privacy" className="hover:underline" style={{ color: "inherit" }}>Política de Privacidade</Link>
+          <Link to="/privacy" className="hover:underline" style={{ color: "inherit" }}>
+            Política de Privacidade
+          </Link>
         </p>
       </footer>
     </div>
