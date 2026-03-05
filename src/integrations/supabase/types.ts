@@ -582,108 +582,6 @@ export type Database = {
         }
         Relationships: []
       }
-      jogos: {
-        Row: {
-          criado_em: string | null
-          criado_por: string
-          data_lancamento: string | null
-          descricao: string | null
-          destaque: boolean | null
-          engine: string | null
-          estudio_id: string | null
-          genero: string[] | null
-          id: string
-          imagem_capa_url: string | null
-          ordem: number | null
-          plataformas: string[] | null
-          site_url: string | null
-          slug: string | null
-          status: Database["public"]["Enums"]["status_jogo"]
-          steam_url: string | null
-          titulo: string
-          trailer_url: string | null
-          user_id: string | null
-        }
-        Insert: {
-          criado_em?: string | null
-          criado_por: string
-          data_lancamento?: string | null
-          descricao?: string | null
-          destaque?: boolean | null
-          engine?: string | null
-          estudio_id?: string | null
-          genero?: string[] | null
-          id?: string
-          imagem_capa_url?: string | null
-          ordem?: number | null
-          plataformas?: string[] | null
-          site_url?: string | null
-          slug?: string | null
-          status: Database["public"]["Enums"]["status_jogo"]
-          steam_url?: string | null
-          titulo: string
-          trailer_url?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          criado_em?: string | null
-          criado_por?: string
-          data_lancamento?: string | null
-          descricao?: string | null
-          destaque?: boolean | null
-          engine?: string | null
-          estudio_id?: string | null
-          genero?: string[] | null
-          id?: string
-          imagem_capa_url?: string | null
-          ordem?: number | null
-          plataformas?: string[] | null
-          site_url?: string | null
-          slug?: string | null
-          status?: Database["public"]["Enums"]["status_jogo"]
-          steam_url?: string | null
-          titulo?: string
-          trailer_url?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "jogos_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jogos_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jogos_estudio_id_fkey"
-            columns: ["estudio_id"]
-            isOneToOne: false
-            referencedRelation: "estudios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jogos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jogos_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       pagamentos: {
         Row: {
           amount: number
@@ -839,17 +737,22 @@ export type Database = {
           descricao: string | null
           descricao_rich: Json | null
           destaque: boolean | null
+          engine: string | null
+          estudio_id: string | null
           fim: string | null
+          genero: string[] | null
           id: string
           imagem_capa_url: string | null
           inicio: string | null
           ordem: number | null
           papel: string | null
+          plataformas: string[] | null
           slug: string | null
           status: Database["public"]["Enums"]["status_projeto"]
+          steam_url: string | null
           tipo: Database["public"]["Enums"]["tipo_projeto"]
           titulo: string
-          user_id: string
+          user_id: string | null
           video_url: string | null
           visualizacoes: number | null
         }
@@ -861,17 +764,22 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
+          engine?: string | null
+          estudio_id?: string | null
           fim?: string | null
+          genero?: string[] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
+          plataformas?: string[] | null
           slug?: string | null
           status: Database["public"]["Enums"]["status_projeto"]
+          steam_url?: string | null
           tipo: Database["public"]["Enums"]["tipo_projeto"]
           titulo: string
-          user_id: string
+          user_id?: string | null
           video_url?: string | null
           visualizacoes?: number | null
         }
@@ -883,21 +791,33 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
+          engine?: string | null
+          estudio_id?: string | null
           fim?: string | null
+          genero?: string[] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
+          plataformas?: string[] | null
           slug?: string | null
           status?: Database["public"]["Enums"]["status_projeto"]
+          steam_url?: string | null
           tipo?: Database["public"]["Enums"]["tipo_projeto"]
           titulo?: string
-          user_id?: string
+          user_id?: string | null
           video_url?: string | null
           visualizacoes?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projetos_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projetos_user_id_fkey"
             columns: ["user_id"]
@@ -1434,7 +1354,12 @@ export type Database = {
         | "doutorado"
         | "mba"
       tipo_emprego: "clt" | "pj" | "freelancer" | "estagio" | "tempo_integral"
-      tipo_projeto: "profissional" | "pessoal" | "game_jam" | "open_source"
+      tipo_projeto:
+        | "profissional"
+        | "pessoal"
+        | "game_jam"
+        | "open_source"
+        | "jogo"
       tipo_publicacao_vaga: "gratuita" | "destaque"
       tipo_trabalho: "presencial" | "hibrido" | "remoto"
       user_role: "super_admin" | "member"
@@ -1591,7 +1516,13 @@ export const Constants = {
         "mba",
       ],
       tipo_emprego: ["clt", "pj", "freelancer", "estagio", "tempo_integral"],
-      tipo_projeto: ["profissional", "pessoal", "game_jam", "open_source"],
+      tipo_projeto: [
+        "profissional",
+        "pessoal",
+        "game_jam",
+        "open_source",
+        "jogo",
+      ],
       tipo_publicacao_vaga: ["gratuita", "destaque"],
       tipo_trabalho: ["presencial", "hibrido", "remoto"],
       user_role: ["super_admin", "member"],
