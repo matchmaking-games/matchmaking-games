@@ -453,18 +453,6 @@ const Index = () => {
               </span>
             </motion.div>
           </div>
-
-          {/* DisplayCards */}
-          <motion.div
-            className="mx-auto relative z-10"
-            style={{ maxWidth: 600, paddingBottom: 120, overflow: "visible" }}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <DisplayCards />
-          </motion.div>
         </div>
       </section>
 
@@ -761,9 +749,13 @@ const Index = () => {
           Matchmaking · Feito para quem vive de games
         </p>
         <p className="text-center" style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
-          <Link to="/terms" className="hover:underline" style={{ color: "inherit" }}>Termos de Uso</Link>
+          <Link to="/terms" className="hover:underline" style={{ color: "inherit" }}>
+            Termos de Uso
+          </Link>
           {" · "}
-          <Link to="/privacy" className="hover:underline" style={{ color: "inherit" }}>Política de Privacidade</Link>
+          <Link to="/privacy" className="hover:underline" style={{ color: "inherit" }}>
+            Política de Privacidade
+          </Link>
         </p>
       </footer>
     </div>
