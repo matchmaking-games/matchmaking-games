@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -12,6 +13,7 @@ import {
   Plus,
   Check,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink } from "@/components/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +64,8 @@ export function DashboardSidebar() {
   const { toast } = useToast();
   const { data: user } = useCurrentUser();
   const { studios } = useStudioMembership();
+  const isMobile = useIsMobile();
+  const [profileSwitchOpen, setProfileSwitchOpen] = useState(false);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -124,49 +128,100 @@ export function DashboardSidebar() {
 
             <DropdownMenuContent align="end" side="top" className="w-56">
               <DropdownMenuLabel>Contas</DropdownMenuLabel>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="cursor-pointer">
-                  <Shuffle className="mr-2 h-4 w-4" />
-                  Trocar de perfil
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {/* Perfil pessoal */}
+              {isMobile ? (
+                <>
                   <DropdownMenuItem
-                    onClick={() => navigate("/dashboard")}
                     className="cursor-pointer"
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={() => setProfileSwitchOpen((prev) => !prev)}
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.avatar_url || undefined} />
-                        <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                          {getInitials(user.nome_completo)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="flex-1 truncate max-w-[140px] text-sm">{user.nome_completo}</span>
-                      <Check className="h-4 w-4 text-primary" />
-                    </div>
+                    <Shuffle className="mr-2 h-4 w-4" />
+                    <span className="flex-1">Trocar de perfil</span>
+                    <ChevronDown
+                      className={`ml-auto h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                        profileSwitchOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </DropdownMenuItem>
-
-                  {/* Estúdios */}
-                  {studios.map((studio) => (
+                  {profileSwitchOpen && (
+                    <div className="border-l-2 border-border ml-4 pl-1">
+                      <DropdownMenuItem
+                        onClick={() => navigate("/dashboard")}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                              {getInitials(user.nome_completo)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="flex-1 truncate max-w-[140px] text-sm">{user.nome_completo}</span>
+                          <Check className="h-4 w-4 text-primary" />
+                        </div>
+                      </DropdownMenuItem>
+                      {studios.map((studio) => (
+                        <DropdownMenuItem
+                          key={studio.id}
+                          onClick={() => navigate(`/studio/manage/dashboard?studio=${studio.estudio.id}`)}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 w-full">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={studio.estudio.logo_url || undefined} />
+                              <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                                {getInitials(studio.estudio.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="cursor-pointer">
+                    <Shuffle className="mr-2 h-4 w-4" />
+                    Trocar de perfil
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
                     <DropdownMenuItem
-                      key={studio.id}
-                      onClick={() => navigate(`/studio/manage/dashboard?studio=${studio.estudio.id}`)}
+                      onClick={() => navigate("/dashboard")}
                       className="cursor-pointer"
                     >
                       <div className="flex items-center gap-2 w-full">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={studio.estudio.logo_url || undefined} />
+                          <AvatarImage src={user.avatar_url || undefined} />
                           <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                            {getInitials(studio.estudio.nome)}
+                            {getInitials(user.nome_completo)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
+                        <span className="flex-1 truncate max-w-[140px] text-sm">{user.nome_completo}</span>
+                        <Check className="h-4 w-4 text-primary" />
                       </div>
                     </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+                    {studios.map((studio) => (
+                      <DropdownMenuItem
+                        key={studio.id}
+                        onClick={() => navigate(`/studio/manage/dashboard?studio=${studio.estudio.id}`)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={studio.estudio.logo_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                              {getInitials(studio.estudio.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              )}
 
               <DropdownMenuSeparator />
 
