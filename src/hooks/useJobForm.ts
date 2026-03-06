@@ -86,12 +86,25 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
   }>({ obrigatorias: [], desejaveis: [] });
   const [existingTiposFuncao, setExistingTiposFuncao] = useState<string[]>([]);
 
+  // Helper URL for navigation — always preserves ?studio= when available
+  const jobsUrl = studioIdFromUrl
+    ? `/studio/manage/jobs?studio=${studioIdFromUrl}`
+    : "/studio/manage/jobs";
+
   // Effect 1: Check membership and authorization
   useEffect(() => {
     const checkMembership = async () => {
       try {
         setIsLoading(true);
         setError(null);
+
+        // Guard: studioIdFromUrl is required
+        if (!studioIdFromUrl) {
+          setIsAuthorized(false);
+          setError("Estúdio não identificado. Volte e tente novamente.");
+          setIsLoading(false);
+          return;
+        }
 
         const {
           data: { session },
@@ -102,39 +115,19 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           return;
         }
 
-        let membership: { role: string; estudio_id: string } | null = null;
+        const { data: membership, error: membershipError } = await supabase
+          .from("estudio_membros")
+          .select("role, estudio_id")
+          .eq("user_id", session.user.id)
+          .eq("estudio_id", studioIdFromUrl)
+          .eq("ativo", true)
+          .maybeSingle();
 
-        if (studioIdFromUrl) {
-          const { data, error: membershipError } = await supabase
-            .from("estudio_membros")
-            .select("role, estudio_id")
-            .eq("user_id", session.user.id)
-            .eq("estudio_id", studioIdFromUrl)
-            .eq("ativo", true)
-            .maybeSingle();
-
-          if (membershipError) {
-            console.error("Error checking membership:", membershipError);
-            setError("Erro ao verificar permissões.");
-            setIsAuthorized(false);
-            return;
-          }
-          membership = data;
-        } else {
-          const { data, error: membershipError } = await supabase
-            .from("estudio_membros")
-            .select("role, estudio_id")
-            .eq("user_id", session.user.id)
-            .eq("ativo", true)
-            .limit(1);
-
-          if (membershipError) {
-            console.error("Error checking membership:", membershipError);
-            setError("Erro ao verificar permissões.");
-            setIsAuthorized(false);
-            return;
-          }
-          membership = data?.[0] || null;
+        if (membershipError) {
+          console.error("Error checking membership:", membershipError);
+          setError("Erro ao verificar permissões.");
+          setIsAuthorized(false);
+          return;
         }
 
         if (!membership) {
@@ -363,7 +356,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           description: "Você pode continuar editando depois.",
         });
 
-        navigate("/studio/manage/jobs");
+        navigate(jobsUrl);
       } catch (err) {
         console.error("Error saving draft:", err);
         toast({
@@ -375,7 +368,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         setIsSaving(false);
       }
     },
-    [estudioId, navigate, toast],
+    [estudioId, navigate, toast, jobsUrl],
   );
 
   // Update existing draft
@@ -437,7 +430,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           description: "Alterações salvas com sucesso.",
         });
 
-        navigate("/studio/manage/jobs");
+        navigate(jobsUrl);
       } catch (err) {
         console.error("Error updating draft:", err);
         toast({
@@ -449,7 +442,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         setIsSaving(false);
       }
     },
-    [estudioId, existingJob, navigate, toast],
+    [estudioId, existingJob, navigate, toast, jobsUrl],
   );
 
   // Create new job
@@ -520,7 +513,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
             description: `A vaga "${data.titulo}" foi criada com sucesso.`,
           });
 
-          navigate("/studio/manage/jobs");
+          navigate(jobsUrl);
         } else if (data.tipo_publicacao === "destaque") {
           // Featured job: save as awaiting payment, then redirect to Stripe
           const { data: vaga, error: insertError } = await supabase
@@ -588,7 +581,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         setIsSaving(false);
       }
     },
-    [estudioId, navigate, toast],
+    [estudioId, navigate, toast, jobsUrl],
   );
 
   // Update existing job
@@ -659,7 +652,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           description: `A vaga "${data.titulo}" foi atualizada com sucesso.`,
         });
 
-        navigate("/studio/manage/jobs");
+        navigate(jobsUrl);
       } catch (err) {
         console.error("Error updating job:", err);
         toast({
@@ -671,7 +664,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
         setIsSaving(false);
       }
     },
-    [estudioId, existingJob, navigate, toast],
+    [estudioId, existingJob, navigate, toast, jobsUrl],
   );
 
   return {

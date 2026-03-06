@@ -159,11 +159,16 @@ export default function JobForm() {
   }, [hasUnsavedChanges, formSaved]);
 
   // Handle cancel button click with unsaved changes check
+  const studioParam = searchParams.get("studio");
+  const jobsUrl = studioParam
+    ? `/studio/manage/jobs?studio=${studioParam}`
+    : "/studio/manage/jobs";
+
   const handleCancelClick = () => {
     if (hasUnsavedChanges && !formSaved) {
       setShowExitDialog(true);
     } else {
-      navigate("/studio/manage/jobs");
+      navigate(jobsUrl);
     }
   };
 
@@ -442,7 +447,7 @@ export default function JobForm() {
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/studio/manage/jobs")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate(jobsUrl)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <CardTitle className="font-display text-2xl">{isEditing ? "Editar Vaga" : "Criar Nova Vaga"}</CardTitle>
@@ -1041,7 +1046,7 @@ export default function JobForm() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setShowExitDialog(false)}>Continuar editando</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={() => navigate("/studio/manage/jobs")}>
+            <AlertDialogAction variant="destructive" onClick={() => navigate(jobsUrl)}>
               Descartar e sair
             </AlertDialogAction>
           </AlertDialogFooter>
