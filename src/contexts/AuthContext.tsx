@@ -15,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   hasProfile: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ export const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   hasProfile: false,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -82,6 +84,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const refreshProfile = async () => {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession) return;
+
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("nome_completo, avatar_url")
+        .eq("id", currentSession.user.id)
+        .maybeSingle();
+
+      if (data) {
+        setUser({
+          id: currentSession.user.id,
+          nome_completo: data.nome_completo,
+          avatar_url: data.avatar_url,
+        });
+        setHasProfile(true);
+      } else {
+        setUser(null);
+        setHasProfile(false);
+      }
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -95,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!session,
         hasProfile,
         signOut,
+        refreshProfile,
       }}
     >
       {children}
