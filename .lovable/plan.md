@@ -1,76 +1,33 @@
 
 
-## Fix: Stripe Payment Flow (multi-studio)
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Five problems across four files. All navigations must preserve `?studio=UUID`.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Change 1 — `src/hooks/useJobForm.ts`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-**Problem 5 (guard):** When `studioIdFromUrl` is null/empty, the fallback query (lines 123-138) picks a random studio. Replace it: if `!studioIdFromUrl`, set `isAuthorized = false`, `error = "Estúdio não identificado. Volte e tente novamente."`, and return early. Remove the fallback query block entirely.
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-**Problem 1 (navigates):** The hook receives `studioIdFromUrl` but all four `navigate()` calls go to `/studio/manage/jobs` without `?studio=`. Build a helper URL inside the hook:
+### Change 2 — `src/lib/formatters.ts`
 
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-const jobsUrl = studioIdFromUrl
-  ? `/studio/manage/jobs?studio=${studioIdFromUrl}`
-  : "/studio/manage/jobs";
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Replace all four `navigate("/studio/manage/jobs")` calls (lines 366, 440, 523, 662) with `navigate(jobsUrl)`. Add `studioIdFromUrl` to each `useCallback` dependency array.
-
-### Change 2 — `src/pages/studio/Jobs.tsx`
-
-**Problem 2 (handlePaymentSuccess):** In `handlePaymentSuccess`, the cleanup navigate uses `activeStudio?.estudio.id` which may be null. Change to read `searchParams.get("studio")`:
-
-```ts
-const studioParam = searchParams.get("studio");
-const cleanUrl = studioParam
-  ? `/studio/manage/jobs?studio=${studioParam}`
-  : "/studio/manage/jobs";
-navigate(cleanUrl, { replace: true });
-```
-
-Add `searchParams` to the `useCallback` deps. Same fix in the `useEffect` that detects invalid session_id (line 146).
-
-### Change 3 — `src/pages/studio/Dashboard.tsx`
-
-**Problem 3 (cancelled toast):** Add `useSearchParams`, `useEffect`, and `useToast`. Detect `?payment=cancelled`:
-
-```ts
-const [searchParams] = useSearchParams();
-
-useEffect(() => {
-  if (searchParams.get("payment") === "cancelled") {
-    toast({
-      title: "Pagamento não concluído",
-      description: "Sua vaga foi salva e está aguardando pagamento. Acesse 'Minhas Vagas' para retomar.",
-    });
-    const studioParam = searchParams.get("studio");
-    navigate(
-      studioParam ? `/studio/manage/dashboard?studio=${studioParam}` : "/studio/manage/dashboard",
-      { replace: true }
-    );
-  }
-}, [searchParams, toast, navigate]);
-```
-
-### Change 4 — `src/pages/studio/JobForm.tsx`
-
-**Problem 4a (dead code):** Remove the `useEffect` at lines 98-110 that detects `?payment=cancelled` — it never fires.
-
-**Problem 4b (navigates without ?studio=):** Three navigate calls need fixing:
-- `handleCancelClick` (line 166): `navigate("/studio/manage/jobs")` → use studio param
-- Back arrow button (line 445): same fix
-- AlertDialog "Descartar e sair" (line 1044): same fix
-
-All three should read `searchParams.get("studio")` and build the URL defensively (no `?studio=undefined`).
-
-### Files touched
-- `src/hooks/useJobForm.ts`
-- `src/pages/studio/Jobs.tsx`
-- `src/pages/studio/JobForm.tsx`
-- `src/pages/studio/Dashboard.tsx`
-
-### Not touched
-Edge Functions, polling logic, modals, UI components, membership checks, layout components, `useActiveStudio`.
+No other files are touched.
 

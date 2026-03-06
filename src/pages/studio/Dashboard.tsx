@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Briefcase, FileText, Clock, Sparkles, Plus, Settings, ExternalLink } from "lucide-react";
 
 import { useActiveStudio } from "@/hooks/useActiveStudio";
@@ -6,6 +7,7 @@ import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 const statCards = [
   { key: "ativas" as const, label: "Ativas", icon: Briefcase, color: "text-primary" },
@@ -16,9 +18,26 @@ const statCards = [
 
 export default function StudioDashboard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const { activeStudio } = useActiveStudio();
   const estudioId = activeStudio?.estudio.id ?? null;
   const { stats, isLoading } = useStudioDashboardStats(estudioId);
+
+  // Detect payment cancellation from Stripe redirect
+  useEffect(() => {
+    if (searchParams.get("payment") === "cancelled") {
+      toast({
+        title: "Pagamento não concluído",
+        description: "Sua vaga foi salva e está aguardando pagamento. Acesse 'Minhas Vagas' para retomar.",
+      });
+      const studioParam = searchParams.get("studio");
+      navigate(
+        studioParam ? `/studio/manage/dashboard?studio=${studioParam}` : "/studio/manage/dashboard",
+        { replace: true },
+      );
+    }
+  }, [searchParams, toast, navigate]);
 
   const hasNoJobs =
     stats && stats.ativas === 0 && stats.rascunhos === 0 && stats.expiradas === 0 && stats.destaque === 0;
