@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 const onboardingSchema = z.object({
   nomeCompleto: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -19,6 +20,7 @@ type ValidationErrors = {
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const slugFromUrl = searchParams.get("slug");
 
   // Auth state
@@ -163,12 +165,15 @@ const Onboarding = () => {
       nome_completo: nomeCompleto,
       slug: username
     });
-    setIsLoading(false);
     if (insertError) {
       console.error("Error creating profile:", insertError);
       toast.error("Erro ao criar perfil. Tente novamente.");
+      setIsLoading(false);
       return;
     }
+
+    await refreshProfile();
+    setIsLoading(false);
 
     const redirectParam = searchParams.get("redirect");
     navigate(redirectParam || "/dashboard");

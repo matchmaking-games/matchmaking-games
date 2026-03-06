@@ -65,7 +65,6 @@ export default function NewStudio() {
   // Hook de verificação de disponibilidade
   const { isChecking, isAvailable } = useCheckStudioSlug(slug, isSlugFormatValid);
 
-
   // Quando o nome muda, gerar slug automaticamente (se usuário não editou manualmente)
   useEffect(() => {
     if (!slugTouched && nome) {
@@ -129,14 +128,18 @@ export default function NewStudio() {
     }
 
     // Inserir estúdio
-    const { error: insertError } = await supabase.from("estudios").insert({
-      nome: nome,
-      slug: slug,
-      estado: estado,
-      cidade: cidade,
-      tamanho: tamanho as "micro" | "pequeno" | "medio" | "grande",
-      criado_por: session.user.id,
-    });
+    const { data: newStudio, error: insertError } = await supabase
+      .from("estudios")
+      .insert({
+        nome: nome,
+        slug: slug,
+        estado: estado,
+        cidade: cidade,
+        tamanho: tamanho as "micro" | "pequeno" | "medio" | "grande",
+        criado_por: session.user.id,
+      })
+      .select("id")
+      .single();
 
     setIsSubmitting(false);
 
@@ -165,9 +168,10 @@ export default function NewStudio() {
 
     // Invalidar query has-studio para atualizar menu
     queryClient.invalidateQueries({ queryKey: ["has-studio"] });
+    queryClient.invalidateQueries({ queryKey: ["studio-memberships"] });
 
     // Redirecionar para dashboard do estúdio
-    navigate("/studio/manage/dashboard");
+    navigate(`/studio/manage/dashboard?studio=${newStudio.id}`);
   };
 
   const renderSlugStatus = () => {

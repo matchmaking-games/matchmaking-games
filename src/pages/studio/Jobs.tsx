@@ -127,10 +127,14 @@ export default function StudioJobs() {
         setIsVerifyingPayment(false);
       }
 
-      // Clean query params
-      navigate(`/studio/manage/jobs?studio=${activeStudio?.estudio.id}`, { replace: true });
+      // Clean query params — use studio from searchParams (came from Stripe redirect)
+      const studioParam = searchParams.get("studio");
+      const cleanUrl = studioParam
+        ? `/studio/manage/jobs?studio=${studioParam}`
+        : "/studio/manage/jobs";
+      navigate(cleanUrl, { replace: true });
     },
-    [verifyPaymentWithPolling, refetch, navigate],
+    [verifyPaymentWithPolling, refetch, navigate, searchParams],
   );
 
   // Detect payment return from Stripe
@@ -143,7 +147,11 @@ export default function StudioJobs() {
         handlePaymentSuccess(sessionId);
       } else {
         console.warn("[VERIFY-PAYMENT] Invalid session_id format:", sessionId);
-        navigate(`/studio/manage/jobs?studio=${activeStudio?.estudio.id}`, { replace: true });
+        const studioParam = searchParams.get("studio");
+        const cleanUrl = studioParam
+          ? `/studio/manage/jobs?studio=${studioParam}`
+          : "/studio/manage/jobs";
+        navigate(cleanUrl, { replace: true });
       }
     }
   }, [searchParams, handlePaymentSuccess, navigate]);
