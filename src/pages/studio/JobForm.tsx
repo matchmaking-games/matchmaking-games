@@ -94,20 +94,7 @@ export default function JobForm() {
   const [formSaved, setFormSaved] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
-  // Detect payment cancelled return from Stripe
-  useEffect(() => {
-    const payment = searchParams.get("payment");
 
-    if (payment === "cancelled") {
-      toast({
-        title: "Pagamento cancelado",
-        description: "Você pode ajustar a vaga e tentar publicar novamente.",
-      });
-
-      // Clean query param
-      navigate(window.location.pathname, { replace: true });
-    }
-  }, [searchParams, toast, navigate]);
 
   const form = useForm<VagaFormSchemaType>({
     resolver: zodResolver(vagaFormSchema),
