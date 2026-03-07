@@ -94,8 +94,6 @@ export default function JobForm() {
   const [formSaved, setFormSaved] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
-
-
   const form = useForm<VagaFormSchemaType>({
     resolver: zodResolver(vagaFormSchema),
     defaultValues: {
@@ -147,9 +145,7 @@ export default function JobForm() {
 
   // Handle cancel button click with unsaved changes check
   const studioParam = searchParams.get("studio");
-  const jobsUrl = studioParam
-    ? `/studio/manage/jobs?studio=${studioParam}`
-    : "/studio/manage/jobs";
+  const jobsUrl = studioParam ? `/studio/manage/jobs?studio=${studioParam}` : "/studio/manage/jobs";
 
   const handleCancelClick = () => {
     if (hasUnsavedChanges && !formSaved) {
@@ -168,6 +164,11 @@ export default function JobForm() {
   const tipoFuncaoValue = form.watch("tipo_funcao") || [];
   const selectedRemoto = form.watch("remoto");
   const [tipoFuncaoOpen, setTipoFuncaoOpen] = useState(false);
+
+  useEffect(() => {
+    console.log("existingTiposFuncao:", existingTiposFuncao);
+    console.log("form tipo_funcao:", form.getValues("tipo_funcao"));
+  }, [existingTiposFuncao]);
 
   // Load existing job data into form
   useEffect(() => {
