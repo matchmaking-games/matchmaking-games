@@ -182,9 +182,8 @@ const AcceptInvite = () => {
     } else {
       toast.success(`Bem-vindo ao ${invite?.estudio_nome}!`);
     }
-    }
     navigate(`/studio/manage/dashboard?studio=${invite?.estudio_id}`, { replace: true });
-  };
+  }, [token, invite, queryClient, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
