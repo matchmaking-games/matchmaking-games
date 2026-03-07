@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ const AcceptInvite = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [existingUser, setExistingUser] = useState<boolean | null>(null);
   const processedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   // Effect 1: Fetch invite + auth state
   useEffect(() => {
