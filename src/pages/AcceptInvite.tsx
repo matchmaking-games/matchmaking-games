@@ -1,6 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ const AcceptInvite = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [existingUser, setExistingUser] = useState<boolean | null>(null);
   const processedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   // Effect 1: Fetch invite + auth state
   useEffect(() => {
@@ -111,20 +113,21 @@ const AcceptInvite = () => {
     };
 
     init();
+
+    // Listen for late-arriving sessions (e.g. after login redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && !userId) {
+        setUserEmail(session.user.email ?? null);
+        setUserId(session.user.id);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [token, navigate]);
 
-  // Effect 2: Auto-process if logged in with correct email
-  useEffect(() => {
-    if (!invite || !userEmail || !userId || invite.aceito || processing || processedRef.current) return;
-    if (error) return;
-
-    if (userEmail.toLowerCase() === invite.email_convidado.toLowerCase()) {
-      processedRef.current = true;
-      acceptInvite();
-    }
-  }, [invite, userEmail, userId]);
-
-  const acceptInvite = async () => {
+  const acceptInvite = useCallback(async () => {
     if (!token) return;
     setProcessing(true);
 
@@ -147,11 +150,11 @@ const AcceptInvite = () => {
       } else if (result.error === "expired") {
         setError("expired");
       } else if (result.error === "already_accepted") {
+        queryClient.invalidateQueries({ queryKey: ["studio-memberships"] });
         toast.info("Você já é membro deste estúdio!");
         navigate(`/studio/manage/dashboard?studio=${invite?.estudio_id}`, { replace: true });
         return;
       } else if (result.error === "no_profile") {
-        // User has auth but no profile, redirect to onboarding
         navigate(`/onboarding?redirect=/invite/${token}`, { replace: true });
         return;
       } else {
@@ -161,13 +164,26 @@ const AcceptInvite = () => {
       return;
     }
 
+    queryClient.invalidateQueries({ queryKey: ["studio-memberships"] });
+
     if (result.already_member) {
       toast.info("Você já é membro deste estúdio!");
     } else {
       toast.success(`Bem-vindo ao ${invite?.estudio_nome}!`);
     }
     navigate(`/studio/manage/dashboard?studio=${invite?.estudio_id}`, { replace: true });
-  };
+  }, [token, invite, queryClient, navigate]);
+
+  // Effect 2: Auto-process if logged in with correct email
+  useEffect(() => {
+    if (!invite || !userEmail || !userId || invite.aceito || processing || processedRef.current) return;
+    if (error) return;
+
+    if (userEmail.toLowerCase() === invite.email_convidado.toLowerCase()) {
+      processedRef.current = true;
+      acceptInvite();
+    }
+  }, [invite, userEmail, userId, acceptInvite]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
