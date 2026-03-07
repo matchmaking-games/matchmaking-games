@@ -127,17 +127,6 @@ const AcceptInvite = () => {
     };
   }, [token, navigate]);
 
-  // Effect 2: Auto-process if logged in with correct email
-  useEffect(() => {
-    if (!invite || !userEmail || !userId || invite.aceito || processing || processedRef.current) return;
-    if (error) return;
-
-    if (userEmail.toLowerCase() === invite.email_convidado.toLowerCase()) {
-      processedRef.current = true;
-      acceptInvite();
-    }
-  }, [invite, userEmail, userId, acceptInvite]);
-
   const acceptInvite = useCallback(async () => {
     if (!token) return;
     setProcessing(true);
@@ -184,6 +173,17 @@ const AcceptInvite = () => {
     }
     navigate(`/studio/manage/dashboard?studio=${invite?.estudio_id}`, { replace: true });
   }, [token, invite, queryClient, navigate]);
+
+  // Effect 2: Auto-process if logged in with correct email
+  useEffect(() => {
+    if (!invite || !userEmail || !userId || invite.aceito || processing || processedRef.current) return;
+    if (error) return;
+
+    if (userEmail.toLowerCase() === invite.email_convidado.toLowerCase()) {
+      processedRef.current = true;
+      acceptInvite();
+    }
+  }, [invite, userEmail, userId, acceptInvite]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
