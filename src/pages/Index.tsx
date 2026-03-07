@@ -425,7 +425,7 @@ const Index = () => {
                 className="font-display font-semibold"
                 style={{ fontSize: 20, color: "#f0f0f0", lineHeight: 1.3, marginBottom: 20 }}>
                 
-                Encontre o talento certo  
+                Encontre os talentos certos  
               </p>
               {[
               "Portfólios completos antes de entrar em contato",
