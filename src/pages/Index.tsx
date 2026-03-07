@@ -291,7 +291,7 @@ const Index = () => {
               PARA QUEM É
             </p>
             <h2 className="font-display font-bold text-4xl md:text-5xl mb-12" style={{ color: "#f0f0f0" }}>
-              Dois lados. Uma conexão.
+              ​Dois lados. Uma conexão.       
             </h2>
           </motion.div>
 
@@ -425,7 +425,7 @@ const Index = () => {
                 className="font-display font-semibold"
                 style={{ fontSize: 20, color: "#f0f0f0", lineHeight: 1.3, marginBottom: 20 }}>
                 
-                Encontre o talento antes da concorrência
+                Encontre o talento certo  
               </p>
               {[
               "Portfólios completos antes de entrar em contato",
