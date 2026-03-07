@@ -1,41 +1,33 @@
 
 
-## Fix: Multi-studio Navigation Safety
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Two files, no other changes.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Change 1 — `src/hooks/useActiveStudio.ts`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-Remove the `|| studios[0]` fallback on line 17-18. Replace with:
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
+### Change 2 — `src/lib/formatters.ts`
+
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-const activeStudio = studioId
-  ? studios.find((s) => s.estudio.id === studioId) ?? null
-  : null;
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-No other changes to this file.
-
-### Change 2 — `src/components/studio/StudioDashboardLayout.tsx`
-
-Add `useSearchParams` import and `Building2` icon. Read `studioId` from search params directly.
-
-Add a `useEffect` for auto-redirect when studios exist but no `?studio=` param:
-
-```ts
-useEffect(() => {
-  if (!isLoading && studios.length > 0 && !searchParams.get("studio")) {
-    setActiveStudio(studios[0].estudio.id);
-  }
-}, [isLoading, studios, searchParams, setActiveStudio]);
-```
-
-Update the rendering logic after the loading spinner, in this order:
-
-1. `studios.length === 0` → redirect to `/studio/manage/new` (existing)
-2. `!searchParams.get("studio")` → show spinner (auto-redirect useEffect will fire)
-3. `!activeStudio && studios.length > 0` → render layout with sidebar using `studios[0]` as membership, main content shows "Estúdio não encontrado" with Building2 icon, title, and description centered
-4. `activeStudio` exists → render normally (existing)
-
-The "not found" state reuses the full layout shell (SidebarProvider, sidebar, mobile header) but replaces `{children}` with the informational message.
+No other files are touched.
 
