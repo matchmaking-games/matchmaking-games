@@ -14,8 +14,9 @@ export function useActiveStudio(): UseActiveStudioReturn {
 
   const studioId = searchParams.get("studio");
 
-  const activeStudio =
-    studios.find((s) => s.estudio.id === studioId) || studios[0] || null;
+  const activeStudio = studioId
+    ? studios.find((s) => s.estudio.id === studioId) ?? null
+    : null;
 
   const setActiveStudio = (newStudioId: string) => {
     setSearchParams((prev) => {
