@@ -16,25 +16,22 @@ Deno.serve(async (req) => {
     console.log("[SEND-INVITE-EMAIL] Received request", { inviteId });
 
     if (!inviteId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "inviteId is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "inviteId is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error("[SEND-INVITE-EMAIL] RESEND_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ success: false, error: "Email service not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Email service not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: invite, error: fetchError } = await supabase
       .from("estudio_convites")
@@ -44,10 +41,10 @@ Deno.serve(async (req) => {
 
     if (fetchError || !invite) {
       console.error("[SEND-INVITE-EMAIL] Invite not found", { inviteId, error: fetchError });
-      return new Response(
-        JSON.stringify({ success: false, error: "Invite not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Invite not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const estudio = invite.estudios as { nome: string; logo_url: string | null };
@@ -66,7 +63,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Matchmaking <convites@matchmaking.games>",
+        from: "Matchmaking <contato@matchmaking.games>",
         to: invite.email_convidado,
         subject: `Convite para ${estudioNome}`,
         html,
@@ -77,23 +74,23 @@ Deno.serve(async (req) => {
 
     if (!resendRes.ok) {
       console.error("[SEND-INVITE-EMAIL] Resend error", { status: resendRes.status, error: resendBody });
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to send email" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Failed to send email" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     console.log("[SEND-INVITE-EMAIL] Email sent successfully", { emailId: resendBody.id });
 
-    return new Response(
-      JSON.stringify({ success: true, emailId: resendBody.id }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: true, emailId: resendBody.id }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("[SEND-INVITE-EMAIL] Unexpected error", err);
-    return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
