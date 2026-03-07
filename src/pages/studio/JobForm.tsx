@@ -165,14 +165,9 @@ export default function JobForm() {
   const selectedRemoto = form.watch("remoto");
   const [tipoFuncaoOpen, setTipoFuncaoOpen] = useState(false);
 
-  useEffect(() => {
-    console.log("existingTiposFuncao:", existingTiposFuncao);
-    console.log("form tipo_funcao:", form.getValues("tipo_funcao"));
-  }, [existingTiposFuncao]);
-
   // Load existing job data into form
   useEffect(() => {
-    if (existingJob) {
+    if (existingJob && existingTiposFuncao.length >= 0) {
       form.reset({
         titulo: existingJob.titulo,
         tipo_funcao: existingTiposFuncao || [],
@@ -197,7 +192,7 @@ export default function JobForm() {
       // Reset unsaved changes after loading existing job
       setHasUnsavedChanges(false);
     }
-  }, [existingJob, form, fetchMunicipios]);
+  }, [existingJob, existingTiposFuncao, form, fetchMunicipios]);
 
   // Load existing skills
   useEffect(() => {
