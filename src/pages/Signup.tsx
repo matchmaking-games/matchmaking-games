@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Footer } from "@/components/layout/Footer";
 import { toast } from "sonner";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { Header } from "@/components/layout/Header";
