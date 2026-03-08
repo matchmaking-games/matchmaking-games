@@ -1328,6 +1328,7 @@ export type Database = {
       delete_expired_backups: { Args: never; Returns: undefined }
       expirar_vagas_antigas: { Args: never; Returns: number }
       get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
+      is_estudio_member: { Args: { p_estudio_id: string }; Returns: boolean }
     }
     Enums: {
       categoria_habilidade: "habilidades" | "softwares"

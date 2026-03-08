@@ -7,48 +7,38 @@ const AuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Auth callback error:", error);
-        navigate("/login");
-        return;
-      }
-      
-      if (!session) {
-        console.error("Auth callback: No session found");
-        navigate("/login");
-        return;
-      }
-      
-      // Recuperar dados do localStorage
-      const pendingSlug = localStorage.getItem("pending_slug");
-      const pendingRedirect = localStorage.getItem("pending_redirect");
-      localStorage.removeItem("pending_slug");
-      localStorage.removeItem("pending_redirect");
-      
-      // Verificar se perfil já existe
-      const { data: profile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      
-      if (profile) {
-        // Perfil existe: ir para redirect ou dashboard
-        navigate(pendingRedirect || "/dashboard");
-      } else {
-        // Sem perfil: ir para onboarding
-        const params = new URLSearchParams();
-        if (pendingSlug) params.set("slug", pendingSlug);
-        if (pendingRedirect) params.set("redirect", pendingRedirect);
-        const qs = params.toString();
-        navigate(qs ? `/onboarding?${qs}` : "/onboarding");
-      }
-    };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        // setTimeout obrigatório para evitar deadlock do Supabase
+        // (chamadas async dentro de onAuthStateChange travam o lock interno)
+        setTimeout(async () => {
+          const pendingSlug = localStorage.getItem("pending_slug");
+          const pendingRedirect = localStorage.getItem("pending_redirect");
+          localStorage.removeItem("pending_slug");
+          localStorage.removeItem("pending_redirect");
 
-    handleCallback();
+          const { data: profile } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            navigate(pendingRedirect || "/dashboard", { replace: true });
+          } else {
+            const params = new URLSearchParams();
+            if (pendingSlug) params.set("slug", pendingSlug);
+            if (pendingRedirect) params.set("redirect", pendingRedirect);
+            const qs = params.toString();
+            navigate(qs ? `/onboarding?${qs}` : "/onboarding", { replace: true });
+          }
+        }, 0);
+      } else if (event === "SIGNED_OUT") {
+        navigate("/login", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (
