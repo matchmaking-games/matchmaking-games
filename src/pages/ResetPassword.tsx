@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useResetPassword } from "@/hooks/useResetPassword";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 const passwordSchema = z
   .object({
