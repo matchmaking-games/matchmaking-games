@@ -1,69 +1,33 @@
 
 
-## Plan: Add "Ver eventos" to sidebar + Event creation form
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-### Part 1 — Sidebar update
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-**File:** `src/components/dashboard/DashboardSidebar.tsx`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-- Import `CalendarRange` from lucide-react
-- Add "Ver eventos" item to `communityItems` array before "Meus eventos":
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
+### Change 2 — `src/lib/formatters.ts`
+
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-const communityItems = [
-  { title: "Ver eventos", url: "/eventos", icon: CalendarRange },
-  { title: "Meus eventos", url: "/dashboard/events", icon: CalendarDays },
-];
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-No other sidebar changes.
-
----
-
-### Part 2 — Hook: `src/hooks/useCreateEvento.ts`
-
-- Uses `useMutation` from tanstack-query (following project patterns)
-- Gets `auth.getUser()` to fill `criado_por`
-- Inserts into `eventos` table via Supabase client
-- Accepts processed data with `data_inicio` and `data_fim` as ISO strings
-- Returns `{ mutateAsync, isPending }`
-
----
-
-### Part 3 — Page: `src/pages/dashboard/EventForm.tsx`
-
-Wrapped in `DashboardLayout`. Structure:
-
-- Header row: "Criar Evento" title + outline button "Ver eventos da comunidade" (CalendarRange icon) linking to `/eventos`
-- Form using react-hook-form + zodResolver with the schema described in the task
-- Calendar in range mode (always visible, not in popover) for date selection
-- Time inputs (grid 2-col) with "Horário de Brasília (BRT)" helper text
-- Modalidade Select (presencial/hibrido/online)
-- Conditional location fields (estado/cidade via `useIBGELocations`, endereco) when not online
-- Link externo input with URL validation
-- Footer: Cancel (ghost, navigates to /dashboard/events) + Submit (primary, disabled while loading with Loader2)
-- On submit: combines date+time into ISO with `-03:00` offset, calls `useCreateEvento`, toast + navigate on success/error
-
-Zod schema with `.superRefine()` for conditional estado/cidade validation and date range check.
-
----
-
-### Part 4 — Route in `src/App.tsx`
-
-Add protected route `/dashboard/events/new` pointing to `EventForm`, placed near other dashboard routes:
-
-```tsx
-<Route path="/dashboard/events/new" element={<ProtectedRoute><EventForm /></ProtectedRoute>} />
-```
-
----
-
-### Files created/modified
-
-| File | Action |
-|------|--------|
-| `src/components/dashboard/DashboardSidebar.tsx` | Add CalendarRange import + "Ver eventos" item |
-| `src/hooks/useCreateEvento.ts` | Create — mutation hook for evento insertion |
-| `src/pages/dashboard/EventForm.tsx` | Create — full form page |
-| `src/App.tsx` | Add route `/dashboard/events/new` |
+No other files are touched.
 

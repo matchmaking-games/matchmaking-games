@@ -22,6 +22,7 @@ import Experience from "./pages/Experience";
 import Education from "./pages/Education";
 import Projects from "./pages/Projects";
 import ProjectFormPage from "./pages/dashboard/ProjectFormPage";
+import EventForm from "./pages/dashboard/EventForm";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
@@ -133,6 +134,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <ProjectFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/events/new"
+            element={
+              <ProtectedRoute>
+                <EventForm />
               </ProtectedRoute>
             }
           />
