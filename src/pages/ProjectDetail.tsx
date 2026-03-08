@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProjectDetail } from "@/hooks/useProjectDetail";
+import { Footer } from "@/components/layout/Footer";
 import { RichTextViewer } from "@/components/editor/RichTextViewer";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
 import { Play, Code2 } from "lucide-react";
@@ -277,6 +278,8 @@ export default function ProjectDetail() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Loader2, AlertCircle, Clock, Shield, Building2, LogOut } from "lucide-react";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 interface InviteData {
   id: string;
@@ -228,176 +230,200 @@ const AcceptInvite = () => {
   // Error: not found
   if (error === "not_found") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite não encontrado</CardTitle>
-            <CardDescription>Este link de convite é inválido ou já foi usado.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Voltar para Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite não encontrado</CardTitle>
+              <CardDescription>Este link de convite é inválido ou já foi usado.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Voltar para Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // Error: expired
   if (error === "expired" && invite) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Clock className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite expirado</CardTitle>
-            <CardDescription>
-              Este convite expirou em{" "}
-              {new Date(invite.expira_em).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-              .
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para
-              solicitar um novo convite.
-            </p>
-            <div className="flex justify-center">
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Voltar para Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Clock className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite expirado</CardTitle>
+              <CardDescription>
+                Este convite expirou em{" "}
+                {new Date(invite.expira_em).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+                .
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para
+                solicitar um novo convite.
+              </p>
+              <div className="flex justify-center">
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Voltar para Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // Error: already used
   if (error === "already_used") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite já utilizado</CardTitle>
-            <CardDescription>Este convite já foi usado por outra pessoa.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Voltar para Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite já utilizado</CardTitle>
+              <CardDescription>Este convite já foi usado por outra pessoa.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Voltar para Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // Error: email mismatch
   if (error === "email_mismatch" && invite && userEmail) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Shield className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Email incorreto</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Este convite foi enviado para:</p>
-              <p className="text-sm font-medium text-foreground bg-secondary/50 px-3 py-2 rounded-md text-center">
-                {invite.email_convidado}
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Shield className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Email incorreto</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Este convite foi enviado para:</p>
+                <p className="text-sm font-medium text-foreground bg-secondary/50 px-3 py-2 rounded-md text-center">
+                  {invite.email_convidado}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Você está logado como <span className="font-medium text-foreground">{userEmail}</span>. Faça logout e
+                acesse novamente com o email correto.
               </p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Você está logado como <span className="font-medium text-foreground">{userEmail}</span>. Faça logout e
-              acesse novamente com o email correto.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>
-                Cancelar
-              </Button>
-              <Button className="flex-1 gap-2" onClick={handleLogout}>
-                <LogOut className="w-4 h-4" />
-                Fazer Logout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>
+                  Cancelar
+                </Button>
+                <Button className="flex-1 gap-2" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                  Fazer Logout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // Error: generic
   if (error === "generic") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Erro ao aceitar convite</CardTitle>
-            <CardDescription>Ocorreu um erro ao processar o convite. Tente novamente.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Erro ao aceitar convite</CardTitle>
+              <CardDescription>Ocorreu um erro ao processar o convite. Tente novamente.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // Not logged in: show invite card with login/signup
   if (!userId && invite) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Avatar className="w-16 h-16">
-                {invite.estudio_logo_url ? (
-                  <AvatarImage src={invite.estudio_logo_url} alt={invite.estudio_nome} />
-                ) : null}
-                <AvatarFallback className="bg-secondary text-foreground">
-                  <Building2 className="w-8 h-8" />
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <CardTitle className="font-display">Convite para {invite.estudio_nome}</CardTitle>
-            <CardDescription>
-              Você foi convidado para se juntar ao estúdio como{" "}
-              <Badge variant="secondary" className="ml-1">
-                {invite.role === "super_admin" ? "Super Admin" : "Membro"}
-              </Badge>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              {existingUser ? "Faça login" : "Crie sua conta"} para aceitar o convite
-            </p>
-            <Button className="w-full" onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}>
-              {existingUser ? "Fazer Login" : "Criar Conta"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Avatar className="w-16 h-16">
+                  {invite.estudio_logo_url ? (
+                    <AvatarImage src={invite.estudio_logo_url} alt={invite.estudio_nome} />
+                  ) : null}
+                  <AvatarFallback className="bg-secondary text-foreground">
+                    <Building2 className="w-8 h-8" />
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="font-display">Convite para {invite.estudio_nome}</CardTitle>
+              <CardDescription>
+                Você foi convidado para se juntar ao estúdio como{" "}
+                <Badge variant="secondary" className="ml-1">
+                  {invite.role === "super_admin" ? "Super Admin" : "Membro"}
+                </Badge>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                {existingUser ? "Faça login" : "Crie sua conta"} para aceitar o convite
+              </p>
+              <Button className="w-full" onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}>
+                {existingUser ? "Fazer Login" : "Criar Conta"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 

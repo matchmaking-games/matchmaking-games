@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { usePublicProfile } from "@/hooks/usePublicProfile";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { ProfileNotFound } from "@/components/public-profile/ProfileNotFound";
 import { ProfileHero } from "@/components/public-profile/ProfileHero";
 import { ProfileNav } from "@/components/public-profile/ProfileNav";
@@ -147,6 +148,8 @@ export default function PublicProfile() {
           <EducationSection educations={educations} />
         </main>
       </div>
+
+      <Footer />
     </div>
   );
 }

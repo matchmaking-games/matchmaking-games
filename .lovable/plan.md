@@ -1,39 +1,33 @@
 
 
-## Plan: Extract Footer Component and Apply to All Public Pages
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-### Change 1 — Create `src/components/layout/Footer.tsx`
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-Extract the footer from `Index.tsx` (lines 722-760) into a standalone component. It includes the logo, social icons (using `SocialIcon`), tagline, and legal links. No props needed. The `socials` array moves into this file.
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-### Change 2 — `src/pages/Index.tsx`
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-- Import `Footer` from `@/components/layout/Footer`
-- Replace lines 721-760 (the inline footer block) with `<Footer />`
-- Remove `SocialIcon` import and `socials` array if no longer used elsewhere in the file
-- Keep `matchmakingLogo` import only if used elsewhere in the file
+### Change 2 — `src/lib/formatters.ts`
 
-### Change 3 — `src/pages/Terms.tsx`
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-- Import `Footer`, replace inline footer block (lines 261-298) with `<Footer />`
-- Remove unused imports (`SocialIcon`, `matchmakingLogo`, `socials` array) if they become orphaned
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-### Change 4 — Add `<Footer />` import + element to these pages (no other changes):
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
 
-- `src/pages/Login.tsx` — before closing `</>`
-- `src/pages/Signup.tsx` — before closing `</>`
-- `src/pages/Jobs.tsx` — before closing `</div>`
-- `src/pages/ProjectDetail.tsx` — at end
-- `src/pages/JobDetail.tsx` — at end
-- `src/pages/PublicProfile.tsx` — at end
-- `src/pages/StudioPublicProfile.tsx` — at end
-- `src/pages/Support.tsx` — at end
-
-### Change 5 — Add both `<Header />` and `<Footer />` to:
-
-- `src/pages/NotFound.tsx` — add Header + pt-16 + Footer
-- `src/pages/ResetPassword.tsx` — add Header + pt-16 + Footer
-- `src/pages/AcceptInvite.tsx` — add Header + pt-16 + Footer
-
-Total: 1 new file, ~14 files edited. No logic changes anywhere.
+No other files are touched.
 
