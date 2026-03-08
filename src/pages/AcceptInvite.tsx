@@ -322,37 +322,41 @@ const AcceptInvite = () => {
   // Error: email mismatch
   if (error === "email_mismatch" && invite && userEmail) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Shield className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Email incorreto</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Este convite foi enviado para:</p>
-              <p className="text-sm font-medium text-foreground bg-secondary/50 px-3 py-2 rounded-md text-center">
-                {invite.email_convidado}
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Shield className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Email incorreto</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Este convite foi enviado para:</p>
+                <p className="text-sm font-medium text-foreground bg-secondary/50 px-3 py-2 rounded-md text-center">
+                  {invite.email_convidado}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Você está logado como <span className="font-medium text-foreground">{userEmail}</span>. Faça logout e
+                acesse novamente com o email correto.
               </p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Você está logado como <span className="font-medium text-foreground">{userEmail}</span>. Faça logout e
-              acesse novamente com o email correto.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>
-                Cancelar
-              </Button>
-              <Button className="flex-1 gap-2" onClick={handleLogout}>
-                <LogOut className="w-4 h-4" />
-                Fazer Logout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>
+                  Cancelar
+                </Button>
+                <Button className="flex-1 gap-2" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                  Fazer Logout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
