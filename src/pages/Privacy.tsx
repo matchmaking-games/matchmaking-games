@@ -18,6 +18,12 @@ const Privacy = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  const linkProps = {
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "text-primary hover:underline",
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "#0f0f0f" }}>
       <Header />
@@ -137,18 +143,38 @@ const Privacy = () => {
                 Como a Empresa Armazena os Dados Pessoais?
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
-                A Empresa utiliza os serviços da Vercel (https://vercel.com) para hospedagem do frontend, da Supabase
-                (https://supabase.com) para armazenamento e banco de dados utilizando a infraestrutura da Amazon AWS, e
-                da Sentry (https://sentry.io) para monitoramento de erros e estabilidade do aplicativo.
+                A Empresa utiliza os serviços da Vercel (
+                <a href="https://vercel.com" {...linkProps}>
+                  https://vercel.com
+                </a>
+                ) para hospedagem do frontend, da Supabase (
+                <a href="https://supabase.com" {...linkProps}>
+                  https://supabase.com
+                </a>
+                ) para armazenamento e banco de dados utilizando a infraestrutura da Amazon AWS, e da Sentry (
+                <a href="https://sentry.io" {...linkProps}>
+                  https://sentry.io
+                </a>
+                ) para monitoramento de erros e estabilidade do aplicativo.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
                 O Sentry pode coletar automaticamente dados técnicos quando ocorrem falhas, como informações do
                 navegador, sistema operacional, URL acessada e identificadores de sessão, com a finalidade exclusiva de
                 identificar e corrigir problemas técnicos. Todos esses serviços operam em conformidade com padrões
-                internacionais de proteção de dados, conforme suas respectivas políticas de privacidade disponíveis em
-                https://supabase.com/privacy, https://vercel.com/legal/privacy-policy e https://sentry.io/privacy/. Por
-                essa razão, a eventual transferência internacional de dados pessoais pela Empresa para esses serviços
-                obedece o inciso I do artigo 33 da LGPD.
+                internacionais de proteção de dados, conforme suas respectivas políticas de privacidade disponíveis em{" "}
+                <a href="https://supabase.com/privacy" {...linkProps}>
+                  https://supabase.com/privacy
+                </a>
+                ,{" "}
+                <a href="https://vercel.com/legal/privacy-policy" {...linkProps}>
+                  https://vercel.com/legal/privacy-policy
+                </a>{" "}
+                e{" "}
+                <a href="https://sentry.io/privacy/" {...linkProps}>
+                  https://sentry.io/privacy/
+                </a>
+                . Por essa razão, a eventual transferência internacional de dados pessoais pela Empresa para esses
+                serviços obedece o inciso I do artigo 33 da LGPD.
               </p>
             </section>
 
@@ -298,8 +324,11 @@ const Privacy = () => {
                 informações, sem identificar visitantes individuais. Portanto, os dados pessoais compartilhados pelo
                 Google Analytics com a Empresa são anonimizados, nos termos do inciso III do Artigo 5º da LGPD. Neste
                 sentido, não se aplica a LGPD, conforme previsto no seu Artigo 12. Mais detalhes sobre a política de
-                privacidade do Google Analytics podem ser encontrados em
-                http://www.google.com/intl/en_uk/analytics/privacyoverview.html.
+                privacidade do Google Analytics podem ser encontrados em{" "}
+                <a href="http://www.google.com/intl/en_uk/analytics/privacyoverview.html" {...linkProps}>
+                  http://www.google.com/intl/en_uk/analytics/privacyoverview.html
+                </a>
+                .
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
                 O aplicativo da Empresa foi desenvolvido utilizando a Vercel para hospedagem, a Supabase para
@@ -381,7 +410,7 @@ const Privacy = () => {
         </Card>
       </main>
 
-      {/* Footer — same as Index.tsx */}
+      {/* Footer */}
       <footer style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "32px 24px" }}>
         <div className="flex flex-col md:flex-row items-center justify-center gap-5 md:gap-12">
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8" style={{ opacity: 0.65 }} />
