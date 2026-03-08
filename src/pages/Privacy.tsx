@@ -1,17 +1,8 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
-import { SocialIcon } from "@/components/SocialIcon";
+import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
-import matchmakingLogo from "@/assets/matchmaking-logo.png";
-
-const socials = [
-  { network: "instagram" as const, href: "https://www.instagram.com/matchmaking.games" },
-  { network: "linkedin" as const, href: "https://www.linkedin.com/company/matchmakinggames" },
-  { network: "x" as const, href: "https://x.com/matchmakingjobs" },
-  { network: "bluesky" as const, href: "https://bsky.app/profile/matchmaking.games" },
-  { network: "discord" as const, href: "https://discord.gg/matchmakinggames" },
-];
 
 const Privacy = () => {
   useEffect(() => {
