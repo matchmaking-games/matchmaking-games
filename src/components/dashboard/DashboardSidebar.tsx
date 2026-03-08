@@ -8,6 +8,7 @@ import {
   Building2,
   Layers,
   CalendarDays,
+  CalendarRange,
   ChevronDown,
   Settings,
   Mail,
