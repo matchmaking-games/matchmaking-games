@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useJobDetail } from "@/hooks/useJobDetail";
 import { JobNotFound } from "@/components/jobs/JobNotFound";
+import { Footer } from "@/components/layout/Footer";
 import {
   formatNivelVaga,
   formatTipoContrato,
