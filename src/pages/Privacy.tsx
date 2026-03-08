@@ -13,7 +13,7 @@ const socials = [
   { network: "discord" as const, href: "https://discord.gg/matchmakinggames" },
 ];
 
-const Terms = () => {
+const Privacy = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
