@@ -291,7 +291,7 @@ const Index = () => {
               PARA QUEM É
             </p>
             <h2 className="font-display font-bold text-4xl md:text-5xl mb-12" style={{ color: "#f0f0f0" }}>
-              Conectando a indústria de games        
+              Sua conexão com o mercado                
             </h2>
           </motion.div>
 
