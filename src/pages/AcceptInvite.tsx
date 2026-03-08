@@ -389,37 +389,41 @@ const AcceptInvite = () => {
   // Not logged in: show invite card with login/signup
   if (!userId && invite) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Avatar className="w-16 h-16">
-                {invite.estudio_logo_url ? (
-                  <AvatarImage src={invite.estudio_logo_url} alt={invite.estudio_nome} />
-                ) : null}
-                <AvatarFallback className="bg-secondary text-foreground">
-                  <Building2 className="w-8 h-8" />
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <CardTitle className="font-display">Convite para {invite.estudio_nome}</CardTitle>
-            <CardDescription>
-              Você foi convidado para se juntar ao estúdio como{" "}
-              <Badge variant="secondary" className="ml-1">
-                {invite.role === "super_admin" ? "Super Admin" : "Membro"}
-              </Badge>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              {existingUser ? "Faça login" : "Crie sua conta"} para aceitar o convite
-            </p>
-            <Button className="w-full" onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}>
-              {existingUser ? "Fazer Login" : "Criar Conta"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Avatar className="w-16 h-16">
+                  {invite.estudio_logo_url ? (
+                    <AvatarImage src={invite.estudio_logo_url} alt={invite.estudio_nome} />
+                  ) : null}
+                  <AvatarFallback className="bg-secondary text-foreground">
+                    <Building2 className="w-8 h-8" />
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="font-display">Convite para {invite.estudio_nome}</CardTitle>
+              <CardDescription>
+                Você foi convidado para se juntar ao estúdio como{" "}
+                <Badge variant="secondary" className="ml-1">
+                  {invite.role === "super_admin" ? "Super Admin" : "Membro"}
+                </Badge>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                {existingUser ? "Faça login" : "Crie sua conta"} para aceitar o convite
+              </p>
+              <Button className="w-full" onClick={existingUser ? handleLoginRedirect : handleSignupRedirect}>
+                {existingUser ? "Fazer Login" : "Criar Conta"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
