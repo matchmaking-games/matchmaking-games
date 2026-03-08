@@ -62,6 +62,7 @@ const discoveryItems = [
 ];
 
 const communityItems = [
+  { title: "Ver eventos", url: "/eventos", icon: CalendarRange },
   { title: "Meus eventos", url: "/dashboard/events", icon: CalendarDays },
 ];
 
