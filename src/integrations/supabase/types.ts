@@ -408,6 +408,51 @@ export type Database = {
           },
         ]
       }
+      eventos: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          criado_por: string
+          data_fim: string
+          data_inicio: string
+          descricao: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          link_externo: string | null
+          modalidade: string
+          nome: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          criado_por: string
+          data_fim: string
+          data_inicio: string
+          descricao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          link_externo?: string | null
+          modalidade: string
+          nome: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          criado_por?: string
+          data_fim?: string
+          data_inicio?: string
+          descricao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          link_externo?: string | null
+          modalidade?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       experiencia: {
         Row: {
           atualmente_trabalhando: boolean | null
