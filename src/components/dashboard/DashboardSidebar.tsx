@@ -48,10 +48,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
 
-const navItems = [
+const personalItems = [
   { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
   { title: "Meu perfil", url: "/dashboard/profile", icon: User },
+];
+
+const discoveryItems = [
+  { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
+  { title: "Buscar profissionais", url: "/professionals", icon: Users },
+  { title: "Buscar estúdios", url: "/studios", icon: Building2 },
+  { title: "Buscar projetos", url: "/projects", icon: Layers },
+];
+
+const communityItems = [
+  { title: "Meus eventos", url: "/dashboard/events", icon: CalendarDays },
 ];
 
 const getInitials = (name: string) => {
