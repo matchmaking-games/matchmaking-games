@@ -365,6 +365,8 @@ export default function JobDetail() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>);
 
 }

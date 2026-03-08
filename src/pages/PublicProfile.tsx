@@ -148,6 +148,8 @@ export default function PublicProfile() {
           <EducationSection educations={educations} />
         </main>
       </div>
+
+      <Footer />
     </div>
   );
 }
