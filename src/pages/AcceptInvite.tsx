@@ -296,22 +296,26 @@ const AcceptInvite = () => {
   // Error: already used
   if (error === "already_used") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite já utilizado</CardTitle>
-            <CardDescription>Este convite já foi usado por outra pessoa.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Voltar para Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite já utilizado</CardTitle>
+              <CardDescription>Este convite já foi usado por outra pessoa.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Voltar para Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
