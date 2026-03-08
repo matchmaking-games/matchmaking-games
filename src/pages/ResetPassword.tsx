@@ -59,29 +59,33 @@ const ResetPassword = () => {
   // Token error
   if (status === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
-        <div className="relative z-10 w-full max-w-md mx-4">
-          <div className="rounded-xl border border-border bg-card p-8 text-center space-y-4">
-            <div className="flex justify-center mb-6">
-              <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pattern" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
+          <div className="relative z-10 w-full max-w-md mx-4">
+            <div className="rounded-xl border border-border bg-card p-8 text-center space-y-4">
+              <div className="flex justify-center mb-6">
+                <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+              </div>
+              <h1 className="font-display text-2xl font-bold text-foreground">
+                Link inválido ou expirado
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                O link de recuperação não é válido ou já expirou. Solicite um novo link.
+              </p>
+              <Link
+                to="/forgot-password"
+                className="inline-block mt-4 text-sm text-primary hover:underline font-medium"
+              >
+                Solicitar novo link
+              </Link>
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground">
-              Link inválido ou expirado
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              O link de recuperação não é válido ou já expirou. Solicite um novo link.
-            </p>
-            <Link
-              to="/forgot-password"
-              className="inline-block mt-4 text-sm text-primary hover:underline font-medium"
-            >
-              Solicitar novo link
-            </Link>
           </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
