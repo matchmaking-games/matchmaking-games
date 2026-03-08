@@ -85,17 +85,20 @@ const Privacy = () => {
                 Pessoais:
               </p>
               <ul className="list-disc list-inside text-base text-muted-foreground leading-relaxed space-y-1 mt-2">
-                <li>Nome da empresa;</li>
-                <li>Local de sede da empresa;</li>
-                <li>Logo da empresa;</li>
-                <li>Nome completo;</li>
-                <li>Redes sociais;</li>
-                <li>Telefone.</li>
+                <li>nome da empresa;</li>
+                <li>local de sede da empresa;</li>
+                <li>logo da empresa;</li>
+                <li>nome completo;</li>
+                <li>redes sociais;</li>
+                <li>telefone.</li>
               </ul>
               <p className="text-base text-muted-foreground leading-relaxed mt-3">
                 Referidos Dados Pessoais são coletados com a finalidade de identificar qual o contexto do Usuário em
                 relação ao assunto, de forma a permitir que a Empresa consiga oferecer conteúdo específico e apresentar
-                Usuários com o mesmo perfil e as mesmas necessidades.
+                Usuários com o mesmo perfil e as mesmas necessidades. O nome completo é importante para identificar a
+                empresa do Usuário; o local de sede é importante para que candidatos possam saber a proximidade; a logo
+                da empresa é importante para identificá-la dentro do aplicativo; redes sociais são usadas para compor o
+                portfólio; telefone é usado para que ambas as partes façam contato.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
                 A Empresa poderá também coletar e tratar dados adicionais fornecidos voluntariamente pelo Usuário, como
@@ -134,13 +137,18 @@ const Privacy = () => {
                 Como a Empresa Armazena os Dados Pessoais?
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
-                A Empresa utiliza os serviços da Vercel (https://vercel.com) para hospedagem do frontend e da Supabase
-                (https://supabase.com) para armazenamento e banco de dados, utilizando a infraestrutura da Amazon AWS. A
-                Supabase trata os dados pessoais em conformidade com a GDPR, conforme previsto em sua Política de
-                Privacidade disponível em https://supabase.com/privacy. A Vercel também opera em conformidade com
-                padrões internacionais de proteção de dados, conforme https://vercel.com/legal/privacy-policy. Por essa
-                razão, a eventual transferência internacional de dados pessoais pela Empresa para esses serviços obedece
-                o inciso I do artigo 33 da LGPD.
+                A Empresa utiliza os serviços da Vercel (https://vercel.com) para hospedagem do frontend, da Supabase
+                (https://supabase.com) para armazenamento e banco de dados utilizando a infraestrutura da Amazon AWS, e
+                da Sentry (https://sentry.io) para monitoramento de erros e estabilidade do aplicativo.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed mt-2">
+                O Sentry pode coletar automaticamente dados técnicos quando ocorrem falhas, como informações do
+                navegador, sistema operacional, URL acessada e identificadores de sessão, com a finalidade exclusiva de
+                identificar e corrigir problemas técnicos. Todos esses serviços operam em conformidade com padrões
+                internacionais de proteção de dados, conforme suas respectivas políticas de privacidade disponíveis em
+                https://supabase.com/privacy, https://vercel.com/legal/privacy-policy e https://sentry.io/privacy/. Por
+                essa razão, a eventual transferência internacional de dados pessoais pela Empresa para esses serviços
+                obedece o inciso I do artigo 33 da LGPD.
               </p>
             </section>
 
@@ -217,15 +225,26 @@ const Privacy = () => {
 
             <section>
               <h2 className="font-display font-semibold text-xl text-foreground mb-3">
-                Quais são os Browsers Compatíveis?
+                Quais São os Browsers Compatíveis Com a Segurança da Informação da Empresa?
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
                 A utilização de determinados browsers pode criar incompatibilidade com o sistema de segurança e recursos
                 utilizados pela Empresa. Os browsers mais adequados para navegar são sempre os navegadores mais modernos
                 e conhecidos (Google Chrome, Mozilla Firefox, Microsoft Edge). Os browsers devem ser adquiridos com
-                distribuidores autorizados, que podem garantir a autenticidade do software. A Empresa não se
-                responsabiliza por problemas causados pelo browser, ou por problemas oriundos da utilização de browser
-                incompatível com navegação segura.
+                distribuidores autorizados, que podem garantir a autenticidade do software.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed mt-2">
+                Alguns distribuidores fornecem os browsers através da própria internet, por meio de download. Todos os
+                problemas referentes ao browser devem ser reportados aos seus respectivos fornecedores ou
+                distribuidores. A Empresa não se responsabiliza por problemas causados pelo browser, ou por problemas
+                oriundos da utilização de browser incompatível com navegação segura.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed mt-2">
+                Também não nos responsabilizamos pela não realização de operações que sejam decorrentes de fatos, atos
+                ou omissões ocasionados por outros prestadores de serviços contratados pelo Usuário, tais como
+                prestadores de serviços de telecomunicação, inclusive transmissão de dados via cabo ou fibras óticas,
+                provedores de acesso à Internet ou, ainda, por falhas do terminal de acesso à Internet do Usuário, entre
+                outros.
               </p>
             </section>
 
@@ -236,16 +255,17 @@ const Privacy = () => {
                 experiência melhor e personalizada, além de algumas informações, como tipo de navegador, resolução da
                 tela e data de acesso, obtidos por meio de relatórios gerados via logs, rotinas javascript e cookies,
                 este último também utilizado em relatórios estatísticos para aperfeiçoamento da navegação, dos serviços
-                oferecidos e para contagem do número de visitantes e acessos. Caso o Usuário preencha voluntariamente
-                algum formulário em nosso site, essas informações somente serão usadas para o propósito com o qual elas
-                foram preenchidas. Em nenhuma hipótese os dados fornecidos serão vendidos, alugados ou repassados para
-                terceiros para fins comerciais alheios à plataforma.
+                oferecidos e para contagem do número de visitantes e acessos, facilitando assim a definição do parque
+                tecnológico instalado para o site. Caso o Usuário preencha voluntariamente algum formulário em nosso
+                site, essas informações somente serão usadas para o propósito com o qual elas foram preenchidas e que
+                estão esclarecidas na página de cada cadastro. Em nenhuma hipótese os dados fornecidos serão vendidos,
+                alugados ou repassados para terceiros para fins comerciais alheios à plataforma.
               </p>
             </section>
 
             <section>
               <h2 className="font-display font-semibold text-xl text-foreground mb-3">
-                A Empresa Utiliza seus Dados para Fins de Marketing?
+                A Empresa Utiliza Seus Dados Para Fins de Marketing?
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
                 O site e aplicativo da Empresa não aceitam e nem fazem publicidade de outras marcas ou somente de
@@ -261,22 +281,31 @@ const Privacy = () => {
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
                 Observado o inciso V do Artigo 9º da LGPD, a Empresa informa que não compartilha, vende, aluga ou
-                divulga qualquer informação de seus Usuários.
+                divulga informações de seus Usuários, salvo nas hipóteses descritas a seguir.
+              </p>
+              <p className="text-base text-muted-foreground leading-relaxed mt-2">
+                A Empresa poderá compartilhar os dados profissionais dos Usuários — como nome, portfólio, localização,
+                habilidades e redes sociais profissionais — com estúdios, consultorias de recrutamento e headhunters
+                cadastrados na plataforma, exclusivamente para fins de recrutamento no setor de games. Esse
+                compartilhamento ocorrerá somente mediante consentimento prévio, livre e informado do Usuário, obtido no
+                momento do cadastro ou por meio das configurações do perfil, podendo ser revogado a qualquer momento.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-3">
                 Faz-se saber que a Empresa utiliza o Google Analytics, uma ferramenta de análise de dados da internet
                 (web analytics), para acompanhar os dados de audiência do aplicativo e entender como os visitantes
                 interagem e navegam por nossas páginas. O Google Analytics coleta informações de forma anônima, ou seja,
-                relata as tendências do site sem identificar visitantes individuais. Portanto, os dados pessoais
-                compartilhados pelo Google Analytics com a Empresa são anonimizados, nos termos do inciso III do Artigo
-                5º da LGPD.
+                relata as tendências do site, como páginas visitadas, tempo de permanência no site, entre outras
+                informações, sem identificar visitantes individuais. Portanto, os dados pessoais compartilhados pelo
+                Google Analytics com a Empresa são anonimizados, nos termos do inciso III do Artigo 5º da LGPD. Neste
+                sentido, não se aplica a LGPD, conforme previsto no seu Artigo 12. Mais detalhes sobre a política de
+                privacidade do Google Analytics podem ser encontrados em
+                http://www.google.com/intl/en_uk/analytics/privacyoverview.html.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
-                O aplicativo da Empresa foi desenvolvido utilizando a Vercel para hospedagem e a Supabase para
-                armazenamento de dados, utilizando a infraestrutura da Amazon AWS. Neste sentido, tanto a Vercel como a
-                Supabase poderão ter acesso a determinadas informações inseridas no aplicativo da Empresa. Fica
-                consignado que tais empresas só acessarão os dados pessoais inseridos no aplicativo da Empresa, se
-                necessário, e nos estritos termos previstos na LGPD.
+                O aplicativo da Empresa foi desenvolvido utilizando a Vercel para hospedagem, a Supabase para
+                armazenamento de dados e a Sentry para monitoramento de erros e estabilidade do aplicativo. Essas
+                empresas poderão ter acesso a determinadas informações inseridas no aplicativo da Empresa apenas quando
+                necessário para a prestação de seus serviços, nos estritos termos previstos na LGPD.
               </p>
             </section>
 
@@ -302,7 +331,7 @@ const Privacy = () => {
                 </li>
                 <li>Portabilidade dos dados a outro fornecedor;</li>
                 <li>
-                  Eliminação dos Dados Pessoais tratados com o consentimento do Usuário, exceto nas hipóteses previstas
+                  Eliminação do Dados Pessoais tratados com o consentimento do Usuário, exceto nas hipóteses previstas
                   no Artigo 16 da LGPD;
                 </li>
                 <li>
@@ -310,7 +339,7 @@ const Privacy = () => {
                   dados;
                 </li>
                 <li>
-                  Informação sobre a possibilidade de não fornecer consentimento e sobre as consequências negativas;
+                  Informação sobre a possibilidade de não fornecer consentimento e sobre as consequências negativa; e
                 </li>
                 <li>Revogação do consentimento, quando aplicável.</li>
               </ul>
