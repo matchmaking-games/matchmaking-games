@@ -256,7 +256,6 @@ const AcceptInvite = () => {
   // Error: expired
   if (error === "expired" && invite) {
     return (
-    return (
       <>
         <Header />
         <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
