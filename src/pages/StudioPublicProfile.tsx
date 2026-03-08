@@ -162,6 +162,8 @@ export default function StudioPublicProfile() {
           </CardContent>
         </Card>
       </main>
+
+      <Footer />
     </div>
   );
 }

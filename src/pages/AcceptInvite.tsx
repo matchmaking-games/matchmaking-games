@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Loader2, AlertCircle, Clock, Shield, Building2, LogOut } from "lucide-react";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 interface InviteData {
   id: string;
