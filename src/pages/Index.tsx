@@ -5,8 +5,8 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import DisplayCards from "@/components/ui/display-cards";
-import { SocialIcon } from "@/components/SocialIcon";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
