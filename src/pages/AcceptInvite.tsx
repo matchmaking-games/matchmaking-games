@@ -256,36 +256,41 @@ const AcceptInvite = () => {
   // Error: expired
   if (error === "expired" && invite) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Clock className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite expirado</CardTitle>
-            <CardDescription>
-              Este convite expirou em{" "}
-              {new Date(invite.expira_em).toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-              .
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para
-              solicitar um novo convite.
-            </p>
-            <div className="flex justify-center">
-              <Button variant="outline" onClick={() => navigate("/")}>
-                Voltar para Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <Clock className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite expirado</CardTitle>
+              <CardDescription>
+                Este convite expirou em{" "}
+                {new Date(invite.expira_em).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+                .
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Entre em contato com <span className="font-medium text-foreground">{invite.estudio_nome}</span> para
+                solicitar um novo convite.
+              </p>
+              <div className="flex justify-center">
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Voltar para Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
