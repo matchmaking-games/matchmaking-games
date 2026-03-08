@@ -167,8 +167,8 @@ export default function NewStudio() {
     });
 
     // Invalidar query has-studio para atualizar menu
-    queryClient.invalidateQueries({ queryKey: ["has-studio"] });
-    queryClient.invalidateQueries({ queryKey: ["studio-memberships"] });
+    await queryClient.invalidateQueries({ queryKey: ["has-studio"] });
+    await queryClient.invalidateQueries({ queryKey: ["studio-memberships"] });
 
     // Redirecionar para dashboard do estúdio
     navigate(`/studio/manage/dashboard?studio=${newStudio.id}`);
