@@ -34,13 +34,6 @@ const staggerItem = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
-/* ─── social links ─── */
-const socials = [
-{ network: "linkedin", href: "https://www.linkedin.com/company/matchmaking-games/" },
-{ network: "instagram", href: "https://www.instagram.com/matchmaking.games/" },
-{ network: "tiktok", href: "https://www.tiktok.com/@matchmaking.games" },
-{ network: "youtube", href: "https://www.youtube.com/@Negócios-em-Jogo" },
-{ network: "linktree", href: "https://linktr.ee/matchmaking.games" }];
 
 
 /* ═══════════════════════════════════════════════════════════════ */
