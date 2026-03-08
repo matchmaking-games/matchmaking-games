@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
+import { Header } from "@/components/layout/Header";
 
 // Zod schema for form validation
 const signupSchema = z.object({
@@ -151,7 +152,9 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <>
+      <Header />
+      <div className="min-h-screen pt-16 flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background grid pattern - 24px for connection feel */}
       <div className="absolute inset-0 bg-grid-pattern" />
       
@@ -322,7 +325,8 @@ const Signup = () => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
