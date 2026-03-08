@@ -205,34 +205,38 @@ async function callAI(pdfText: string, apiKey: string): Promise<Record<string, u
   for (let attempt = 0; attempt < 2; attempt++) {
     logStep(`AI call attempt ${attempt + 1}`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4096,
+            responseMimeType: "application/json",
+          },
+        }),
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 4096,
-        response_format: { type: "json_object" },
-      }),
-    });
+    );
 
     if (!response.ok) {
       const errText = await response.text();
-      logStep("AI gateway error", { status: response.status, body: errText });
-      if (attempt === 1) throw new Error(`AI gateway returned ${response.status}`);
+      logStep("Gemini API error", { status: response.status, body: errText });
+      if (attempt === 1) throw new Error(`Gemini API returned ${response.status}`);
       continue;
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
-      logStep("AI returned empty content");
-      if (attempt === 1) throw new Error("AI returned empty content");
+      logStep("Gemini returned empty content");
+      if (attempt === 1) throw new Error("Gemini returned empty content");
       continue;
     }
 
@@ -240,7 +244,7 @@ async function callAI(pdfText: string, apiKey: string): Promise<Record<string, u
       return JSON.parse(content);
     } catch {
       logStep("JSON parse failed, retrying", { content: content.slice(0, 200) });
-      if (attempt === 1) throw new Error("AI returned invalid JSON after 2 attempts");
+      if (attempt === 1) throw new Error("Gemini returned invalid JSON after 2 attempts");
     }
   }
 
@@ -324,12 +328,12 @@ Deno.serve(async (req) => {
     }
 
     // 4. Call AI
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY not configured");
     }
 
-    const extractedData = await callAI(fullText, LOVABLE_API_KEY);
+    const extractedData = await callAI(fullText, GEMINI_API_KEY);
     logStep("AI extraction complete");
 
     // 7. Record success in import_history
