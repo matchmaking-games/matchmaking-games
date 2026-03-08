@@ -137,6 +137,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/dashboard/events/new"
+            element={
+              <ProtectedRoute>
+                <EventForm />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
