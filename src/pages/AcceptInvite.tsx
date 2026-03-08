@@ -363,22 +363,26 @@ const AcceptInvite = () => {
   // Error: generic
   if (error === "generic") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Erro ao aceitar convite</CardTitle>
-            <CardDescription>Ocorreu um erro ao processar o convite. Tente novamente.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => window.location.reload()}>
-              Tentar novamente
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Erro ao aceitar convite</CardTitle>
+              <CardDescription>Ocorreu um erro ao processar o convite. Tente novamente.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Tentar novamente
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
