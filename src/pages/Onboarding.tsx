@@ -9,24 +9,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
+
 const onboardingSchema = z.object({
   nomeCompleto: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   username: z.string().min(3, "Mínimo 3 caracteres").max(30, "Máximo 30 caracteres").regex(/^[a-z0-9-]+$/, "Use apenas letras minúsculas, números e hífen").refine(val => !val.startsWith("-") && !val.endsWith("-"), "Não pode começar ou terminar com hífen")
 });
+
 type ValidationErrors = {
   nomeCompleto?: string;
   username?: string;
 };
+
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { refreshProfile } = useAuth();
+  const { session, isLoading: authLoading, refreshProfile } = useAuth();
   const slugFromUrl = searchParams.get("slug");
-
-  // Auth state
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
   // Form state
   const [nomeCompleto, setNomeCompleto] = useState("");
@@ -38,34 +36,12 @@ const Onboarding = () => {
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
-  // Check authentication on mount
+  // Guard: redirect to login if not authenticated
   useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-      setUserEmail(session.user.email ?? null);
-      setUserId(session.user.id);
-      setIsAuthChecking(false);
-    };
-    checkAuth();
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/login");
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (!authLoading && !session) {
+      navigate("/login", { replace: true });
+    }
+  }, [authLoading, session, navigate]);
 
   // Validate username format
   const validateUsername = (value: string): string => {
@@ -76,6 +52,7 @@ const Onboarding = () => {
     if (value.startsWith("-") || value.endsWith("-")) return "Não pode começar ou terminar com hífen";
     return "";
   };
+
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
     setUsername(value);
@@ -96,10 +73,7 @@ const Onboarding = () => {
     }
     setIsCheckingAvailability(true);
     const timer = setTimeout(async () => {
-      const {
-        data,
-        error
-      } = await supabase.rpc("check_slug_availability", {
+      const { data, error } = await supabase.rpc("check_slug_availability", {
         slug_to_check: username
       });
       if (error) {
@@ -112,6 +86,7 @@ const Onboarding = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [username]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -129,18 +104,17 @@ const Onboarding = () => {
       setValidationErrors(errors);
       return;
     }
-    if (!userId || !userEmail) {
+
+    if (!session) {
       toast.error("Erro de autenticação. Faça login novamente.");
       navigate("/login");
       return;
     }
+
     setIsLoading(true);
 
     // Re-check availability before inserting
-    const {
-      data: stillAvailable,
-      error: checkError
-    } = await supabase.rpc("check_slug_availability", {
+    const { data: stillAvailable, error: checkError } = await supabase.rpc("check_slug_availability", {
       slug_to_check: username
     });
     if (checkError) {
@@ -157,11 +131,9 @@ const Onboarding = () => {
     }
 
     // Insert into users table
-    const {
-      error: insertError
-    } = await supabase.from("users").insert({
-      id: userId,
-      email: userEmail,
+    const { error: insertError } = await supabase.from("users").insert({
+      id: session.user.id,
+      email: session.user.email!,
       nome_completo: nomeCompleto,
       slug: username
     });
@@ -178,11 +150,10 @@ const Onboarding = () => {
     const redirectParam = searchParams.get("redirect");
     navigate(redirectParam || "/dashboard");
   };
+
   const renderUsernameStatusIcon = () => {
     if (!username || username.length < 3) return null;
-    if (validationErrors.username) {
-      return null;
-    }
+    if (validationErrors.username) return null;
     if (isCheckingAvailability) {
       return <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />;
     }
@@ -194,15 +165,20 @@ const Onboarding = () => {
     }
     return null;
   };
+
   const isButtonDisabled = isLoading || !nomeCompleto || !username || !!validationErrors.nomeCompleto || !!validationErrors.username || isCheckingAvailability || isAvailable !== true;
 
   // Loading state while checking auth
-  if (isAuthChecking) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+  if (authLoading || !session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background grid pattern */}
       <div className="absolute inset-0 bg-grid-pattern" />
 
@@ -274,6 +250,8 @@ const Onboarding = () => {
           </form>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Onboarding;
