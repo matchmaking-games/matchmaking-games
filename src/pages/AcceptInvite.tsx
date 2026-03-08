@@ -230,22 +230,26 @@ const AcceptInvite = () => {
   // Error: not found
   if (error === "not_found") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <AlertCircle className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <CardTitle className="font-display">Convite não encontrado</CardTitle>
-            <CardDescription>Este link de convite é inválido ou já foi usado.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Button variant="outline" onClick={() => navigate("/")}>
-              Voltar para Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <AlertCircle className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <CardTitle className="font-display">Convite não encontrado</CardTitle>
+              <CardDescription>Este link de convite é inválido ou já foi usado.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Voltar para Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </>
     );
   }
 
