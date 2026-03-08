@@ -29,7 +29,7 @@ const Privacy = () => {
               <h1 className="font-display font-bold text-3xl text-foreground">Política de Privacidade</h1>
               <p className="font-display font-semibold text-xl text-foreground mt-2">Matchmaking</p>
               <p className="text-base text-muted-foreground leading-relaxed mt-4">
-                A Política de Privacidade da Empresa foi atualizada em maio de 2025. Com o objetivo de proteger os
+                A Política de Privacidade da Empresa foi atualizada em março de 2026. Com o objetivo de proteger os
                 direitos fundamentais de liberdade e de privacidade e o livre desenvolvimento da personalidade da pessoa
                 natural, a Empresa elaborou a presente Política de Privacidade, observadas as disposições da Lei Geral
                 de Proteção de Dados Pessoais (LGPD) – Lei n° 13.709/2018. É fundamental dedicar um momento para se
