@@ -92,29 +92,33 @@ const ResetPassword = () => {
   // Success state
   if (status === "success") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
-        <div className="relative z-10 w-full max-w-md mx-4">
-          <div className="rounded-xl border border-border bg-card p-8 text-center space-y-4">
-            <div className="flex justify-center mb-6">
-              <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+      <>
+        <Header />
+        <div className="min-h-screen pt-16 flex items-center justify-center bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-pattern" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
+          <div className="relative z-10 w-full max-w-md mx-4">
+            <div className="rounded-xl border border-border bg-card p-8 text-center space-y-4">
+              <div className="flex justify-center mb-6">
+                <img src={matchmakingLogo} alt="Matchmaking" className="h-10" />
+              </div>
+              <h1 className="font-display text-2xl font-bold text-foreground">
+                ✅ Senha alterada com sucesso!
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Sua senha foi atualizada. Você já pode entrar com a nova senha.
+              </p>
+              <Button
+                className="w-full h-12 text-base font-semibold mt-4"
+                onClick={() => navigate("/login")}
+              >
+                Ir para o login
+              </Button>
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground">
-              ✅ Senha alterada com sucesso!
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Sua senha foi atualizada. Você já pode entrar com a nova senha.
-            </p>
-            <Button
-              className="w-full h-12 text-base font-semibold mt-4"
-              onClick={() => navigate("/login")}
-            >
-              Ir para o login
-            </Button>
           </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
