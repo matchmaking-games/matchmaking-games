@@ -124,7 +124,9 @@ const ResetPassword = () => {
 
   // Form state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <>
+      <Header />
+      <div className="min-h-screen pt-16 flex items-center justify-center bg-background relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-pattern" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-glow-primary" />
 
