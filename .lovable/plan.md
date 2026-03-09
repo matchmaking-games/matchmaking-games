@@ -1,61 +1,33 @@
 
 
-## Prompt 07 — Correção: seção de Habilidades da ProfessionalsSidebar
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-### 1 arquivo alterado: `src/components/professionals/ProfessionalsSidebar.tsx`
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
----
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-### Mudanças
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-**Imports — remover:**
-- `Search` from lucide-react
-- `useQuery` from @tanstack/react-query
-- `Input`, `Checkbox`, `Skeleton` from UI
-- `supabase` from integrations
+### Change 2 — `src/lib/formatters.ts`
 
-**Imports — adicionar:**
-- `useAvailableSkills, Habilidade` from `@/hooks/useAvailableSkills`
-- `MultiSelectCombobox` from `@/components/ui/multi-select-combobox`
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-**Nota:** `Checkbox` ainda é usado nas seções de Disponibilidade e Modalidade, então NÃO pode ser removido.
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-**Fora do componente — adicionar** `groupSkillsByCategory` (copiado da JobsSidebar).
-
-**Dentro do componente — substituir:**
-- Remover `useState` para `skillSearch`
-- Remover `useQuery` inline
-- Remover `filteredSkills` useMemo
-- Remover `selectedSkills` e `handleSkillToggle`
-- Adicionar: `useAvailableSkills()` + `groupSkillsByCategory(availableSkills)`
-- Adicionar: `skillOptions` useMemo (idêntico à JobsSidebar)
-- Adicionar: `selectedByCategory` useMemo (idêntico à JobsSidebar)
-- Adicionar: `handleCategorySelection` (idêntico à JobsSidebar)
-
-**JSX da seção Habilidades (linhas 180-274) — substituir por:**
-```tsx
-<div className="space-y-4">
-  <Label className="text-sm">Habilidades</Label>
-  {loadingSkills ? (
-    <p className="text-xs text-muted-foreground">Carregando...</p>
-  ) : (
-    <div className="space-y-3">
-      {skillOptions.habilidades.length > 0 && (
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Habilidades</Label>
-          <MultiSelectCombobox ... />
-        </div>
-      )}
-      {skillOptions.softwares.length > 0 && (
-        <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Softwares</Label>
-          <MultiSelectCombobox ... />
-        </div>
-      )}
-    </div>
-  )}
-</div>
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Placeholders, search placeholders e empty messages idênticos aos da JobsSidebar.
+No other files are touched.
 
