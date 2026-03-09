@@ -217,7 +217,7 @@ export default function Events() {
                 <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os estados</SelectItem>
+                <SelectItem value="__all__">Todos os estados</SelectItem>
                 {!loadingEstados &&
                   estados.map((uf) => (
                     <SelectItem key={uf.sigla} value={uf.sigla}>
