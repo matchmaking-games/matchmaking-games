@@ -386,7 +386,7 @@ export default function EventForm() {
                       <FormLabel>Período do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <div>
-                          <div className="flex justify-center">
+                          <div className="flex justify-between">
                             <Calendar
                               mode="range"
                               selected={field.value as DateRange | undefined}
