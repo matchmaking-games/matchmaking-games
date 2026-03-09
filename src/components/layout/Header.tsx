@@ -75,6 +75,17 @@ export function Header() {
                 <SheetTitle className="text-left">Menu</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
+                {isAuthenticated && (
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Painel
+                  </Link>
+                )}
+
                 <Link
                   to="/jobs"
                   onClick={() => setMobileMenuOpen(false)}
@@ -122,14 +133,6 @@ export function Header() {
 
                 {isAuthenticated && (
                   <>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      Painel
-                    </Link>
                     <Link
                       to="/dashboard/settings"
                       onClick={() => setMobileMenuOpen(false)}
