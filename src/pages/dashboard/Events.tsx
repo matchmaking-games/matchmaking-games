@@ -165,8 +165,7 @@ export default function EventsPage() {
     : [];
 
   const handleEdit = (evento: Evento) => {
-    // TODO: implementar edição
-    console.log("Editar evento:", evento.id);
+    navigate(`/dashboard/events/${evento.id}/edit`);
   };
 
   const handleDeleteRequest = (evento: Evento) => {
