@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, CalendarDays, Clock, MapPin } from "lucide-react";
+import { Plus, CalendarDays, Clock, MapPin, CalendarRange } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
