@@ -1,33 +1,41 @@
 
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+## EventForm Visual Refactor
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+3 visual changes, no logic changes.
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+### 1. Wrap form in Card
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+- Import `Card`, `CardContent` from `@/components/ui/card`
+- Header (title + "Ver eventos da comunidade" button) stays outside, above the Card
+- The `<Form>` with `<form>` goes inside `<Card><CardContent className="pt-6">...</CardContent></Card>`
 
-### Change 2 — `src/lib/formatters.ts`
+### 2. Fix Calendar centering
 
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+- Wrap `<Calendar>` in `<div className="flex justify-center">`
+- Add `className="w-fit rounded-md border border-border"` to Calendar (move existing classes)
 
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
+### 3. Replace time inputs with Select dropdowns
 
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
-```
+Each time field (`horario_inicio`, `horario_fim`) gets replaced:
 
-No other files are touched.
+- Remove `<Input type="time" />`
+- Add two `Select` components side by side in `<div className="flex gap-2">`
+  - Hour select: options "00"–"23", placeholder "HH"
+  - Minute select: options "00","05","10"..."55", placeholder "MM"
+- Use `useState` for `selectedHour`/`selectedMinute` inside each field's render
+- `useEffect` to sync from `field.value` (parse existing "HH:MM" back into states)
+- On either select change, combine and call `field.onChange(hour + ":" + minute)`
+- Import `useState` alongside existing `useEffect`
+
+**Hour options:** `Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'))`
+**Minute options:** `Array.from({length: 12}, (_, i) => String(i * 5).padStart(2, '0'))`
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `src/pages/dashboard/EventForm.tsx` | All 3 changes above |
+
+No other files touched.
 
