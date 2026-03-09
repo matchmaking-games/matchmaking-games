@@ -172,11 +172,12 @@ function EventDetailSheet({ evento, open, onOpenChange }: { evento: PublicEvento
 
 export default function Events() {
   const [modalidade, setModalidade] = useState("todos");
-  const [estado, setEstado] = useState("");
+  const [estadoSelect, setEstadoSelect] = useState("__all__");
   const [mostrarEncerrados, setMostrarEncerrados] = useState(false);
   const [selectedEvento, setSelectedEvento] = useState<PublicEvento | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const estado = estadoSelect === "__all__" ? "" : estadoSelect;
   const { data: eventos, isLoading, error } = usePublicEvents({ modalidade, estado, mostrarEncerrados });
   const { estados, loadingEstados } = useIBGELocations();
 
