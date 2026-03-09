@@ -146,6 +146,7 @@ export function formatStatusProjeto(status: string): string {
   const map: Record<string, string> = {
     em_andamento: "Em desenvolvimento",
     concluido: "Concluído",
+    pausado: "Pausado",
   };
   return map[status] || status;
 }
