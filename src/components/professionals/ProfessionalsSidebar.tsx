@@ -211,12 +211,12 @@ export function ProfessionalsSidebar({
             </div>
 
             <div className="max-h-64 overflow-y-auto space-y-3 pr-1">
-              {filteredSkills.habilidades.length > 0 && (
+              {filteredSkills.softwares.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Habilidades
+                    Softwares
                   </span>
-                  {filteredSkills.habilidades.map((skill) => (
+                  {filteredSkills.softwares.map((skill) => (
                     <div key={skill.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`skill-${skill.id}`}
@@ -236,12 +236,12 @@ export function ProfessionalsSidebar({
                 </div>
               )}
 
-              {filteredSkills.softwares.length > 0 && (
+              {filteredSkills.habilidades.length > 0 && (
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Softwares
+                    Habilidades
                   </span>
-                  {filteredSkills.softwares.map((skill) => (
+                  {filteredSkills.habilidades.map((skill) => (
                     <div key={skill.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`skill-${skill.id}`}
