@@ -309,7 +309,9 @@ export type Database = {
           criado_em: string | null
           criado_por: string
           dribbble_url: string | null
-          especialidades: string[] | null
+          especialidades:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado: string | null
           facebook_url: string | null
           fundado_em: string | null
@@ -339,7 +341,9 @@ export type Database = {
           criado_em?: string | null
           criado_por: string
           dribbble_url?: string | null
-          especialidades?: string[] | null
+          especialidades?:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado?: string | null
           facebook_url?: string | null
           fundado_em?: string | null
@@ -369,7 +373,9 @@ export type Database = {
           criado_em?: string | null
           criado_por?: string
           dribbble_url?: string | null
-          especialidades?: string[] | null
+          especialidades?:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado?: string | null
           facebook_url?: string | null
           fundado_em?: string | null
@@ -1408,6 +1414,16 @@ export type Database = {
     }
     Enums: {
       categoria_habilidade: "habilidades" | "softwares"
+      especialidade_estudio:
+        | "Mobile"
+        | "PC"
+        | "Console"
+        | "VR"
+        | "Casual"
+        | "Indie"
+        | "AA"
+        | "AAA"
+        | "F2P"
       modalidade_trabalho: "presencial" | "hibrido" | "remoto"
       nivel_habilidade: "basico" | "intermediario" | "avancado" | "expert"
       nivel_vaga: "iniciante" | "junior" | "pleno" | "senior" | "lead"
@@ -1568,6 +1584,17 @@ export const Constants = {
   public: {
     Enums: {
       categoria_habilidade: ["habilidades", "softwares"],
+      especialidade_estudio: [
+        "Mobile",
+        "PC",
+        "Console",
+        "VR",
+        "Casual",
+        "Indie",
+        "AA",
+        "AAA",
+        "F2P",
+      ],
       modalidade_trabalho: ["presencial", "hibrido", "remoto"],
       nivel_habilidade: ["basico", "intermediario", "avancado", "expert"],
       nivel_vaga: ["iniciante", "junior", "pleno", "senior", "lead"],
