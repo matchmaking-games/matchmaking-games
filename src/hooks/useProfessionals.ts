@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProfessionalCard, ProfessionalFilters, ProfessionalCursor } from "@/types/professional";
 
-export interface ProfessionalsQueryParams extends ProfessionalFilters {
+export interface ProfessionalsQueryParams extends Partial<ProfessionalFilters> {
   pageSize?: number;
   cursor?: ProfessionalCursor | null;
 }
