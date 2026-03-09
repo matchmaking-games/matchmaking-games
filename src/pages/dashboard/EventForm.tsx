@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarRange, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -185,11 +185,28 @@ export default function EventForm() {
     },
   });
 
+  const { isDirty } = form.formState;
   const modalidade = form.watch("modalidade");
   const estadoSelecionado = form.watch("estado");
   const descricao = form.watch("descricao") || "";
   const dateRange = form.watch("dateRange");
   const showLocation = modalidade === "presencial" || modalidade === "hibrido";
+
+  const handleNavigateBack = useCallback(() => {
+    if (isDirty && !window.confirm("Você tem alterações não salvas. Deseja realmente sair? Os dados serão perdidos.")) {
+      return;
+    }
+    navigate("/dashboard/events");
+  }, [isDirty, navigate]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   useEffect(() => {
     if (estadoSelecionado) {
@@ -236,22 +253,16 @@ export default function EventForm() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        <Button variant="ghost" onClick={handleNavigateBack} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para eventos
+        </Button>
         <Card>
           <CardContent className="pt-6 space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <h1 className="font-display font-bold text-3xl text-foreground">
-                Criar Evento
-              </h1>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/eventos")}
-                className="gap-2"
-              >
-                <CalendarRange className="h-4 w-4" />
-                Ver eventos da comunidade
-              </Button>
-            </div>
+            <h1 className="font-display font-bold text-3xl text-foreground">
+              Criar Evento
+            </h1>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Nome */}
@@ -552,7 +563,7 @@ export default function EventForm() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => navigate("/dashboard/events")}
+                    onClick={handleNavigateBack}
                   >
                     Cancelar
                   </Button>
