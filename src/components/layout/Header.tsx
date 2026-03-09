@@ -187,7 +187,7 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="h-9 px-3 text-sm font-medium">
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent font-normal text-sm">
                   Explorar
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
