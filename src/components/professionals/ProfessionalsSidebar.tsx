@@ -1,13 +1,10 @@
-import { useMemo, useState } from "react";
-import { X, Search } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -15,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
+import { useAvailableSkills, Habilidade } from "@/hooks/useAvailableSkills";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { supabase } from "@/integrations/supabase/client";
 import type { ProfessionalFilters } from "@/types/professional";
 
 interface ProfessionalsSidebarProps {
@@ -34,6 +32,13 @@ const MODALIDADES = [
   { value: "presencial", label: "Presencial" },
 ] as const;
 
+function groupSkillsByCategory(skills: Habilidade[]) {
+  return {
+    habilidades: skills.filter((s) => s.categoria === "habilidades"),
+    softwares: skills.filter((s) => s.categoria === "softwares"),
+  };
+}
+
 export function ProfessionalsSidebar({
   filters,
   onFilterChange,
@@ -42,37 +47,30 @@ export function ProfessionalsSidebar({
   onClearAll,
   activeFilterCount,
 }: ProfessionalsSidebarProps) {
-  const [skillSearch, setSkillSearch] = useState("");
+  const { availableSkills, loading: loadingSkills } = useAvailableSkills();
+  const groupedSkills = groupSkillsByCategory(availableSkills);
 
   const { estados, loadingEstados } = useIBGELocations();
 
-  const { data: allSkills, isLoading: loadingSkills, isError: skillsError } = useQuery({
-    queryKey: ["available-skills-sidebar"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("habilidades")
-        .select("id, nome, categoria")
-        .order("nome");
-      if (error) throw error;
-      return data;
-    },
-    staleTime: Infinity,
-  });
+  const skillOptions = useMemo(() => ({
+    habilidades: groupedSkills.habilidades.map((s) => ({ value: s.id, label: s.nome })),
+    softwares: groupedSkills.softwares.map((s) => ({ value: s.id, label: s.nome })),
+  }), [groupedSkills]);
 
-  // Filter skills by search text
-  const filteredSkills = useMemo(() => {
-    if (!allSkills) return { habilidades: [], softwares: [] };
-    const q = skillSearch.toLowerCase().trim();
-    const filtered = q
-      ? allSkills.filter((s) => s.nome.toLowerCase().includes(q))
-      : allSkills;
+  const selectedByCategory = useMemo(() => {
+    const selected = filters.habilidades || [];
     return {
-      habilidades: filtered.filter((s) => s.categoria === "habilidades"),
-      softwares: filtered.filter((s) => s.categoria === "softwares"),
+      habilidades: selected.filter((id) => groupedSkills.habilidades.some((s) => s.id === id)),
+      softwares: selected.filter((id) => groupedSkills.softwares.some((s) => s.id === id)),
     };
-  }, [allSkills, skillSearch]);
+  }, [filters.habilidades, groupedSkills]);
 
-  const selectedSkills = filters.habilidades || [];
+  const handleCategorySelection = (category: keyof typeof selectedByCategory, newSelected: string[]) => {
+    const otherCategories = Object.keys(selectedByCategory)
+      .filter((k) => k !== category)
+      .flatMap((k) => selectedByCategory[k as keyof typeof selectedByCategory]);
+    onHabilidadesChange([...otherCategories, ...newSelected]);
+  };
 
   const handleModalidadeToggle = (value: string, checked: boolean) => {
     const current = filters.tipoTrabalho || [];
@@ -80,13 +78,6 @@ export function ProfessionalsSidebar({
       ? [...current, value]
       : current.filter((v) => v !== value);
     onFilterChange("trabalho", next.length > 0 ? next.join(",") : null);
-  };
-
-  const handleSkillToggle = (id: string, checked: boolean) => {
-    const next = checked
-      ? [...selectedSkills, id]
-      : selectedSkills.filter((s) => s !== id);
-    onHabilidadesChange(next);
   };
 
   const handleEstadoChange = (value: string) => {
@@ -178,98 +169,41 @@ export function ProfessionalsSidebar({
       </div>
 
       {/* Habilidades */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-sm">Habilidades</Label>
-          {selectedSkills.length > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {selectedSkills.length} selecionada{selectedSkills.length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+      <div className="space-y-4">
+        <Label className="text-sm">Habilidades</Label>
 
         {loadingSkills ? (
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ) : skillsError ? (
-          <p className="text-xs text-muted-foreground">
-            Não foi possível carregar as habilidades
-          </p>
+          <p className="text-xs text-muted-foreground">Carregando...</p>
         ) : (
-          <>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Buscar habilidade..."
-                value={skillSearch}
-                onChange={(e) => setSkillSearch(e.target.value)}
-                className="pl-8 h-9 text-sm"
-              />
-            </div>
+          <div className="space-y-3">
+            {skillOptions.habilidades.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Habilidades</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.habilidades}
+                  selected={selectedByCategory.habilidades}
+                  onSelectionChange={(ids) => handleCategorySelection("habilidades", ids)}
+                  placeholder="Selecione habilidades..."
+                  searchPlaceholder="Buscar habilidade..."
+                  emptyMessage="Nenhuma habilidade encontrada"
+                />
+              </div>
+            )}
 
-            <div className="max-h-64 overflow-y-auto space-y-3 pr-1">
-              {filteredSkills.softwares.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Softwares
-                  </span>
-                  {filteredSkills.softwares.map((skill) => (
-                    <div key={skill.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`skill-${skill.id}`}
-                        checked={selectedSkills.includes(skill.id)}
-                        onCheckedChange={(checked) =>
-                          handleSkillToggle(skill.id, !!checked)
-                        }
-                      />
-                      <Label
-                        htmlFor={`skill-${skill.id}`}
-                        className="text-sm cursor-pointer font-normal"
-                      >
-                        {skill.nome}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {filteredSkills.habilidades.length > 0 && (
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Habilidades
-                  </span>
-                  {filteredSkills.habilidades.map((skill) => (
-                    <div key={skill.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`skill-${skill.id}`}
-                        checked={selectedSkills.includes(skill.id)}
-                        onCheckedChange={(checked) =>
-                          handleSkillToggle(skill.id, !!checked)
-                        }
-                      />
-                      <Label
-                        htmlFor={`skill-${skill.id}`}
-                        className="text-sm cursor-pointer font-normal"
-                      >
-                        {skill.nome}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {filteredSkills.habilidades.length === 0 &&
-                filteredSkills.softwares.length === 0 &&
-                skillSearch && (
-                  <p className="text-xs text-muted-foreground py-2">
-                    Nenhuma habilidade encontrada
-                  </p>
-                )}
-            </div>
-          </>
+            {skillOptions.softwares.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Softwares</Label>
+                <MultiSelectCombobox
+                  options={skillOptions.softwares}
+                  selected={selectedByCategory.softwares}
+                  onSelectionChange={(ids) => handleCategorySelection("softwares", ids)}
+                  placeholder="Selecione softwares..."
+                  searchPlaceholder="Buscar software..."
+                  emptyMessage="Nenhum software encontrado"
+                />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </Card>
