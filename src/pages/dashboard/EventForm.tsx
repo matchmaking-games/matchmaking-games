@@ -308,9 +308,17 @@ export default function EventForm() {
               <ArrowLeft className="h-4 w-4" />
               Voltar para eventos
             </Button>
-            {/* Header */}
+            {isEditing && isLoadingEvento ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+            <>
             <h1 className="font-display font-bold text-3xl text-foreground">
-              Criar Evento
+              {isEditing ? "Editar Evento" : "Criar Evento"}
             </h1>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
