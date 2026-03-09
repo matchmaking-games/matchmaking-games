@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Briefcase, Settings, LogOut, LayoutDashboard, CalendarRange, Users, Building2, Layers } from "lucide-react";
+import {
+  Menu,
+  Briefcase,
+  Settings,
+  LogOut,
+  LayoutDashboard,
+  CalendarRange,
+  Users,
+  Building2,
+  Layers,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -123,7 +133,7 @@ export function Header() {
                     <Link
                       to="/dashboard/settings"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                     >
                       <Settings className="h-4 w-4" />
                       Configurações
@@ -134,7 +144,7 @@ export function Header() {
                         setMobileMenuOpen(false);
                         handleSignOut();
                       }}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left w-full"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors text-left w-full"
                     >
                       <LogOut className="h-4 w-4" />
                       Sair
