@@ -126,7 +126,7 @@ function CategorySelector({
           {selectedSkills.map((skill) => (
             <span
               key={skill.id}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border bg-muted text-muted-foreground border-border"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm border bg-muted text-foreground/80 border-border"
             >
               {skill.nome}
               {!disabled && (
