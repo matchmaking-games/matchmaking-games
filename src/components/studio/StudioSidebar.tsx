@@ -129,7 +129,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
                     <NavLink
                       to={buildUrl(item.url)}
                       end={item.url === "/studio/manage/dashboard"}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-300 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
                       activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                     >
                       <item.icon className="h-[22px] w-[22px]" />
