@@ -303,7 +303,7 @@ export default function Events() {
           </div>
         )}
 
-        <EventDetailSheet evento={selectedEvento} open={sheetOpen} onOpenChange={setSheetOpen} />
+        <EventDetailSheet evento={selectedEvento} open={sheetOpen} onOpenChange={handleSheetOpenChange} />
       </main>
       <Footer />
     </div>
