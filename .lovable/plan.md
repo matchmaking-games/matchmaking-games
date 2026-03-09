@@ -1,40 +1,33 @@
 
 
-## Plano: Criar componente ProjectsSidebar
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Criar `src/components/projects/ProjectsSidebar.tsx` seguindo a estrutura exata de `StudiosSidebar.tsx` — mesma Card, header, botão limpar, e seções com Label + controle.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Estrutura
+### Change 1 — `src/components/education/EducationModal.tsx`
 
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+
+### Change 2 — `src/lib/formatters.ts`
+
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
-Card (p-4 space-y-6 lg:sticky lg:top-24)
-├── Header: "Filtros" + Badge count (idêntico às outras sidebars)
-├── Botão "Limpar filtros" (condicional, idêntico)
-├── Seção Engine: Label + Select com "__all__" + Object.entries(ENGINE_LABELS)
-├── Seção Plataformas: Label + MultiSelectCombobox com PLATAFORMA_LABELS
-└── Seção Gênero: Label + MultiSelectCombobox com GENERO_LABELS
-```
 
-### Props
-
-```typescript
-interface ProjectsSidebarProps {
-  filters: ProjectFilters;
-  onFilterChange: (key: string, value: string | null) => void;
-  onPlataformasChange: (items: string[]) => void;
-  onGeneroChange: (items: string[]) => void;
-  onClearAll: () => void;
-  activeFilterCount: number;
-}
-```
-
-### Detalhes
-
-- Options para MultiSelectCombobox geradas via `Object.entries(LABELS).map(([value, label]) => ({ value, label }))`
-- Engine Select: `value={filters.engine || "__all__"}`, onChange converte `"__all__"` para `null`
-- Imports de labels de `@/constants/project-labels`
-- Nenhum arquivo existente alterado
-
-### Arquivos afetados
-- `src/components/projects/ProjectsSidebar.tsx` (criar)
+No other files are touched.
 
