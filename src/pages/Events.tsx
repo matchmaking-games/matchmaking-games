@@ -236,7 +236,9 @@ export default function Events() {
               Mostrar encerrados
             </Label>
           </div>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Content */}
         {isLoading && (
