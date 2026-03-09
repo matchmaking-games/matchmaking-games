@@ -25,6 +25,7 @@ import ProjectFormPage from "./pages/dashboard/ProjectFormPage";
 import EventForm from "./pages/dashboard/EventForm";
 import EventsPage from "./pages/dashboard/Events";
 import Jobs from "./pages/Jobs";
+import Professionals from "./pages/Professionals";
 import Events from "./pages/Events";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
