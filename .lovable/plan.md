@@ -1,33 +1,75 @@
 
+## Prompt 01 — Types + Hooks: Busca de Profissionais
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+### 3 arquivos novos, nenhum arquivo existente alterado
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+---
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+### Arquivo 1 — `src/types/professional.ts`
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+Tipos puros, sem imports externos:
 
-### Change 2 — `src/lib/formatters.ts`
+- **`ProfessionalSkill`** (inline nos campos de `ProfessionalCard`) → `{ id, nome, categoria }`
+- **`ProfessionalCard`** → 14 campos conforme spec (id, nome_completo, slug, avatar_url, titulo_profissional, bio_curta, cidade, estado, disponivel_para_trabalho, tipo_trabalho_preferido, habilidades, total_habilidades, criado_em, rank)
+- **`ProfessionalFilters`** → 5 campos: searchText, disponivel, estado, tipoTrabalho, habilidades
+- **`ProfessionalCursor`** → criado_em + id
 
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+---
 
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
+### Arquivo 2 — `src/hooks/useProfessionalFilters.ts`
 
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+Segue `useJobFilters.ts` exatamente. Mapeamento URL ↔ estado:
+
+```
+q           → searchText: string | null
+disponivel  → disponivel: boolean | null   ("true" → true, ausente → null)
+estado      → estado: string | null
+trabalho    → tipoTrabalho: string[] | null (split por vírgula)
+skills      → habilidades: string[] | null (split por vírgula)
 ```
 
-No other files are touched.
+Funções retornadas:
+- `setFilter(key, value)` — genérico, deleta se null/vazio
+- `setHabilidades(ids)` — escreve/deleta "skills"
+- `setEstado(uf)` — escreve/deleta "estado" (sem cascade de cidade, profissionais não têm cidade no filtro)
+- `clearAllFilters()` — limpa toda a URL
+- `activeFilterCount` — conta: searchText, disponivel, estado, tipoTrabalho.length, habilidades.length
+- `hasActiveFilters` — activeFilterCount > 0
 
+---
+
+### Arquivo 3 — `src/hooks/useProfessionals.ts`
+
+Parâmetros de entrada: todos os campos de `ProfessionalFilters` + `pageSize` (padrão 20) + `cursor: ProfessionalCursor | null`.
+
+**Montagem dos params RPC** (omitir quando null/vazio — nunca enviar string ou array vazio):
+
+```
+p_search          ← searchText (só se truthy)
+p_disponivel      ← disponivel (só se não null)
+p_estado          ← estado (só se não null)
+p_tipo_trabalho   ← tipoTrabalho (só se length > 0)
+p_habilidades     ← habilidades (só se length > 0)
+p_limit           ← pageSize + 1 (sempre — para detectar hasNextPage)
+p_cursor_criado_em ← cursor.criado_em (só se cursor não null)
+p_cursor_id       ← cursor.id (só se cursor não null)
+```
+
+**Lógica de paginação** (igual a useJobs):
+- RPC chamada com `p_limit = pageSize + 1`
+- Se `result.length > pageSize` → `hasNextPage = true`, cortar o array no índice `pageSize`
+- `nextCursor` = `{ criado_em, id }` do último item válido
+
+**React Query:**
+```ts
+queryKey: ["professionals", { searchText, disponivel, estado, tipoTrabalho, habilidades, cursor }]
+staleTime: 30_000
+retry: 2
+```
+
+Retorno: `{ data: { professionals, hasNextPage, nextCursor }, isLoading, error }`
+
+---
+
+### O que NÃO muda
+Nenhum arquivo existente é tocado. Sem componentes, sem páginas, sem rotas.
