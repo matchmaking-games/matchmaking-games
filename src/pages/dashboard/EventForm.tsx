@@ -271,7 +271,7 @@ export default function EventForm() {
       const dataInicio = `${fromDate}T${data.horario_inicio}:00-03:00`;
       const dataFim = `${toDate}T${data.horario_fim}:00-03:00`;
 
-      await createEvento({
+      const payload = {
         nome: data.nome,
         descricao: data.descricao || undefined,
         data_inicio: dataInicio,
@@ -281,13 +281,19 @@ export default function EventForm() {
         cidade: showLocation ? data.cidade : undefined,
         endereco: showLocation ? data.endereco : undefined,
         link_externo: data.link_externo || undefined,
-      });
+      };
 
-      toast({ title: "Evento criado com sucesso!" });
+      if (isEditing) {
+        await updateEvento({ id: id!, ...payload });
+      } else {
+        await createEvento(payload);
+        toast({ title: "Evento criado com sucesso!" });
+      }
+
       navigate("/dashboard/events");
     } catch {
       toast({
-        title: "Erro ao criar evento. Tente novamente.",
+        title: isEditing ? "Erro ao atualizar evento. Tente novamente." : "Erro ao criar evento. Tente novamente.",
         variant: "destructive",
       });
     }
