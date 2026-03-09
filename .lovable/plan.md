@@ -1,25 +1,33 @@
 
 
-## Criar arquivos de tipos e hooks para busca de estúdios
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Tres arquivos novos, seguindo exatamente os padrões de `src/types/professional.ts`, `useProfessionalFilters.ts` e `useProfessionals.ts`.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### 1. `src/types/studio.ts`
-- `StudioCard`: id, nome, slug, logo_url, sobre, cidade, estado, tamanho, especialidades, website, criado_em, rank
-- `StudioFilters`: searchText, estado, tamanho, especialidades (string[])
-- `StudioCursor`: criado_em, id
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-### 2. `src/hooks/useStudioFilters.ts`
-- Mesmo padrão do `useProfessionalFilters` com `useSearchParams`
-- Params: `q` → searchText, `estado` → estado, `tamanho` → tamanho, `especialidades` → especialidades (comma-separated)
-- Exporta: filters, setFilter, setEspecialidades, setEstado, clearAllFilters, activeFilterCount, hasActiveFilters
-- activeFilterCount: +1 para cada filtro preenchido; especialidades conta cada item individual
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-### 3. `src/hooks/useStudios.ts`
-- Mesmo padrão do `useProfessionals` com React Query
-- Chama `supabase.rpc("search_studios", {...})` com conversão de `""` → null e `[]` → null
-- Paginação: request p_limit+1, detecta hasNextPage, monta nextCursor
-- queryKey inclui todos os params, staleTime 30s
+### Change 2 — `src/lib/formatters.ts`
 
-Nenhum arquivo existente será alterado.
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
+
+No other files are touched.
 
