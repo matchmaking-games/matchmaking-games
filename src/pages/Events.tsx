@@ -3,7 +3,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { usePublicEvents, PublicEvento } from "@/hooks/usePublicEvents";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -153,15 +154,12 @@ function EventDetailSheet({ evento, open, onOpenChange }: { evento: PublicEvento
             )}
 
             {evento.link_externo && (
-              <a
-                href={evento.link_externo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Acessar link do evento
-              </a>
+              <Button asChild>
+                <a href={evento.link_externo} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                  Acessar link do evento
+                </a>
+              </Button>
             )}
           </div>
         </ScrollArea>
@@ -190,11 +188,12 @@ export default function Events() {
     <div className="min-h-screen flex flex-col bg-background pt-16">
       <Header />
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
-        <h1 className="font-display font-bold text-4xl text-foreground mb-2">Eventos</h1>
-        <p className="text-muted-foreground mb-8">Encontre eventos da comunidade de games e criação digital.</p>
-
-        {/* Filters */}
+        {/* Header + Filters Card */}
         <Card className="mb-8">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display font-bold text-4xl text-foreground">Eventos</CardTitle>
+            <CardDescription>Encontre eventos da comunidade de games e criação digital.</CardDescription>
+          </CardHeader>
           <CardContent className="py-4">
             <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-1.5">
