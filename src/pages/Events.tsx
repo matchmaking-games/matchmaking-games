@@ -174,6 +174,10 @@ export default function Events() {
   const [modalidade, setModalidade] = useState("todos");
   const [estadoSelect, setEstadoSelect] = useState("__all__");
   const [mostrarEncerrados, setMostrarEncerrados] = useState(false);
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const eventId = searchParams.get("id");
+
   const [selectedEvento, setSelectedEvento] = useState<PublicEvento | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -181,9 +185,34 @@ export default function Events() {
   const { data: eventos, isLoading, error } = usePublicEvents({ modalidade, estado, mostrarEncerrados });
   const { estados, loadingEstados } = useIBGELocations();
 
+  useEffect(() => {
+    if (eventId && eventos) {
+      const found = eventos.find((e) => e.id === eventId);
+      if (found) {
+        setSelectedEvento(found);
+        setSheetOpen(true);
+      }
+    } else if (!eventId) {
+      setSheetOpen(false);
+    }
+  }, [eventId, eventos]);
+
   const handleCardClick = (evento: PublicEvento) => {
-    setSelectedEvento(evento);
-    setSheetOpen(true);
+    setSearchParams((prev) => {
+      prev.set("id", evento.id);
+      return prev;
+    });
+  };
+
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setSearchParams((prev) => {
+        prev.delete("id");
+        return prev;
+      });
+    } else {
+      setSheetOpen(true);
+    }
   };
 
   return (
