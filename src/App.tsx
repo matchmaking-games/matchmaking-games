@@ -23,6 +23,7 @@ import Education from "./pages/Education";
 import Projects from "./pages/Projects";
 import ProjectFormPage from "./pages/dashboard/ProjectFormPage";
 import EventForm from "./pages/dashboard/EventForm";
+import EventsPage from "./pages/dashboard/Events";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import PublicProfile from "./pages/PublicProfile";
