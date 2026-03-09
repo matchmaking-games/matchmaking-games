@@ -212,7 +212,7 @@ export default function Events() {
 
           <div className="space-y-1.5">
             <Label className="text-sm text-muted-foreground">Estado</Label>
-            <Select value={estado} onValueChange={setEstado}>
+            <Select value={estadoSelect} onValueChange={setEstadoSelect}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
