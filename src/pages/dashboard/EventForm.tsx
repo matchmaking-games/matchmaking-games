@@ -313,12 +313,25 @@ export default function EventForm() {
                               mode="range"
                               selected={field.value as DateRange | undefined}
                               onSelect={(range) => {
-                                if (range) {
-                                  field.onChange({
-                                    from: range.from,
-                                    to: range.to || range.from,
-                                  });
+                                if (!range || !range.from) {
+                                  field.onChange(undefined);
+                                  return;
                                 }
+                                // Se o usuário clicou no mesmo dia que já era o from e não há to,
+                                // significa que quer resetar a seleção
+                                const current = field.value as DateRange | undefined;
+                                if (
+                                  current?.from &&
+                                  !current?.to &&
+                                  range.from.toDateString() === current.from.toDateString()
+                                ) {
+                                  field.onChange(undefined);
+                                  return;
+                                }
+                                field.onChange({
+                                  from: range.from,
+                                  to: range.to || range.from,
+                                });
                               }}
                               locale={ptBR}
                               className="w-fit rounded-md border border-border"
