@@ -185,11 +185,28 @@ export default function EventForm() {
     },
   });
 
+  const { isDirty } = form.formState;
   const modalidade = form.watch("modalidade");
   const estadoSelecionado = form.watch("estado");
   const descricao = form.watch("descricao") || "";
   const dateRange = form.watch("dateRange");
   const showLocation = modalidade === "presencial" || modalidade === "hibrido";
+
+  const handleNavigateBack = useCallback(() => {
+    if (isDirty && !window.confirm("Você tem alterações não salvas. Deseja realmente sair? Os dados serão perdidos.")) {
+      return;
+    }
+    navigate("/dashboard/events");
+  }, [isDirty, navigate]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   useEffect(() => {
     if (estadoSelecionado) {
