@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, TriangleAlert } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
@@ -12,21 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateEvento } from "@/hooks/useCreateEvento";
 import { useUpdateEvento } from "@/hooks/useUpdateEvento";
@@ -50,7 +37,7 @@ const eventoSchema = z
         from: z.date({ required_error: "Selecione a data de início" }),
         to: z.date({ required_error: "Selecione a data de fim" }),
       },
-      { required_error: "Selecione o período do evento" }
+      { required_error: "Selecione o período do evento" },
     ),
     horario_inicio: z
       .string()
@@ -66,10 +53,7 @@ const eventoSchema = z
     estado: z.string().optional().or(z.literal("")),
     cidade: z.string().optional().or(z.literal("")),
     endereco: z.string().optional().or(z.literal("")),
-    link_externo: z
-      .string()
-      .min(1, "Informe o link do evento")
-      .url("Informe uma URL válida (ex: https://...)"),
+    link_externo: z.string().min(1, "Informe o link do evento").url("Informe uma URL válida (ex: https://...)"),
   })
   .superRefine((data, ctx) => {
     if (data.modalidade !== "online") {
@@ -99,12 +83,8 @@ const eventoSchema = z
 
 type EventoFormData = z.infer<typeof eventoSchema>;
 
-const HOURS = Array.from({ length: 24 }, (_, i) =>
-  String(i).padStart(2, "0")
-);
-const MINUTES = Array.from({ length: 12 }, (_, i) =>
-  String(i * 5).padStart(2, "0")
-);
+const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
 
 interface TimeSelectProps {
   value: string;
@@ -171,13 +151,7 @@ export default function EventForm() {
   const { mutateAsync: updateEvento, isPending: isUpdating } = useUpdateEvento();
   const { data: eventoData, isLoading: isLoadingEvento } = useEventoById(id);
   const isPending = isCreating || isUpdating;
-  const {
-    estados,
-    municipios,
-    loadingMunicipios,
-    fetchMunicipios,
-    clearMunicipios,
-  } = useIBGELocations();
+  const { estados, municipios, loadingMunicipios, fetchMunicipios, clearMunicipios } = useIBGELocations();
 
   const form = useForm<EventoFormData>({
     resolver: zodResolver(eventoSchema),
@@ -202,7 +176,12 @@ export default function EventForm() {
     const dFim = new Date(eventoData.data_fim);
 
     const tz = "America/Sao_Paulo";
-    const hInicio = dInicio.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+    const hInicio = dInicio.toLocaleTimeString("pt-BR", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
     const hFim = dFim.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
 
     // Pre-fetch municipalities if there's a state
@@ -318,6 +297,17 @@ export default function EventForm() {
               <ArrowLeft className="h-4 w-4" />
               Voltar para eventos
             </Button>
+            <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+              <TriangleAlert className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong className="font-medium">Atenção:</strong> Ao publicar seu evento na Matchmaking, você assume
+                total responsabilidade por sua organização, divulgação e execução. A Matchmaking atua apenas como
+                vitrine e não possui vínculo com a produção dos eventos listados. Qualquer alteração no cronograma,
+                cancelamento ou imprevisto deve ser comunicado diretamente aos participantes por você. Esta
+                funcionalidade visa fortalecer a comunidade brasileira de desenvolvedores de games; utilize este espaço
+                com ética e respeito.
+              </span>
+            </p>
             {isEditing && isLoadingEvento ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
@@ -326,330 +316,315 @@ export default function EventForm() {
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : (
-            <>
-            <h1 className="font-display font-bold text-3xl text-foreground">
-              {isEditing ? "Editar Evento" : "Criar Evento"}
-            </h1>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Nome */}
-                <FormField
-                  control={form.control}
-                  name="nome"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do evento<span className="text-destructive ml-1">*</span></FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Ex: Global Game Jam São Paulo 2025"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Descrição */}
-                <FormField
-                  control={form.control}
-                  name="descricao"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Descrição<span className="text-destructive ml-1">*</span></FormLabel>
-                      <FormControl>
-                    <Textarea
-                      placeholder="Descreva o evento, programação, público-alvo..."
-                      className="min-h-[100px] overflow-hidden resize-none"
-                      {...field}
-                      onInput={(e) => {
-                        const target = e.target as HTMLTextAreaElement;
-                        target.style.height = 'auto';
-                        target.style.height = target.scrollHeight + 'px';
-                      }}
+              <>
+                <h1 className="font-display font-bold text-3xl text-foreground">
+                  {isEditing ? "Editar Evento" : "Criar Evento"}
+                </h1>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Nome */}
+                    <FormField
+                      control={form.control}
+                      name="nome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Nome do evento<span className="text-destructive ml-1">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Global Game Jam São Paulo 2025" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                      </FormControl>
-                      <div className="text-xs text-muted-foreground text-right">
-                        {descricao.length}/1000 caracteres
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                {/* Período do evento */}
-                <FormField
-                  control={form.control}
-                  name="dateRange"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Período do evento<span className="text-destructive ml-1">*</span></FormLabel>
-                      <FormControl>
-                        <div>
-                          <Calendar
-                            mode="range"
-                            selected={field.value as DateRange | undefined}
-                            onSelect={(range) => {
-                              if (!range || !range.from) {
-                                field.onChange(undefined);
-                                return;
-                              }
-                              // Se o usuário clicou no mesmo dia que já era o from e não há to,
-                              // significa que quer resetar a seleção
-                              const current = field.value as DateRange | undefined;
-                              if (
-                                current?.from &&
-                                !current?.to &&
-                                range.from.toDateString() === current.from.toDateString()
-                              ) {
-                                field.onChange(undefined);
-                                return;
-                              }
-                              field.onChange({
-                                from: range.from,
-                                to: range.to || range.from,
-                              });
-                            }}
-                            locale={ptBR}
-                            className="w-full rounded-md border border-border"
-                            classNames={{
-                              months: "flex flex-col sm:flex-row sm:justify-between w-full",
-                              month: "space-y-4",
-                            }}
-                            numberOfMonths={2}
-                          />
-                          {dateRange?.from && (
-                            <p className="text-sm text-muted-foreground mt-2">
-                              De{" "}
-                              {format(dateRange.from, "dd/MM/yyyy", {
-                                locale: ptBR,
-                              })}
-                              {dateRange.to &&
-                                dateRange.to.getTime() !==
-                                  dateRange.from.getTime() && (
-                                  <>
-                                    {" "}
-                                    até{" "}
-                                    {format(dateRange.to, "dd/MM/yyyy", {
-                                      locale: ptBR,
-                                    })}
-                                  </>
-                                )}
-                            </p>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    {/* Descrição */}
+                    <FormField
+                      control={form.control}
+                      name="descricao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Descrição<span className="text-destructive ml-1">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Descreva o evento, programação, público-alvo..."
+                              className="min-h-[100px] overflow-hidden resize-none"
+                              {...field}
+                              onInput={(e) => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height = target.scrollHeight + "px";
+                              }}
+                            />
+                          </FormControl>
+                          <div className="text-xs text-muted-foreground text-right">
+                            {descricao.length}/1000 caracteres
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                {/* Horários */}
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="horario_inicio"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Horário de início<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                          <TimeSelect
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <p className="text-xs text-muted-foreground">
-                          Horário de Brasília (BRT)
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="horario_fim"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Horário de fim<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                          <TimeSelect
-                            value={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <p className="text-xs text-muted-foreground">
-                          Horário de Brasília (BRT)
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    {/* Período do evento */}
+                    <FormField
+                      control={form.control}
+                      name="dateRange"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Período do evento<span className="text-destructive ml-1">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div>
+                              <Calendar
+                                mode="range"
+                                selected={field.value as DateRange | undefined}
+                                onSelect={(range) => {
+                                  if (!range || !range.from) {
+                                    field.onChange(undefined);
+                                    return;
+                                  }
+                                  // Se o usuário clicou no mesmo dia que já era o from e não há to,
+                                  // significa que quer resetar a seleção
+                                  const current = field.value as DateRange | undefined;
+                                  if (
+                                    current?.from &&
+                                    !current?.to &&
+                                    range.from.toDateString() === current.from.toDateString()
+                                  ) {
+                                    field.onChange(undefined);
+                                    return;
+                                  }
+                                  field.onChange({
+                                    from: range.from,
+                                    to: range.to || range.from,
+                                  });
+                                }}
+                                locale={ptBR}
+                                className="w-full rounded-md border border-border"
+                                classNames={{
+                                  months: "flex flex-col sm:flex-row sm:justify-between w-full",
+                                  month: "space-y-4",
+                                }}
+                                numberOfMonths={2}
+                              />
+                              {dateRange?.from && (
+                                <p className="text-sm text-muted-foreground mt-2">
+                                  De{" "}
+                                  {format(dateRange.from, "dd/MM/yyyy", {
+                                    locale: ptBR,
+                                  })}
+                                  {dateRange.to && dateRange.to.getTime() !== dateRange.from.getTime() && (
+                                    <>
+                                      {" "}
+                                      até{" "}
+                                      {format(dateRange.to, "dd/MM/yyyy", {
+                                        locale: ptBR,
+                                      })}
+                                    </>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                {/* Modalidade */}
-                <FormField
-                  control={form.control}
-                  name="modalidade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Modalidade<span className="text-destructive ml-1">*</span></FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a modalidade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="presencial">Presencial</SelectItem>
-                          <SelectItem value="hibrido">Híbrido</SelectItem>
-                          <SelectItem value="online">Online</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Localização condicional */}
-                {showLocation && (
-                  <>
+                    {/* Horários */}
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Estado */}
                       <FormField
                         control={form.control}
-                        name="estado"
+                        name="horario_inicio"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Estado<span className="text-destructive ml-1">*</span></FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione o estado" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {estados.map((estado) => (
-                                  <SelectItem
-                                    key={estado.sigla}
-                                    value={estado.sigla}
-                                  >
-                                    {estado.sigla} — {estado.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>
+                              Horário de início<span className="text-destructive ml-1">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <TimeSelect value={field.value} onChange={field.onChange} />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">Horário de Brasília (BRT)</p>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Cidade */}
                       <FormField
                         control={form.control}
-                        name="cidade"
+                        name="horario_fim"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cidade<span className="text-destructive ml-1">*</span></FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              disabled={!estadoSelecionado || loadingMunicipios}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={
-                                      loadingMunicipios
-                                        ? "Carregando cidades..."
-                                        : "Selecione a cidade"
-                                    }
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {municipios.map((m) => (
-                                  <SelectItem key={m.id} value={m.nome}>
-                                    {m.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>
+                              Horário de fim<span className="text-destructive ml-1">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <TimeSelect value={field.value} onChange={field.onChange} />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">Horário de Brasília (BRT)</p>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
 
-                    {/* Endereço */}
+                    {/* Modalidade */}
                     <FormField
                       control={form.control}
-                      name="endereco"
+                      name="modalidade"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Endereço<span className="text-destructive ml-1">*</span></FormLabel>
+                          <FormLabel>
+                            Modalidade<span className="text-destructive ml-1">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a modalidade" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="presencial">Presencial</SelectItem>
+                              <SelectItem value="hibrido">Híbrido</SelectItem>
+                              <SelectItem value="online">Online</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Localização condicional */}
+                    {showLocation && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Estado */}
+                          <FormField
+                            control={form.control}
+                            name="estado"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Estado<span className="text-destructive ml-1">*</span>
+                                </FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Selecione o estado" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {estados.map((estado) => (
+                                      <SelectItem key={estado.sigla} value={estado.sigla}>
+                                        {estado.sigla} — {estado.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Cidade */}
+                          <FormField
+                            control={form.control}
+                            name="cidade"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Cidade<span className="text-destructive ml-1">*</span>
+                                </FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  disabled={!estadoSelecionado || loadingMunicipios}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue
+                                        placeholder={loadingMunicipios ? "Carregando cidades..." : "Selecione a cidade"}
+                                      />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {municipios.map((m) => (
+                                      <SelectItem key={m.id} value={m.nome}>
+                                        {m.nome}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        {/* Endereço */}
+                        <FormField
+                          control={form.control}
+                          name="endereco"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Endereço<span className="text-destructive ml-1">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo" {...field} />
+                              </FormControl>
+                              <p className="text-xs text-muted-foreground">Rua, número, complemento e bairro</p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+
+                    {/* Link externo */}
+                    <FormField
+                      control={form.control}
+                      name="link_externo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Link para mais detalhes<span className="text-destructive ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo"
-                              {...field}
-                            />
+                            <Input placeholder="https://..." {...field} />
                           </FormControl>
                           <p className="text-xs text-muted-foreground">
-                            Rua, número, complemento e bairro
+                            Site oficial, página de inscrição ou qualquer link relevante
                           </p>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </>
-                )}
 
-                {/* Link externo */}
-                <FormField
-                  control={form.control}
-                  name="link_externo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link para mais detalhes<span className="text-destructive ml-1">*</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://..." {...field} />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">
-                        Site oficial, página de inscrição ou qualquer link relevante
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Botões */}
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleNavigateBack}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    {isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      isEditing ? "Salvar Alterações" : "Criar Evento"
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-            </>
+                    {/* Botões */}
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button type="button" variant="ghost" onClick={handleNavigateBack}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit" disabled={isPending}>
+                        {isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : isEditing ? (
+                          "Salvar Alterações"
+                        ) : (
+                          "Criar Evento"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </>
             )}
           </CardContent>
         </Card>
