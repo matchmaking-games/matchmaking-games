@@ -728,7 +728,7 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
               </div>
 
               {/* Review content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              <div className="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-8">
                 <p className="text-sm text-muted-foreground">
                   Confira os dados extraídos abaixo. Você pode editar qualquer campo antes de salvar. Após confirmar,
                   suas experiências e formações serão substituídas.
