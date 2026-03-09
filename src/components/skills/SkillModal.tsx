@@ -126,7 +126,7 @@ export function SkillModal({ open, onOpenChange, editingSkill, existingSkillIds,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col sm:max-w-[425px] max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="flex flex-col sm:max-w-[425px] max-h-[90dvh] overflow-y-auto scrollbar-thin">
         <DialogHeader className="shrink-0">
           <DialogTitle>{isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}</DialogTitle>
           <DialogDescription>
