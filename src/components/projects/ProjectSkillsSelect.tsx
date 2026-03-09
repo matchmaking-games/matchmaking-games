@@ -103,7 +103,7 @@ function CategorySelector({
                       setSearch("");
                       setIsOpen(false);
                     }}
-                    className="px-2 py-1 rounded text-xs border transition-colors hover:opacity-80 bg-muted text-muted-foreground border-border"
+                    className="px-2 py-1 rounded text-xs border transition-colors hover:opacity-80 bg-muted text-foreground/80 border-border"
                   >
                     {skill.nome}
                   </button>
