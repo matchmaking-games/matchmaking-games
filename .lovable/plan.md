@@ -1,150 +1,33 @@
 
-## Prompt 04 — Página: Professionals.tsx
 
-### 1 arquivo novo: `src/pages/Professionals.tsx`
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Nenhum arquivo existente alterado.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
----
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-### Estrutura (replica Jobs.tsx linha a linha)
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-```tsx
-// Imports
-- useState, useEffect from react
-- Users, Search, X, ChevronLeft, ChevronRight from lucide-react
-- Header, Footer
-- Input, Button
-- ProfessionalCard, ProfessionalCardSkeletonGrid
-- ProfessionalsSidebar
-- useProfessionals, useProfessionalFilters
-- useDebounce, useToast
-- ProfessionalCursor type
+### Change 2 — `src/lib/formatters.ts`
 
-// Component
-export default function Professionals() {
-  // Hooks de filtros
-  const { filters, setFilter, setHabilidades, setEstado, clearAllFilters, activeFilterCount, hasActiveFilters } = useProfessionalFilters()
-  
-  // Estado local de busca + debounce
-  const [searchInput, setSearchInput] = useState(filters.searchText || "")
-  const debouncedSearch = useDebounce(searchInput, 500)
-  
-  // Paginação
-  const [currentPage, setCurrentPage] = useState(1)
-  const [cursors, setCursors] = useState<(ProfessionalCursor | null)[]>([null])
-  
-  // filtersKey para reset de paginação
-  const filtersKey = JSON.stringify({
-    disponivel: filters.disponivel,
-    estado: filters.estado,
-    tipoTrabalho: filters.tipoTrabalho,
-    habilidades: filters.habilidades,
-    searchText: debouncedSearch
-  })
-  
-  // useEffects: reset paginação, sync debounce→URL, toast de erro
-  
-  // Query
-  const { data, isLoading, error } = useProfessionals({
-    searchText: debouncedSearch || null,
-    disponivel: filters.disponivel,
-    estado: filters.estado,
-    tipoTrabalho: filters.tipoTrabalho,
-    habilidades: filters.habilidades,
-    pageSize: 20,
-    cursor: currentCursor
-  })
-  
-  // Extract: professionals, hasNextPage, nextCursor
-  
-  // Handlers: clearSearch, handleClearAll, goToNextPage, goToPreviousPage
-}
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
----
-
-### Layout JSX
-
-```
-<div className="min-h-screen bg-background">
-  <Header />
-  <div className="pt-16">
-    
-    {/* Hero Section */}
-    <div className="bg-card border-b border-border py-8">
-      <h1>Profissionais</h1>
-      <p>Encontre talentos da indústria de games no Brasil</p>
-    </div>
-    
-    {/* Content */}
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* Sidebar */}
-        <aside className="w-full lg:w-64 flex-shrink-0">
-          <ProfessionalsSidebar ... />
-        </aside>
-        
-        {/* Main */}
-        <main className="flex-1 space-y-4">
-          {/* Search Input */}
-          <div className="relative">
-            <Search /> <Input /> {searchInput && <X />}
-          </div>
-          
-          {/* Grid */}
-          {isLoading ? <ProfessionalCardSkeletonGrid /> 
-           : professionals.length === 0 ? <EmptyState /> 
-           : <>
-               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-                 {professionals.map(p => <ProfessionalCard key={p.id} professional={p} />)}
-               </div>
-               {/* Pagination */}
-               <div className="flex items-center justify-center gap-4 pt-6">
-                 <Button>Anterior</Button>
-                 <span>Página {currentPage}</span>
-                 <Button>Próxima</Button>
-               </div>
-             </>
-          }
-        </main>
-      </div>
-    </div>
-  </div>
-  <Footer />
-</div>
-```
-
----
-
-### EmptyState local
-
-```tsx
-function EmptyState({ hasFilters, onClear }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-        <Users className="w-8 h-8 text-muted-foreground" />
-      </div>
-      <h3>
-        {hasFilters 
-          ? "Nenhum profissional encontrado com esses filtros" 
-          : "Nenhum profissional cadastrado ainda"}
-      </h3>
-      <p>
-        {hasFilters 
-          ? "Tente ajustar sua busca ou remover alguns filtros." 
-          : "Volte em breve! Novos profissionais se cadastram regularmente."}
-      </p>
-      {hasFilters && <button onClick={onClear}>Limpar todos os filtros</button>}
-    </div>
-  )
-}
-```
-
----
-
-### O que NÃO muda
-Nenhum arquivo existente é tocado — App.tsx, hooks, componentes.
+No other files are touched.
 
