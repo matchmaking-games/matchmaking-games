@@ -499,7 +499,7 @@ export default function EventForm() {
                       name="endereco"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Endereço</FormLabel>
+                          <FormLabel>Endereço<span className="text-destructive ml-1">*</span></FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo"
