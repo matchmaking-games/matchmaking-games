@@ -172,11 +172,12 @@ function EventDetailSheet({ evento, open, onOpenChange }: { evento: PublicEvento
 
 export default function Events() {
   const [modalidade, setModalidade] = useState("todos");
-  const [estado, setEstado] = useState("");
+  const [estadoSelect, setEstadoSelect] = useState("__all__");
   const [mostrarEncerrados, setMostrarEncerrados] = useState(false);
   const [selectedEvento, setSelectedEvento] = useState<PublicEvento | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  const estado = estadoSelect === "__all__" ? "" : estadoSelect;
   const { data: eventos, isLoading, error } = usePublicEvents({ modalidade, estado, mostrarEncerrados });
   const { estados, loadingEstados } = useIBGELocations();
 
@@ -211,12 +212,12 @@ export default function Events() {
 
           <div className="space-y-1.5">
             <Label className="text-sm text-muted-foreground">Estado</Label>
-            <Select value={estado} onValueChange={setEstado}>
+            <Select value={estadoSelect} onValueChange={setEstadoSelect}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os estados</SelectItem>
+                <SelectItem value="__all__">Todos os estados</SelectItem>
                 {!loadingEstados &&
                   estados.map((uf) => (
                     <SelectItem key={uf.sigla} value={uf.sigla}>
