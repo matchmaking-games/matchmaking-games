@@ -278,12 +278,16 @@ export default function EventForm() {
                     <FormItem>
                       <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Descreva o evento, programação, público-alvo..."
-                          rows={4}
-                          className="resize-none"
-                          {...field}
-                        />
+                    <Textarea
+                      placeholder="Descreva o evento, programação, público-alvo..."
+                      className="min-h-[100px] overflow-hidden resize-none"
+                      {...field}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }}
+                    />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
                         {descricao.length}/1000 caracteres
