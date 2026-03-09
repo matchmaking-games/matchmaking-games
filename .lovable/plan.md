@@ -1,40 +1,33 @@
 
 
-## Criar `src/pages/Studios.tsx`
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Réplica estrutural exata de `Professionals.tsx`, substituindo apenas o que é específico de profissionais por estúdios.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Substituições diretas
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-| Professionals.tsx | Studios.tsx |
-|---|---|
-| `useProfessionalFilters` | `useStudioFilters` |
-| `useProfessionals` | `useStudios` |
-| `ProfessionalCard` | `StudioCard` |
-| `ProfessionalsSidebar` | `StudiosSidebar` |
-| `ProfessionalCardSkeletonGrid` | `StudioCardSkeletonGrid` |
-| `ProfessionalCursor` | `StudioCursor` |
-| `Users` icon | `Building2` icon |
-| `onHabilidadesChange={setHabilidades}` | `onEspecialidadesChange={setEspecialidades}` |
-| `filters.disponivel, tipoTrabalho, habilidades` no filtersKey | `filters.tamanho, especialidades` no filtersKey |
-| Query params: disponivel, tipoTrabalho, habilidades | Query params: tamanho, especialidades |
-| `professionals` array | `studios` array |
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-### Textos
+### Change 2 — `src/lib/formatters.ts`
 
-- Hero: "Estúdios" / "Conheça os estúdios de games do Brasil"
-- Search placeholder: "Buscar por nome ou descrição..."
-- Toast erro: "Erro ao carregar estúdios" / "Não foi possível carregar os estúdios..."
-- Empty com filtros: "Nenhum estúdio encontrado com esses filtros" / "Tente ajustar..."
-- Empty sem filtros: "Nenhum estúdio cadastrado ainda" / "Volte em breve! Novos estúdios..."
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-### Estrutura idêntica
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-- Layout: Header + hero + sidebar(lg:w-64) + main com search + grid/skeleton/empty + pagination + Footer
-- Paginação por cursor com array de cursors, mesma lógica
-- Debounce 500ms, sync com URL, reset ao mudar filtros
-- Grid: `grid gap-4 md:grid-cols-2 lg:grid-cols-2`
-- EmptyState como função interna com `Building2` no lugar de `Users`
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
 
-Um único arquivo novo, zero alterações em arquivos existentes.
+No other files are touched.
 
