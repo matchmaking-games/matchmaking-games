@@ -16,7 +16,8 @@ const sizeLabels: Record<string, string> = {
 };
 
 export function StudioCard({ studio }: StudioCardProps) {
-  const { nome, slug, logo_url, cidade, estado, tamanho, especialidades, website } = studio;
+  const { nome, slug, logo_url, cidade, estado, tamanho, especialidades: rawEspecialidades, website } = studio;
+  const especialidades = rawEspecialidades ?? [];
 
   const location =
     cidade && estado ? `${cidade}, ${estado}` :
