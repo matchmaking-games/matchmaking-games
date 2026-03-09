@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProjectDetail } from "@/hooks/useProjectDetail";
 import { Footer } from "@/components/layout/Footer";
@@ -174,9 +175,9 @@ export default function ProjectDetail() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {habilidades.map((skill) => (
-                          <span key={skill.id} className="bg-muted text-foreground text-xs rounded-md px-2 py-1">
+                          <Badge key={skill.id} variant="secondary" className="text-xs">
                             {skill.nome}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </CardContent>
@@ -190,9 +191,9 @@ export default function ProjectDetail() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {softwares.map((skill) => (
-                          <span key={skill.id} className="bg-muted text-foreground text-xs rounded-md px-2 py-1">
+                          <Badge key={skill.id} variant="secondary" className="text-xs">
                             {skill.nome}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </CardContent>

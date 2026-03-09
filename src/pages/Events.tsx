@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { CalendarDays, MapPin, ExternalLink, Clock } from "lucide-react";
 
 function formatEventDate(inicio: string, fim: string): string {
@@ -48,17 +49,17 @@ const modalidadeLabels: Record<string, string> = {
 
 function ModalidadeBadge({ modalidade }: { modalidade: string }) {
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${modalidadeStyles[modalidade] ?? ""}`}>
+    <Badge variant="outline" className={`text-xs ${modalidadeStyles[modalidade] ?? ""}`}>
       {modalidadeLabels[modalidade] ?? modalidade}
-    </span>
+    </Badge>
   );
 }
 
 function EncerradoBadge() {
   return (
-    <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-950 text-red-300 border border-red-800">
+    <Badge variant="outline" className="text-xs bg-red-950 text-red-300 border border-red-800">
       Encerrado
-    </span>
+    </Badge>
   );
 }
 
