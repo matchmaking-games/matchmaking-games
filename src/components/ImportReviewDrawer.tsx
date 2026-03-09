@@ -569,7 +569,7 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto scrollbar-thin p-6 space-y-6">
                 {/* Warning alert */}
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
