@@ -154,15 +154,12 @@ function EventDetailSheet({ evento, open, onOpenChange }: { evento: PublicEvento
             )}
 
             {evento.link_externo && (
-              <a
-                href={evento.link_externo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Acessar link do evento
-              </a>
+              <Button asChild>
+                <a href={evento.link_externo} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4" />
+                  Acessar link do evento
+                </a>
+              </Button>
             )}
           </div>
         </ScrollArea>
