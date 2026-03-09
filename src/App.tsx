@@ -139,6 +139,14 @@ const App = () => (
             }
           />
           <Route
+            path="/dashboard/events"
+            element={
+              <ProtectedRoute>
+                <EventsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/events/new"
             element={
               <ProtectedRoute>
