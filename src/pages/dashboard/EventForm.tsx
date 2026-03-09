@@ -462,7 +462,7 @@ export default function EventForm() {
                         name="cidade"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cidade</FormLabel>
+                            <FormLabel>Cidade<span className="text-destructive ml-1">*</span></FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
