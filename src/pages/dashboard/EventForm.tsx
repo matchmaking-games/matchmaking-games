@@ -305,7 +305,7 @@ export default function EventForm() {
                   name="dateRange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Período do evento</FormLabel>
+                      <FormLabel>Período do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <div>
                           <div className="flex justify-center">
