@@ -79,11 +79,11 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
     (evento.cidade || evento.estado);
 
   return (
-    <Card>
+    <Card className={isEncerrado ? "opacity-60 bg-muted/40" : ""}>
       <CardContent className="pt-5 pb-5">
         {/* Row 1: name + badges + actions */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="font-medium text-foreground">{evento.nome}</span>
+          <span className={`font-medium ${isEncerrado ? "text-muted-foreground" : "text-foreground"}`}>{evento.nome}</span>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {isEncerrado && (
               <Badge variant="outline" className="text-xs bg-red-950 text-red-300 border border-red-800">
@@ -93,28 +93,30 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
             <Badge variant="outline" className={`text-xs ${config.className}`}>
               {config.label}
             </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                  <EllipsisVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => onEdit(evento)}
-                  disabled={isEncerrado}
-                  className={isEncerrado ? "opacity-50" : ""}
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onDelete(evento)} className="text-destructive focus:text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!isEncerrado && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                    <EllipsisVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => onEdit(evento)}
+                    disabled={isEncerrado}
+                    className={isEncerrado ? "opacity-50" : ""}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onDelete(evento)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 

@@ -1,31 +1,33 @@
 
 
-## Melhorias visuais para eventos encerrados
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-### Problema identificado
-Atualmente o código já possui a lógica `isEncerrado` e um badge "Encerrado", mas:
-1. O menu de ações (ellipsis) ainda aparece (mesmo com "Editar" desabilitado)
-2. O card tem a mesma cor que eventos ativos
-3. Pode confundir usuários tentando editar algo já finalizado
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Solução
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-Três mudanças no componente `EventCard` (linhas 70-153):
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-**1. Ocultar menu de ações quando encerrado**
-- Envolver o `DropdownMenu` (linhas 96-117) em condicional `{!isEncerrado && ...}`
-- Usuário não verá opção de editar evento passado
+### Change 2 — `src/lib/formatters.ts`
 
-**2. Card com visual "inativo"**
-- Adicionar prop `className` condicional no `<Card>` (linha 82)
-- Quando `isEncerrado`: aplicar opacidade reduzida + borda mais suave
-- Exemplo: `className={isEncerrado ? "opacity-60 bg-muted/40" : ""}`
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-**3. Texto do nome em tom neutro**
-- Mudar `text-foreground` → `text-muted-foreground` quando encerrado (linha 86)
-- Reforça visualmente que o evento já passou
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-### Resultado esperado
-- Eventos ativos: card normal, menu visível
-- Eventos encerrados: card com visual desbotado, sem menu de ações, badge "Encerrado" vermelho
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
+
+No other files are touched.
 
