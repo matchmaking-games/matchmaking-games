@@ -791,16 +791,18 @@ export type Database = {
           descricao: string | null
           descricao_rich: Json | null
           destaque: boolean | null
-          engine: string | null
+          engine: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id: string | null
           fim: string | null
-          genero: string[] | null
+          genero: Database["public"]["Enums"]["genero_projeto"][] | null
           id: string
           imagem_capa_url: string | null
           inicio: string | null
           ordem: number | null
           papel: string | null
-          plataformas: string[] | null
+          plataformas:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
           slug: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url: string | null
@@ -818,16 +820,18 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
-          engine?: string | null
+          engine?: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id?: string | null
           fim?: string | null
-          genero?: string[] | null
+          genero?: Database["public"]["Enums"]["genero_projeto"][] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
-          plataformas?: string[] | null
+          plataformas?:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
           slug?: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -845,16 +849,18 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
-          engine?: string | null
+          engine?: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id?: string | null
           fim?: string | null
-          genero?: string[] | null
+          genero?: Database["public"]["Enums"]["genero_projeto"][] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
-          plataformas?: string[] | null
+          plataformas?:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
           slug?: string | null
           status?: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -1442,6 +1448,32 @@ export type Database = {
     }
     Enums: {
       categoria_habilidade: "habilidades" | "softwares"
+      engine_projeto:
+        | "unity"
+        | "unreal"
+        | "godot"
+        | "gamemaker"
+        | "construct"
+        | "rpg_maker"
+        | "defold"
+        | "cocos"
+        | "pygame"
+        | "custom"
+        | "renpy"
+        | "heaps"
+        | "bevy"
+        | "flax"
+        | "cryengine"
+        | "source_2"
+        | "gdevelop"
+        | "solar2d"
+        | "bitsy"
+        | "pico_8"
+        | "adventure_game_studio"
+        | "openfl"
+        | "monogame"
+        | "stride"
+        | "outro"
       especialidade_estudio:
         | "Mobile"
         | "PC"
@@ -1452,9 +1484,101 @@ export type Database = {
         | "AA"
         | "AAA"
         | "F2P"
+      genero_projeto:
+        | "acao"
+        | "aventura"
+        | "rpg"
+        | "estrategia"
+        | "simulacao"
+        | "esportes"
+        | "corrida"
+        | "puzzle"
+        | "plataforma"
+        | "terror"
+        | "ficcao_cientifica"
+        | "casual"
+        | "idle"
+        | "tower_defense"
+        | "battle_royale"
+        | "mmo"
+        | "visual_novel"
+        | "metroidvania"
+        | "roguelike"
+        | "roguelite"
+        | "soulslike"
+        | "sandbox"
+        | "sobrevivencia"
+        | "musical"
+        | "luta"
+        | "tiro_fps"
+        | "tiro_tps"
+        | "card_game"
+        | "party_game"
+        | "educativo"
+        | "hack_and_slash"
+        | "stealth"
+        | "point_and_click"
+        | "walking_simulator"
+        | "bullet_hell"
+        | "shoot_em_up"
+        | "beat_em_up"
+        | "jrpg"
+        | "wrpg"
+        | "tactical_rpg"
+        | "dungeon_crawler"
+        | "arpg"
+        | "rts"
+        | "tbs"
+        | "grand_strategy"
+        | "4x"
+        | "auto_battler"
+        | "tycoon"
+        | "life_sim"
+        | "farming_sim"
+        | "god_game"
+        | "immersive_sim"
+        | "survivors_like"
+        | "hidden_object"
+        | "social_deduction"
+        | "trivia"
+        | "pinball"
+        | "ritmo"
+        | "fmv"
+        | "terror_psicologico"
+        | "survival_horror"
+        | "moba"
+        | "clicker"
+        | "deckbuilder"
+        | "metajogo"
+        | "noir"
+        | "fantasia"
+        | "cyberpunk"
+        | "steampunk"
+        | "outro"
       modalidade_trabalho: "presencial" | "hibrido" | "remoto"
       nivel_habilidade: "basico" | "intermediario" | "avancado" | "expert"
       nivel_vaga: "iniciante" | "junior" | "pleno" | "senior" | "lead"
+      plataforma_projeto:
+        | "pc_windows"
+        | "pc_linux"
+        | "pc_macos"
+        | "mobile_android"
+        | "mobile_ios"
+        | "console_playstation_4"
+        | "console_playstation_5"
+        | "console_xbox_one"
+        | "console_xbox_series"
+        | "console_nintendo_switch"
+        | "web_browser"
+        | "vr_meta_quest"
+        | "vr_steamvr"
+        | "vr_psvr"
+        | "ar_core"
+        | "ar_kit"
+        | "arcade"
+        | "cloud_gaming"
+        | "handheld_retro"
+        | "outro"
       status_candidatura:
         | "pendente"
         | "visualizada"
@@ -1612,6 +1736,33 @@ export const Constants = {
   public: {
     Enums: {
       categoria_habilidade: ["habilidades", "softwares"],
+      engine_projeto: [
+        "unity",
+        "unreal",
+        "godot",
+        "gamemaker",
+        "construct",
+        "rpg_maker",
+        "defold",
+        "cocos",
+        "pygame",
+        "custom",
+        "renpy",
+        "heaps",
+        "bevy",
+        "flax",
+        "cryengine",
+        "source_2",
+        "gdevelop",
+        "solar2d",
+        "bitsy",
+        "pico_8",
+        "adventure_game_studio",
+        "openfl",
+        "monogame",
+        "stride",
+        "outro",
+      ],
       especialidade_estudio: [
         "Mobile",
         "PC",
@@ -1623,9 +1774,103 @@ export const Constants = {
         "AAA",
         "F2P",
       ],
+      genero_projeto: [
+        "acao",
+        "aventura",
+        "rpg",
+        "estrategia",
+        "simulacao",
+        "esportes",
+        "corrida",
+        "puzzle",
+        "plataforma",
+        "terror",
+        "ficcao_cientifica",
+        "casual",
+        "idle",
+        "tower_defense",
+        "battle_royale",
+        "mmo",
+        "visual_novel",
+        "metroidvania",
+        "roguelike",
+        "roguelite",
+        "soulslike",
+        "sandbox",
+        "sobrevivencia",
+        "musical",
+        "luta",
+        "tiro_fps",
+        "tiro_tps",
+        "card_game",
+        "party_game",
+        "educativo",
+        "hack_and_slash",
+        "stealth",
+        "point_and_click",
+        "walking_simulator",
+        "bullet_hell",
+        "shoot_em_up",
+        "beat_em_up",
+        "jrpg",
+        "wrpg",
+        "tactical_rpg",
+        "dungeon_crawler",
+        "arpg",
+        "rts",
+        "tbs",
+        "grand_strategy",
+        "4x",
+        "auto_battler",
+        "tycoon",
+        "life_sim",
+        "farming_sim",
+        "god_game",
+        "immersive_sim",
+        "survivors_like",
+        "hidden_object",
+        "social_deduction",
+        "trivia",
+        "pinball",
+        "ritmo",
+        "fmv",
+        "terror_psicologico",
+        "survival_horror",
+        "moba",
+        "clicker",
+        "deckbuilder",
+        "metajogo",
+        "noir",
+        "fantasia",
+        "cyberpunk",
+        "steampunk",
+        "outro",
+      ],
       modalidade_trabalho: ["presencial", "hibrido", "remoto"],
       nivel_habilidade: ["basico", "intermediario", "avancado", "expert"],
       nivel_vaga: ["iniciante", "junior", "pleno", "senior", "lead"],
+      plataforma_projeto: [
+        "pc_windows",
+        "pc_linux",
+        "pc_macos",
+        "mobile_android",
+        "mobile_ios",
+        "console_playstation_4",
+        "console_playstation_5",
+        "console_xbox_one",
+        "console_xbox_series",
+        "console_nintendo_switch",
+        "web_browser",
+        "vr_meta_quest",
+        "vr_steamvr",
+        "vr_psvr",
+        "ar_core",
+        "ar_kit",
+        "arcade",
+        "cloud_gaming",
+        "handheld_retro",
+        "outro",
+      ],
       status_candidatura: [
         "pendente",
         "visualizada",
