@@ -284,7 +284,10 @@ export default function EventsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteEvento.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteConfirm();
+              }}
               disabled={deleteEvento.isPending}
               variant="destructive"
             >

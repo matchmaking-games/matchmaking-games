@@ -1,46 +1,33 @@
 
 
-## Diagnóstico: Overlay travando após ação
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-### Problema identificado
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-Após analisar o código de `Events.tsx`, `useDeleteEvento.ts` e os componentes de dialog, identifiquei a causa:
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-O `AlertDialogAction` do Radix tem comportamento padrão de **fechar o dialog automaticamente** ao ser clicado. Porém, o código também tenta fechar o dialog manualmente no `onSettled` da mutation. Isso cria uma **race condition**:
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-1. Usuário clica "Excluir"
-2. `onClick` dispara `handleDeleteConfirm()` (mutation inicia)
-3. Radix fecha o dialog automaticamente via `onOpenChange(false)`
-4. O overlay começa animação de saída
-5. `onSettled` tenta fechar novamente (`setDeleteDialogOpen(false)`)
+### Change 2 — `src/lib/formatters.ts`
 
-Essa desincronização pode deixar o **overlay do AlertDialog (bg-black/80 fixed inset-0)** visível, bloqueando toda interação.
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-### Solução
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-Impedir o fechamento automático do Radix e controlar manualmente:
-
-**Arquivo: `src/pages/dashboard/Events.tsx`**
-
-```tsx
-// Linha 286-291: Modificar AlertDialogAction
-<AlertDialogAction
-  onClick={(e) => {
-    e.preventDefault(); // Impede fechamento automático
-    handleDeleteConfirm();
-  }}
-  disabled={deleteEvento.isPending}
-  variant="destructive"
->
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Com `e.preventDefault()`, o dialog só fecha quando `onSettled` executa `setDeleteDialogOpen(false)`, garantindo sincronização correta.
-
-### Detalhes técnicos
-
-| Fluxo atual (bugado) | Fluxo corrigido |
-|---|---|
-| Click → mutation inicia → dialog fecha imediatamente → onSettled tenta fechar de novo | Click → mutation inicia → dialog permanece aberto → mutation termina → onSettled fecha dialog |
-
-O dialog ficará visível com "Excluindo..." durante a requisição, e só fechará após conclusão.
+No other files are touched.
 
