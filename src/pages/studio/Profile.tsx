@@ -365,7 +365,7 @@ export default function StudioProfile() {
         estado: estado || null,
         cidade: cidade || null,
         tamanho: tamanho || null,
-        especialidades: especialidades.length > 0 ? especialidades : null,
+        especialidades: (especialidades.length > 0 ? especialidades : null) as any,
         fundado_em: fundadoEm || null,
         logo_url: logoUrl,
         atualizado_em: new Date().toISOString(),
