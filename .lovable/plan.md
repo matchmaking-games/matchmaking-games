@@ -1,33 +1,48 @@
 
+## TASK-E05: Dropdown "Explorar" no Header
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+### Arquivo único a editar
+`src/components/layout/Header.tsx`
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+### Mudanças exatas
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+**1. Imports** — Adicionar ao topo:
+- `NavigationMenu`, `NavigationMenuContent`, `NavigationMenuItem`, `NavigationMenuList`, `NavigationMenuTrigger` de `@/components/ui/navigation-menu`
+- `CalendarRange`, `Users`, `Building2`, `Layers` do `lucide-react` (junto aos ícones já importados)
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
-
-### Change 2 — `src/lib/formatters.ts`
-
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
-
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
-
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+**2. Array `exploreItems`** — Declarar antes do componente `Header`:
+```
+Eventos      /events        CalendarRange
+Profissionais /professionals Users
+Estúdios     /studios       Building2
+Projetos     /projects      Layers
 ```
 
-No other files are touched.
+**3. Desktop (linha 134)** — Após o link "Vagas", antes do bloco `{isLoading ? ...}`, inserir:
+```
+NavigationMenu
+  └─ NavigationMenuList
+       └─ NavigationMenuItem
+            ├─ NavigationMenuTrigger → "Explorar"
+            └─ NavigationMenuContent
+                 └─ ul.w-64.p-2
+                      └─ {exploreItems.map} → li > Link > div.flex.items-start.gap-3
+                           ├─ Icon h-5 w-5 text-muted-foreground mt-0.5
+                           └─ div
+                                ├─ p.font-medium
+                                └─ p.text-sm.text-muted-foreground
+```
 
+**4. Mobile (linha 61)** — Após o link "Vagas" (linha 61), antes do bloco `{isAuthenticated && ...}`, inserir 4 links com mesmo padrão visual dos outros links mobile:
+- `CalendarRange` → `/events` → "Eventos"
+- `Users` → `/professionals` → "Profissionais"  
+- `Building2` → `/studios` → "Estúdios"
+- `Layers` → `/projects` → "Projetos"
+
+### O que NÃO muda
+- Toda lógica de autenticação
+- Link "Vagas" desktop e mobile
+- Botões "Painel", "Entrar", "Criar Conta", avatar dropdown
+- Links "Painel", "Configurações" e "Sair" no mobile
+- Logo, altura, z-index, border, bg do header
+- Nenhum outro arquivo
