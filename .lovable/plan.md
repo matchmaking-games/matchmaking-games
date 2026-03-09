@@ -1,33 +1,35 @@
 
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+## Implementar edição de evento
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+### Abordagem
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+Reutilizar o `EventForm` existente para criar e editar, passando o ID do evento via rota. O formulário detecta se está em modo de edição pelo parâmetro `:id` na URL.
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+### Alterações
 
-### Change 2 — `src/lib/formatters.ts`
+**1. Rota — `src/App.tsx`**
+- Adicionar rota `/dashboard/events/:id/edit` apontando para `EventForm`
 
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+**2. Hook `useUpdateEvento` — `src/hooks/useUpdateEvento.ts`** (novo)
+- `useMutation` que faz `supabase.from("eventos").update({...}).eq("id", id)`
+- Invalida queries `["eventos", "meus"]` e `["eventos", "publicos"]`
+- Toast de sucesso/erro
 
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
+**3. Hook `useEventoById` — `src/hooks/useEventoById.ts`** (novo)
+- `useQuery` que busca um evento por ID: `supabase.from("eventos").select("*").eq("id", id).single()`
+- Habilitado apenas quando `id` existe
 
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
-```
+**4. `src/pages/dashboard/EventForm.tsx`**
+- Importar `useParams` do react-router-dom para ler `:id`
+- Importar `useEventoById` e `useUpdateEvento`
+- Se `id` existe: buscar evento, popular o formulário com `form.reset()` quando os dados carregam
+- Parsing dos dados existentes: extrair `dateRange` (from/to como Date), `horario_inicio`, `horario_fim` a partir de `data_inicio`/`data_fim`
+- No `onSubmit`: se editando, chamar `updateEvento` ao invés de `createEvento`
+- Título dinâmico: "Editar Evento" vs "Criar Evento"
+- Botão dinâmico: "Salvar Alterações" vs "Criar Evento"
+- Mostrar skeleton/loading enquanto carrega dados no modo edição
 
-No other files are touched.
+**5. `src/pages/dashboard/Events.tsx`**
+- `handleEdit`: navegar para `/dashboard/events/${evento.id}/edit`
 
