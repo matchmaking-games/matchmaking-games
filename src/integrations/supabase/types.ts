@@ -323,6 +323,7 @@ export type Database = {
           logo_url: string | null
           nome: string
           pinterest_url: string | null
+          search_vector: unknown
           slug: string
           sobre: string | null
           steam_url: string | null
@@ -355,6 +356,7 @@ export type Database = {
           logo_url?: string | null
           nome: string
           pinterest_url?: string | null
+          search_vector?: unknown
           slug: string
           sobre?: string | null
           steam_url?: string | null
@@ -387,6 +389,7 @@ export type Database = {
           logo_url?: string | null
           nome?: string
           pinterest_url?: string | null
+          search_vector?: unknown
           slug?: string
           sobre?: string | null
           steam_url?: string | null
@@ -1409,6 +1412,31 @@ export type Database = {
           tipo_trabalho_preferido: string[]
           titulo_profissional: string
           total_habilidades: number
+        }[]
+      }
+      search_studios: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_especialidades?: string[]
+          p_estado?: string
+          p_limit?: number
+          p_search?: string
+          p_tamanho?: string
+        }
+        Returns: {
+          cidade: string
+          criado_em: string
+          especialidades: string[]
+          estado: string
+          id: string
+          logo_url: string
+          nome: string
+          rank: number
+          slug: string
+          sobre: string
+          tamanho: string
+          website: string
         }[]
       }
     }

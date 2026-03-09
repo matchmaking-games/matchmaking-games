@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateEvento } from "@/hooks/useCreateEvento";
+import { useUpdateEvento } from "@/hooks/useUpdateEvento";
+import { useEventoById } from "@/hooks/useEventoById";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useIBGELocations } from "@/hooks/useIBGELocations";
 import type { DateRange } from "react-day-picker";
 
@@ -160,9 +163,14 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
 }
 
 export default function EventForm() {
+  const { id } = useParams<{ id: string }>();
+  const isEditing = !!id;
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { mutateAsync: createEvento, isPending } = useCreateEvento();
+  const { mutateAsync: createEvento, isPending: isCreating } = useCreateEvento();
+  const { mutateAsync: updateEvento, isPending: isUpdating } = useUpdateEvento();
+  const { data: eventoData, isLoading: isLoadingEvento } = useEventoById(id);
+  const isPending = isCreating || isUpdating;
   const {
     estados,
     municipios,
@@ -184,6 +192,41 @@ export default function EventForm() {
       link_externo: "",
     },
   });
+
+  // Populate form when editing
+  const [formPopulated, setFormPopulated] = useState(false);
+  useEffect(() => {
+    if (!eventoData || formPopulated) return;
+
+    const dInicio = new Date(eventoData.data_inicio);
+    const dFim = new Date(eventoData.data_fim);
+
+    const tz = "America/Sao_Paulo";
+    const hInicio = dInicio.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+    const hFim = dFim.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+
+    // Pre-fetch municipalities if there's a state
+    if (eventoData.estado) {
+      fetchMunicipios(eventoData.estado);
+    }
+
+    form.reset({
+      nome: eventoData.nome,
+      descricao: eventoData.descricao || "",
+      dateRange: {
+        from: new Date(dInicio.toLocaleDateString("en-CA", { timeZone: tz })),
+        to: new Date(dFim.toLocaleDateString("en-CA", { timeZone: tz })),
+      },
+      horario_inicio: hInicio,
+      horario_fim: hFim,
+      modalidade: eventoData.modalidade as "presencial" | "hibrido" | "online",
+      estado: eventoData.estado || "",
+      cidade: eventoData.cidade || "",
+      endereco: eventoData.endereco || "",
+      link_externo: eventoData.link_externo || "",
+    });
+    setFormPopulated(true);
+  }, [eventoData, formPopulated, form, fetchMunicipios]);
 
   const { isDirty } = form.formState;
   const modalidade = form.watch("modalidade");
@@ -228,7 +271,7 @@ export default function EventForm() {
       const dataInicio = `${fromDate}T${data.horario_inicio}:00-03:00`;
       const dataFim = `${toDate}T${data.horario_fim}:00-03:00`;
 
-      await createEvento({
+      const payload = {
         nome: data.nome,
         descricao: data.descricao || undefined,
         data_inicio: dataInicio,
@@ -238,13 +281,19 @@ export default function EventForm() {
         cidade: showLocation ? data.cidade : undefined,
         endereco: showLocation ? data.endereco : undefined,
         link_externo: data.link_externo || undefined,
-      });
+      };
 
-      toast({ title: "Evento criado com sucesso!" });
+      if (isEditing) {
+        await updateEvento({ id: id!, ...payload });
+      } else {
+        await createEvento(payload);
+        toast({ title: "Evento criado com sucesso!" });
+      }
+
       navigate("/dashboard/events");
     } catch {
       toast({
-        title: "Erro ao criar evento. Tente novamente.",
+        title: isEditing ? "Erro ao atualizar evento. Tente novamente." : "Erro ao criar evento. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -259,9 +308,17 @@ export default function EventForm() {
               <ArrowLeft className="h-4 w-4" />
               Voltar para eventos
             </Button>
-            {/* Header */}
+            {isEditing && isLoadingEvento ? (
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+            <>
             <h1 className="font-display font-bold text-3xl text-foreground">
-              Criar Evento
+              {isEditing ? "Editar Evento" : "Criar Evento"}
             </h1>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -426,7 +483,7 @@ export default function EventForm() {
                       <FormLabel>Modalidade<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -574,12 +631,14 @@ export default function EventForm() {
                         Salvando...
                       </>
                     ) : (
-                      "Criar Evento"
+                      isEditing ? "Salvar Alterações" : "Criar Evento"
                     )}
                   </Button>
                 </div>
               </form>
             </Form>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>
