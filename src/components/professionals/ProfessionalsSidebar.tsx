@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -25,12 +24,6 @@ interface ProfessionalsSidebarProps {
   onClearAll: () => void;
   activeFilterCount: number;
 }
-
-const MODALIDADES = [
-  { value: "remoto", label: "Remoto" },
-  { value: "hibrido", label: "Híbrido" },
-  { value: "presencial", label: "Presencial" },
-] as const;
 
 function groupSkillsByCategory(skills: Habilidade[]) {
   return {
@@ -72,14 +65,6 @@ export function ProfessionalsSidebar({
     onHabilidadesChange([...otherCategories, ...newSelected]);
   };
 
-  const handleModalidadeToggle = (value: string, checked: boolean) => {
-    const current = filters.tipoTrabalho || [];
-    const next = checked
-      ? [...current, value]
-      : current.filter((v) => v !== value);
-    onFilterChange("trabalho", next.length > 0 ? next.join(",") : null);
-  };
-
   const handleEstadoChange = (value: string) => {
     onEstadoChange(value === "__all__" ? null : value);
   };
@@ -106,42 +91,38 @@ export function ProfessionalsSidebar({
 
       {/* Disponibilidade */}
       <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="disponivel"
-            checked={filters.disponivel === true}
-            onCheckedChange={(checked) =>
-              onFilterChange("disponivel", checked ? "true" : null)
-            }
-          />
-          <Label htmlFor="disponivel" className="text-sm cursor-pointer">
-            Apenas disponíveis para trabalho
-          </Label>
-        </div>
+        <Label className="text-sm">Disponibilidade</Label>
+        <Select
+          value={filters.disponivel === true ? "disponivel" : "__all__"}
+          onValueChange={(v) => onFilterChange("disponivel", v === "__all__" ? null : "true")}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos</SelectItem>
+            <SelectItem value="disponivel">Apenas disponíveis</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Modalidade */}
       <div className="space-y-2">
         <Label className="text-sm">Modalidade</Label>
-        <div className="space-y-2">
-          {MODALIDADES.map((m) => (
-            <div key={m.value} className="flex items-center space-x-2">
-              <Checkbox
-                id={`modalidade-${m.value}`}
-                checked={(filters.tipoTrabalho || []).includes(m.value)}
-                onCheckedChange={(checked) =>
-                  handleModalidadeToggle(m.value, !!checked)
-                }
-              />
-              <Label
-                htmlFor={`modalidade-${m.value}`}
-                className="text-sm cursor-pointer"
-              >
-                {m.label}
-              </Label>
-            </div>
-          ))}
-        </div>
+        <Select
+          value={(filters.tipoTrabalho && filters.tipoTrabalho.length === 1) ? filters.tipoTrabalho[0] : "__all__"}
+          onValueChange={(v) => onFilterChange("trabalho", v === "__all__" ? null : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todas as modalidades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todas as modalidades</SelectItem>
+            <SelectItem value="presencial">Presencial</SelectItem>
+            <SelectItem value="hibrido">Híbrido</SelectItem>
+            <SelectItem value="remoto">Remoto</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Estado */}
