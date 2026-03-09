@@ -40,9 +40,8 @@ const eventoSchema = z
       .max(150, "O nome deve ter no máximo 150 caracteres"),
     descricao: z
       .string()
-      .max(1000, "A descrição deve ter no máximo 1000 caracteres")
-      .optional()
-      .or(z.literal("")),
+      .min(10, "A descrição deve ter pelo menos 10 caracteres")
+      .max(1000, "A descrição deve ter no máximo 1000 caracteres"),
     dateRange: z.object(
       {
         from: z.date({ required_error: "Selecione a data de início" }),
@@ -66,12 +65,8 @@ const eventoSchema = z
     endereco: z.string().optional().or(z.literal("")),
     link_externo: z
       .string()
-      .optional()
-      .or(z.literal(""))
-      .refine(
-        (val) => !val || z.string().url().safeParse(val).success,
-        "Informe uma URL válida"
-      ),
+      .min(1, "Informe o link do evento")
+      .url("Informe uma URL válida (ex: https://...)"),
   })
   .superRefine((data, ctx) => {
     if (data.modalidade !== "online") {
@@ -87,6 +82,13 @@ const eventoSchema = z
           code: z.ZodIssueCode.custom,
           message: "Selecione a cidade",
           path: ["cidade"],
+        });
+      }
+      if (!data.endereco) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o endereço do evento",
+          path: ["endereco"],
         });
       }
     }
@@ -258,7 +260,7 @@ export default function EventForm() {
                   name="nome"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do evento</FormLabel>
+                      <FormLabel>Nome do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ex: Global Game Jam São Paulo 2025"
@@ -276,7 +278,7 @@ export default function EventForm() {
                   name="descricao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>Descrição<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                     <Textarea
                       placeholder="Descreva o evento, programação, público-alvo..."
@@ -303,7 +305,7 @@ export default function EventForm() {
                   name="dateRange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Período do evento</FormLabel>
+                      <FormLabel>Período do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <div>
                           <div className="flex justify-center">
@@ -356,7 +358,7 @@ export default function EventForm() {
                     name="horario_inicio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Horário de início</FormLabel>
+                        <FormLabel>Horário de início<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                           <TimeSelect
                             value={field.value}
@@ -375,7 +377,7 @@ export default function EventForm() {
                     name="horario_fim"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Horário de fim</FormLabel>
+                        <FormLabel>Horário de fim<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                           <TimeSelect
                             value={field.value}
@@ -397,7 +399,7 @@ export default function EventForm() {
                   name="modalidade"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Modalidade</FormLabel>
+                      <FormLabel>Modalidade<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
@@ -428,7 +430,7 @@ export default function EventForm() {
                         name="estado"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Estado</FormLabel>
+                            <FormLabel>Estado<span className="text-destructive ml-1">*</span></FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
@@ -460,7 +462,7 @@ export default function EventForm() {
                         name="cidade"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cidade</FormLabel>
+                            <FormLabel>Cidade<span className="text-destructive ml-1">*</span></FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
@@ -497,7 +499,7 @@ export default function EventForm() {
                       name="endereco"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Endereço</FormLabel>
+                          <FormLabel>Endereço<span className="text-destructive ml-1">*</span></FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo"
@@ -520,7 +522,7 @@ export default function EventForm() {
                   name="link_externo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Link para mais detalhes</FormLabel>
+                      <FormLabel>Link para mais detalhes<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="https://..." {...field} />
                       </FormControl>

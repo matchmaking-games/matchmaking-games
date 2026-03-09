@@ -975,6 +975,7 @@ export type Database = {
           pinterest_url: string | null
           portfolio_url: string | null
           pronomes: string | null
+          search_vector: unknown
           slug: string
           sobre: string | null
           steam_url: string | null
@@ -1014,6 +1015,7 @@ export type Database = {
           pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
+          search_vector?: unknown
           slug: string
           sobre?: string | null
           steam_url?: string | null
@@ -1053,6 +1055,7 @@ export type Database = {
           pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
+          search_vector?: unknown
           slug?: string
           sobre?: string | null
           steam_url?: string | null
@@ -1374,6 +1377,34 @@ export type Database = {
       expirar_vagas_antigas: { Args: never; Returns: number }
       get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
       is_estudio_member: { Args: { p_estudio_id: string }; Returns: boolean }
+      search_professionals: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_disponivel?: boolean
+          p_estado?: string
+          p_habilidades?: string[]
+          p_limit?: number
+          p_search?: string
+          p_tipo_trabalho?: string[]
+        }
+        Returns: {
+          avatar_url: string
+          bio_curta: string
+          cidade: string
+          criado_em: string
+          disponivel_para_trabalho: boolean
+          estado: string
+          habilidades: Json
+          id: string
+          nome_completo: string
+          rank: number
+          slug: string
+          tipo_trabalho_preferido: string[]
+          titulo_profissional: string
+          total_habilidades: number
+        }[]
+      }
     }
     Enums: {
       categoria_habilidade: "habilidades" | "softwares"

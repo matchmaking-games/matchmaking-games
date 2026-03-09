@@ -1,97 +1,33 @@
 
-I have read the full file (562 lines). Here is the exact plan with precise line numbers.
 
-## Current state audit
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-**Schema issues (lines 41-74):**
-- `descricao`: optional + `.or(z.literal(""))` — needs to become required with min(10)/max(1000)
-- `link_externo`: optional + custom refine — needs to become `z.string().min(1).url()`
-- `superRefine` (lines 76-93): only validates `estado` and `cidade` — needs to also validate `endereco`
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-**Labels — none have asterisks yet:**
-- Line 261: `Nome do evento`
-- Line 279: `Descrição`
-- Line 306: `Período do evento`
-- Line 359: `Horário de início`
-- Line 378: `Horário de fim`
-- Line 400: `Modalidade`
-- Line 431: `Estado` (conditional)
-- Line 463: `Cidade` (conditional)
-- Line 500: `Endereço` (conditional)
-- Line 523: `Link para mais detalhes`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-**FormMessage audit — all present:**
-- `nome`: line 268 ✓
-- `descricao`: line 295 ✓ (after char counter div — correct)
-- `dateRange`: line 347 ✓
-- `horario_inicio`: line 369 ✓ (below TimeSelect, after BRT note — correct)
-- `horario_fim`: line 388 ✓
-- `modalidade`: line 416 ✓
-- `estado`: line 452 ✓
-- `cidade`: line 488 ✓
-- `endereco`: line 510 ✓
-- `link_externo`: line 530 ✓
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-All FormMessages are in place. No CSS is hiding them. Only schema + asterisks need changing.
+### Change 2 — `src/lib/formatters.ts`
 
-## Changes
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-### 1. Schema — lines 41-93
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-Replace `descricao` field (lines 41-45):
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-descricao: z
-  .string()
-  .min(10, "A descrição deve ter pelo menos 10 caracteres")
-  .max(1000, "A descrição deve ter no máximo 1000 caracteres"),
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-Replace `link_externo` field (lines 67-74):
-```ts
-link_externo: z
-  .string()
-  .min(1, "Informe o link do evento")
-  .url("Informe uma URL válida (ex: https://...)"),
-```
+No other files are touched.
 
-Replace `superRefine` body (lines 76-93) to add `endereco` validation:
-```ts
-.superRefine((data, ctx) => {
-  if (data.modalidade !== "online") {
-    if (!data.estado) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o estado", path: ["estado"] });
-    }
-    if (!data.cidade) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione a cidade", path: ["cidade"] });
-    }
-    if (!data.endereco) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o endereço do evento", path: ["endereco"] });
-    }
-  }
-});
-```
-
-Also update `defaultValues` — `descricao: ""` will now fail validation on submit (min 10), which is correct. No change needed to defaultValues.
-
-### 2. Asterisks — 10 label changes
-
-Each `<FormLabel>Text</FormLabel>` becomes `<FormLabel>Text<span className="text-destructive ml-1">*</span></FormLabel>`:
-
-| Line | Label |
-|------|-------|
-| 261 | Nome do evento |
-| 279 | Descrição |
-| 306 | Período do evento |
-| 359 | Horário de início |
-| 378 | Horário de fim |
-| 400 | Modalidade |
-| 431 | Estado |
-| 463 | Cidade |
-| 500 | Endereço |
-| 523 | Link para mais detalhes |
-
-### 3. No FormMessage changes needed
-All 10 fields already have `<FormMessage />` in the correct position.
-
-### Files modified
-Only `src/pages/dashboard/EventForm.tsx`.
