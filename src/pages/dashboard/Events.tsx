@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, CalendarDays, Clock, MapPin, CalendarRange, EllipsisVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, CalendarDays, Clock, MapPin, CalendarRange, EllipsisVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,9 +102,14 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
+                    onClick={() => window.open(`/eventos?id=${evento.id}`, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Ver evento
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
                     onClick={() => onEdit(evento)}
-                    disabled={isEncerrado}
-                    className={isEncerrado ? "opacity-50" : ""}
                   >
                     <Pencil className="h-4 w-4 mr-2" />
                     Editar
