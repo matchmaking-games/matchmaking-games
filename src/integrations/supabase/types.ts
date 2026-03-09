@@ -803,6 +803,7 @@ export type Database = {
           plataformas:
             | Database["public"]["Enums"]["plataforma_projeto"][]
             | null
+          search_vector: unknown
           slug: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url: string | null
@@ -832,6 +833,7 @@ export type Database = {
           plataformas?:
             | Database["public"]["Enums"]["plataforma_projeto"][]
             | null
+          search_vector?: unknown
           slug?: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -861,6 +863,7 @@ export type Database = {
           plataformas?:
             | Database["public"]["Enums"]["plataforma_projeto"][]
             | null
+          search_vector?: unknown
           slug?: string | null
           status?: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -1418,6 +1421,44 @@ export type Database = {
           tipo_trabalho_preferido: string[]
           titulo_profissional: string
           total_habilidades: number
+        }[]
+      }
+      search_projects: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_engine?: string
+          p_genero?: string[]
+          p_limit?: number
+          p_plataformas?: string[]
+          p_search?: string
+        }
+        Returns: {
+          codigo_url: string
+          criado_em: string
+          demo_url: string
+          descricao: string
+          destaque: boolean
+          engine: string
+          estudio_id: string
+          estudio_logo_url: string
+          estudio_nome: string
+          estudio_slug: string
+          genero: string[]
+          id: string
+          imagem_capa_url: string
+          plataformas: string[]
+          rank: number
+          slug: string
+          status: string
+          steam_url: string
+          tipo: string
+          titulo: string
+          user_avatar_url: string
+          user_id: string
+          user_nome: string
+          user_slug: string
+          visualizacoes: number
         }[]
       }
       search_studios: {
