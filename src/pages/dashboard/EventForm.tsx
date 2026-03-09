@@ -483,7 +483,7 @@ export default function EventForm() {
                       <FormLabel>Modalidade<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
