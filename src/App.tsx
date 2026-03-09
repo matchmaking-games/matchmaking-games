@@ -157,6 +157,7 @@ const App = () => (
             }
           />
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/professionals" element={<Professionals />} />
           <Route path="/events" element={<Events />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
