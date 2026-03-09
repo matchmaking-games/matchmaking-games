@@ -102,12 +102,11 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    onClick={() => window.open(`/eventos?id=${evento.id}`, "_blank")}
+                    onClick={() => window.open(`/events?id=${evento.id}`, "_blank")}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Ver evento
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => onEdit(evento)}
                   >
