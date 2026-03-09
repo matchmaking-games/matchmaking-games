@@ -386,36 +386,38 @@ export default function EventForm() {
                       <FormLabel>Período do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <div>
-                          <div className="flex justify-between">
-                            <Calendar
-                              mode="range"
-                              selected={field.value as DateRange | undefined}
-                              onSelect={(range) => {
-                                if (!range || !range.from) {
-                                  field.onChange(undefined);
-                                  return;
-                                }
-                                // Se o usuário clicou no mesmo dia que já era o from e não há to,
-                                // significa que quer resetar a seleção
-                                const current = field.value as DateRange | undefined;
-                                if (
-                                  current?.from &&
-                                  !current?.to &&
-                                  range.from.toDateString() === current.from.toDateString()
-                                ) {
-                                  field.onChange(undefined);
-                                  return;
-                                }
-                                field.onChange({
-                                  from: range.from,
-                                  to: range.to || range.from,
-                                });
-                              }}
-                              locale={ptBR}
-                              className="w-fit rounded-md border border-border"
-                              numberOfMonths={2}
-                            />
-                          </div>
+                          <Calendar
+                            mode="range"
+                            selected={field.value as DateRange | undefined}
+                            onSelect={(range) => {
+                              if (!range || !range.from) {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              // Se o usuário clicou no mesmo dia que já era o from e não há to,
+                              // significa que quer resetar a seleção
+                              const current = field.value as DateRange | undefined;
+                              if (
+                                current?.from &&
+                                !current?.to &&
+                                range.from.toDateString() === current.from.toDateString()
+                              ) {
+                                field.onChange(undefined);
+                                return;
+                              }
+                              field.onChange({
+                                from: range.from,
+                                to: range.to || range.from,
+                              });
+                            }}
+                            locale={ptBR}
+                            className="w-full rounded-md border border-border"
+                            classNames={{
+                              months: "flex flex-col sm:flex-row sm:justify-between w-full",
+                              month: "space-y-4",
+                            }}
+                            numberOfMonths={2}
+                          />
                           {dateRange?.from && (
                             <p className="text-sm text-muted-foreground mt-2">
                               De{" "}
