@@ -1,39 +1,33 @@
 
 
-## Plano: Criar componente ProjectCard para listagem pública
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Criar `src/components/projects/ProjectCard.tsx` seguindo o padrão visual dos cards existentes (ProfessionalCard, StudioCard), com as adaptações para projetos.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-**Nota**: O arquivo `src/components/projects/ProjectCard.tsx` já existe no projeto (é o card do dashboard com dropdown de editar/excluir). O novo componente para a listagem **pública** precisa de um nome diferente para não sobrescrever o existente.
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-Sugiro nomear como `src/components/projects/ProjectSearchCard.tsx` — ou, se preferir sobrescrever o card existente do dashboard, me avise.
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-### Estrutura do componente
+### Change 2 — `src/lib/formatters.ts`
 
-- **Props**: `{ project: ProjectCard }` (tipo de `src/types/project-search.ts`)
-- **Link wrapper**: `<a>` com `target="_blank"`, URL condicional baseada em `estudio_id` vs `user_id`
-- **Card**: mesmas classes dos cards existentes (`bg-card/50 border-border/50 hover:border-primary/50 transition-colors`)
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-### Layout (3 seções verticais)
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-1. **Imagem de capa** — `aspect-video` (16:9), `object-cover` se houver imagem, fallback com `Gamepad2` centralizado em fundo `bg-muted`
-2. **Info** (padding `p-4`):
-   - Linha 1: título (`font-display font-semibold truncate`) + badge engine (`variant="secondary"`, texto de `ENGINE_LABELS`)
-   - Linha 2: até 3 badges plataforma (`variant="outline"`) + overflow `+N`
-   - Linha 3: até 2 badges gênero (`variant="outline"`) + overflow `+N`
-3. **Rodapé** (`border-t border-border/50 pt-3 mt-3`):
-   - Avatar 24px (logo estúdio ou avatar usuário)
-   - Nome do dono (`text-muted-foreground text-sm`)
-   - Badge `variant="secondary"` com "Estúdio" ou "Profissional" à direita (`ml-auto`)
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
 
-### Imports
-- `Card` de `ui/card`
-- `Badge` de `ui/badge`
-- `Avatar, AvatarImage, AvatarFallback` de `ui/avatar`
-- `Gamepad2` de `lucide-react`
-- `ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS` de `constants/project-labels`
-- `ProjectCard as ProjectCardType` de `types/project-search`
-
-### Arquivos afetados
-- `src/components/projects/ProjectSearchCard.tsx` (criar) — nenhum arquivo existente alterado
+No other files are touched.
 
