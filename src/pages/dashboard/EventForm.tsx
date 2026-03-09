@@ -253,12 +253,12 @@ export default function EventForm() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        <Button variant="ghost" onClick={handleNavigateBack} className="gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para eventos
-        </Button>
         <Card>
           <CardContent className="pt-6 space-y-6">
+            <Button variant="ghost" onClick={handleNavigateBack} className="gap-2 -ml-2">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para eventos
+            </Button>
             {/* Header */}
             <h1 className="font-display font-bold text-3xl text-foreground">
               Criar Evento
