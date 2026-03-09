@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -93,6 +94,69 @@ const eventoSchema = z
 
 type EventoFormData = z.infer<typeof eventoSchema>;
 
+const HOURS = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
+const MINUTES = Array.from({ length: 12 }, (_, i) =>
+  String(i * 5).padStart(2, "0")
+);
+
+interface TimeSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function TimeSelect({ value, onChange }: TimeSelectProps) {
+  const [hour, setHour] = useState(() => value?.split(":")[0] ?? "");
+  const [minute, setMinute] = useState(() => value?.split(":")[1] ?? "");
+
+  useEffect(() => {
+    if (value && value.includes(":")) {
+      setHour(value.split(":")[0]);
+      setMinute(value.split(":")[1]);
+    }
+  }, [value]);
+
+  const handleHourChange = (h: string) => {
+    setHour(h);
+    if (minute) onChange(`${h}:${minute}`);
+  };
+
+  const handleMinuteChange = (m: string) => {
+    setMinute(m);
+    if (hour) onChange(`${hour}:${m}`);
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Select value={hour} onValueChange={handleHourChange}>
+        <SelectTrigger className="flex-1">
+          <SelectValue placeholder="HH" />
+        </SelectTrigger>
+        <SelectContent>
+          {HOURS.map((h) => (
+            <SelectItem key={h} value={h}>
+              {h}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={minute} onValueChange={handleMinuteChange}>
+        <SelectTrigger className="flex-1">
+          <SelectValue placeholder="MM" />
+        </SelectTrigger>
+        <SelectContent>
+          {MINUTES.map((m) => (
+            <SelectItem key={m} value={m}>
+              {m}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export default function EventForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -170,7 +234,7 @@ export default function EventForm() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Header — fora do Card */}
         <div className="flex items-center justify-between">
           <h1 className="font-display font-bold text-3xl text-foreground">
             Criar Evento
@@ -185,298 +249,311 @@ export default function EventForm() {
           </Button>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Nome */}
-            <FormField
-              control={form.control}
-              name="nome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do evento</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ex: Global Game Jam São Paulo 2025"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* Formulário dentro do Card */}
+        <Card>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Nome */}
+                <FormField
+                  control={form.control}
+                  name="nome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do evento</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Ex: Global Game Jam São Paulo 2025"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Descrição */}
-            <FormField
-              control={form.control}
-              name="descricao"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descreva o evento, programação, público-alvo..."
-                      rows={4}
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <div className="text-xs text-muted-foreground text-right">
-                    {descricao.length}/1000 caracteres
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Descrição */}
+                <FormField
+                  control={form.control}
+                  name="descricao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Descreva o evento, programação, público-alvo..."
+                          rows={4}
+                          className="resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <div className="text-xs text-muted-foreground text-right">
+                        {descricao.length}/1000 caracteres
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Período do evento */}
-            <FormField
-              control={form.control}
-              name="dateRange"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Período do evento</FormLabel>
-                  <FormControl>
-                    <div>
-                      <Calendar
-                        mode="range"
-                        selected={field.value as DateRange | undefined}
-                        onSelect={(range) => {
-                          if (range) {
-                            field.onChange({
-                              from: range.from,
-                              to: range.to || range.from,
-                            });
-                          }
-                        }}
-                        locale={ptBR}
-                        className="rounded-md border border-border"
-                        numberOfMonths={2}
-                      />
-                      {dateRange?.from && (
-                        <p className="text-sm text-muted-foreground mt-2">
-                          De{" "}
-                          {format(dateRange.from, "dd/MM/yyyy", {
-                            locale: ptBR,
-                          })}
-                          {dateRange.to &&
-                            dateRange.to.getTime() !==
-                              dateRange.from.getTime() && (
-                              <>
-                                {" "}
-                                até{" "}
-                                {format(dateRange.to, "dd/MM/yyyy", {
-                                  locale: ptBR,
-                                })}
-                              </>
-                            )}
-                        </p>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Período do evento */}
+                <FormField
+                  control={form.control}
+                  name="dateRange"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Período do evento</FormLabel>
+                      <FormControl>
+                        <div>
+                          <div className="flex justify-center">
+                            <Calendar
+                              mode="range"
+                              selected={field.value as DateRange | undefined}
+                              onSelect={(range) => {
+                                if (range) {
+                                  field.onChange({
+                                    from: range.from,
+                                    to: range.to || range.from,
+                                  });
+                                }
+                              }}
+                              locale={ptBR}
+                              className="w-fit rounded-md border border-border"
+                              numberOfMonths={2}
+                            />
+                          </div>
+                          {dateRange?.from && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              De{" "}
+                              {format(dateRange.from, "dd/MM/yyyy", {
+                                locale: ptBR,
+                              })}
+                              {dateRange.to &&
+                                dateRange.to.getTime() !==
+                                  dateRange.from.getTime() && (
+                                  <>
+                                    {" "}
+                                    até{" "}
+                                    {format(dateRange.to, "dd/MM/yyyy", {
+                                      locale: ptBR,
+                                    })}
+                                  </>
+                                )}
+                            </p>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Horários */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="horario_inicio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário de início</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground">
-                      Horário de Brasília (BRT)
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="horario_fim"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horário de fim</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground">
-                      Horário de Brasília (BRT)
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Modalidade */}
-            <FormField
-              control={form.control}
-              name="modalidade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Modalidade</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a modalidade" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="presencial">Presencial</SelectItem>
-                      <SelectItem value="hibrido">Híbrido</SelectItem>
-                      <SelectItem value="online">Online</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Localização condicional */}
-            {showLocation && (
-              <>
+                {/* Horários */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Estado */}
                   <FormField
                     control={form.control}
-                    name="estado"
+                    name="horario_inicio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o estado" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {estados.map((estado) => (
-                              <SelectItem
-                                key={estado.sigla}
-                                value={estado.sigla}
-                              >
-                                {estado.sigla} — {estado.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Horário de início</FormLabel>
+                        <FormControl>
+                          <TimeSelect
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          Horário de Brasília (BRT)
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {/* Cidade */}
                   <FormField
                     control={form.control}
-                    name="cidade"
+                    name="horario_fim"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cidade</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={!estadoSelecionado || loadingMunicipios}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={
-                                  loadingMunicipios
-                                    ? "Carregando cidades..."
-                                    : "Selecione a cidade"
-                                }
-                              />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {municipios.map((m) => (
-                              <SelectItem key={m.id} value={m.nome}>
-                                {m.nome}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Horário de fim</FormLabel>
+                        <FormControl>
+                          <TimeSelect
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          Horário de Brasília (BRT)
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
 
-                {/* Endereço */}
+                {/* Modalidade */}
                 <FormField
                   control={form.control}
-                  name="endereco"
+                  name="modalidade"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Endereço</FormLabel>
+                      <FormLabel>Modalidade</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a modalidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="presencial">Presencial</SelectItem>
+                          <SelectItem value="hibrido">Híbrido</SelectItem>
+                          <SelectItem value="online">Online</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Localização condicional */}
+                {showLocation && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Estado */}
+                      <FormField
+                        control={form.control}
+                        name="estado"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Estado</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o estado" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {estados.map((estado) => (
+                                  <SelectItem
+                                    key={estado.sigla}
+                                    value={estado.sigla}
+                                  >
+                                    {estado.sigla} — {estado.nome}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Cidade */}
+                      <FormField
+                        control={form.control}
+                        name="cidade"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cidade</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              disabled={!estadoSelecionado || loadingMunicipios}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={
+                                      loadingMunicipios
+                                        ? "Carregando cidades..."
+                                        : "Selecione a cidade"
+                                    }
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {municipios.map((m) => (
+                                  <SelectItem key={m.id} value={m.nome}>
+                                    {m.nome}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Endereço */}
+                    <FormField
+                      control={form.control}
+                      name="endereco"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Endereço</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo"
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Rua, número, complemento e bairro
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {/* Link externo */}
+                <FormField
+                  control={form.control}
+                  name="link_externo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link para mais detalhes</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Ex: Rua Augusta, 1200, Sala 42 — Centro, São Paulo"
-                          {...field}
-                        />
+                        <Input placeholder="https://..." {...field} />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">
-                        Rua, número, complemento e bairro
+                        Site oficial, página de inscrição ou qualquer link relevante
                       </p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </>
-            )}
 
-            {/* Link externo */}
-            <FormField
-              control={form.control}
-              name="link_externo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Link para mais detalhes</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Site oficial, página de inscrição ou qualquer link relevante
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Botões */}
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => navigate("/dashboard/events")}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  "Criar Evento"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+                {/* Botões */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => navigate("/dashboard/events")}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      "Criar Evento"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
