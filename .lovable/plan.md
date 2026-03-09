@@ -1,33 +1,32 @@
 
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+## Padronizar badges: remover hardcoded `rounded-full` e usar o componente `Badge`
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+### Problema
+O `badge.tsx` foi alterado para `rounded-sm` (quadrado), mas vários componentes usam `<span>` hardcoded com `rounded-full` ou ignoram o componente `Badge` completamente, gerando inconsistência visual.
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+### Arquivos a corrigir
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+**1. `src/components/projects/ProjectCard.tsx`** (prioridade - é a página que o user apontou)
+- Linhas 128-145: dois `<span>` com `rounded-full border` para tipo e status → substituir por `<Badge>` com as classes de cor
+- Linhas 157-170: `<span>` com `rounded border` para skills → substituir por `<Badge variant="secondary">`
+- Linha 168: `<span>` do "+X" overflow → substituir por `<Badge variant="secondary">`
 
-### Change 2 — `src/lib/formatters.ts`
+**2. `src/components/education/EducationCard.tsx`**
+- Linha 48: `<Badge>` com `rounded-full` no className → remover `rounded-full`
 
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+**3. `src/components/experience/ExperienceCard.tsx`**
+- Linha 148: `<Badge>` com `rounded-full` no className → remover `rounded-full`
 
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
+**4. `src/pages/Events.tsx`**
+- Linhas 49-62: `<span>` hardcoded para ModalidadeBadge e EncerradoBadge → substituir por `<Badge>` com classes de cor
 
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
-```
+**5. `src/pages/dashboard/Events.tsx`**
+- Linhas 62-71: `<span>` hardcoded para badges de status e encerrado → substituir por `<Badge>`
 
-No other files are touched.
+**6. `src/pages/ProjectDetail.tsx`**
+- Linhas 177 e 193: `<span>` hardcoded para skills → substituir por `<Badge variant="secondary">`
+
+### Regra aplicada
+Todas as instâncias passam a usar o componente `<Badge>` do design system, herdando automaticamente o `rounded-sm` definido no `badgeVariants`. Classes de cor são passadas via `className` prop.
 
