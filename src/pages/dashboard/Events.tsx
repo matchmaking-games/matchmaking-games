@@ -100,7 +100,11 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(evento)}>
+                <DropdownMenuItem
+                  onClick={() => onEdit(evento)}
+                  disabled={isEncerrado}
+                  className={isEncerrado ? "opacity-50" : ""}
+                >
                   <Pencil className="h-4 w-4 mr-2" />
                   Editar
                 </DropdownMenuItem>
