@@ -399,7 +399,7 @@ export default function EventForm() {
                   name="modalidade"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Modalidade</FormLabel>
+                      <FormLabel>Modalidade<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
