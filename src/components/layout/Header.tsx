@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Briefcase, Settings, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, Briefcase, Settings, LogOut, LayoutDashboard, CalendarRange, Users, Building2, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
+
+const exploreItems = [
+  { title: "Eventos", description: "Encontros e game jams", href: "/events", icon: CalendarRange },
+  { title: "Profissionais", description: "Talentos da indústria", href: "/professionals", icon: Users },
+  { title: "Estúdios", description: "Empresas de games", href: "/studios", icon: Building2 },
+  { title: "Projetos", description: "Portfólios e jogos", href: "/projects", icon: Layers },
+];
 
 export function Header() {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
@@ -58,6 +72,42 @@ export function Header() {
                 >
                   <Briefcase className="h-4 w-4" />
                   Vagas
+                </Link>
+
+                <Link
+                  to="/events"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+                >
+                  <CalendarRange className="h-4 w-4" />
+                  Eventos
+                </Link>
+
+                <Link
+                  to="/professionals"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  Profissionais
+                </Link>
+
+                <Link
+                  to="/studios"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+                >
+                  <Building2 className="h-4 w-4" />
+                  Estúdios
+                </Link>
+
+                <Link
+                  to="/projects"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
+                >
+                  <Layers className="h-4 w-4" />
+                  Projetos
                 </Link>
 
                 {isAuthenticated && (
@@ -124,14 +174,43 @@ export function Header() {
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
         </Link>
 
-        {/* Desktop: Right section (Vagas + Auth) */}
+        {/* Desktop: Right section (Vagas + Explorar + Auth) */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Vagas (desktop only) - same style as "Entrar" */}
+          {/* Vagas (desktop only) */}
           <Link to="/jobs">
             <Button variant="ghost" size="sm">
               Vagas
             </Button>
           </Link>
+
+          {/* Explorar dropdown */}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="h-9 px-3 text-sm font-medium">
+                  Explorar
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="w-64 p-2">
+                    {exploreItems.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          to={item.href}
+                          className="flex items-start gap-3 rounded-md p-3 hover:bg-muted transition-colors"
+                        >
+                          <item.icon className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="font-medium text-foreground">{item.title}</p>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
 
           {isLoading ? (
             <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
