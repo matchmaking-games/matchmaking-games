@@ -131,7 +131,7 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
     <div className="flex gap-2">
       <Select value={hour} onValueChange={handleHourChange}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="HH" />
+          <SelectValue placeholder="Hora" />
         </SelectTrigger>
         <SelectContent>
           {HOURS.map((h) => (
@@ -143,7 +143,7 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
       </Select>
       <Select value={minute} onValueChange={handleMinuteChange}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="MM" />
+          <SelectValue placeholder="Min" />
         </SelectTrigger>
         <SelectContent>
           {MINUTES.map((m) => (
@@ -234,24 +234,22 @@ export default function EventForm() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header — fora do Card */}
-        <div className="flex items-center justify-between">
-          <h1 className="font-display font-bold text-3xl text-foreground">
-            Criar Evento
-          </h1>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/eventos")}
-            className="gap-2"
-          >
-            <CalendarRange className="h-4 w-4" />
-            Ver eventos da comunidade
-          </Button>
-        </div>
-
-        {/* Formulário dentro do Card */}
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h1 className="font-display font-bold text-3xl text-foreground">
+                Criar Evento
+              </h1>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/eventos")}
+                className="gap-2"
+              >
+                <CalendarRange className="h-4 w-4" />
+                Ver eventos da comunidade
+              </Button>
+            </div>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Nome */}
@@ -280,12 +278,16 @@ export default function EventForm() {
                     <FormItem>
                       <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Descreva o evento, programação, público-alvo..."
-                          rows={4}
-                          className="resize-none"
-                          {...field}
-                        />
+                    <Textarea
+                      placeholder="Descreva o evento, programação, público-alvo..."
+                      className="min-h-[100px] overflow-hidden resize-none"
+                      {...field}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = 'auto';
+                        target.style.height = target.scrollHeight + 'px';
+                      }}
+                    />
                       </FormControl>
                       <div className="text-xs text-muted-foreground text-right">
                         {descricao.length}/1000 caracteres
