@@ -1,110 +1,33 @@
 
-## Prompt 02 — Componentes: ProfessionalCard + ProfessionalCardSkeleton
 
-### 2 arquivos novos, nenhum arquivo existente alterado
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
----
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Arquivo 1 — `src/components/professionals/ProfessionalCard.tsx`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-**Estrutura visual** (segue JobCard como referência de estilo):
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-```
-<a href="/p/:slug" target="_blank" rel="noopener noreferrer">
-  <Card className="p-4 cursor-pointer bg-card/50 border-border/50 hover:border-border/80 hover:bg-card/70 transition-all duration-200">
-    
-    {/* Cabeçalho: Avatar + Info + Badge Disponível */}
-    <div className="flex gap-4 items-start">
-      <Avatar 48x48 rounded-full>
-        <AvatarImage src={avatar_url} />
-        <AvatarFallback>  ← iniciais: split nome por espaço → [0][0] + [last][0]
-      </Avatar>
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-semibold text-foreground truncate">  ← nome_completo
-            {titulo_profissional && <p className="text-sm text-muted-foreground">}
-            {localização && <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <MapPin w-3 h-3 /> cidade+estado / só estado / só cidade
-            }
-          </div>
-          {disponivel_para_trabalho && (
-            <Badge className="bg-primary text-primary-foreground text-xs flex-shrink-0">
-              Disponível
-            </Badge>
-          )}
-        </div>
-      </div>
-    </div>
-    
-    {/* Rodapé: Habilidades (só se length > 0) */}
-    {habilidades.length > 0 && (
-      <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/50">
-        {habilidades.slice(0,4).map → Badge variant="secondary" text-xs bg-muted/80}
-        {total_habilidades > 4 && <span className="text-xs text-muted-foreground">+{total_habilidades - 4} mais</span>}
-      </div>
-    )}
-  </Card>
-</a>
-```
+### Change 2 — `src/lib/formatters.ts`
 
-**Lógica de iniciais:**
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
 ```ts
-const getInitials = (name: string) => {
-  const parts = name.split(" ").filter(Boolean);
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-};
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-**Lógica de localização:**
-```ts
-const location =
-  cidade && estado ? `${cidade}, ${estado}` :
-  estado ? estado :
-  cidade ? cidade : null;
-```
+No other files are touched.
 
----
-
-### Arquivo 2 — `src/components/professionals/ProfessionalCardSkeleton.tsx`
-
-**`ProfessionalCardSkeleton`** — espelha estrutura do card real:
-```
-<Card className="p-4">
-  <div className="flex gap-4 items-start">
-    <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
-    <div className="flex-1 space-y-2">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1.5">
-          <Skeleton className="h-4 w-36" />   ← nome
-          <Skeleton className="h-3 w-28" />   ← título
-          <Skeleton className="h-3 w-20" />   ← localização
-        </div>
-        <Skeleton className="h-5 w-20" />     ← badge disponível
-      </div>
-    </div>
-  </div>
-  <div className="flex gap-1.5 mt-3 pt-3 border-t border-border/50">
-    <Skeleton className="h-5 w-16" />
-    <Skeleton className="h-5 w-12" />
-    <Skeleton className="h-5 w-20" />
-    <Skeleton className="h-5 w-14" />
-  </div>
-</Card>
-```
-
-**`ProfessionalCardSkeletonGrid`** — 6 skeletons no grid da página:
-```tsx
-<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-  {Array.from({ length: 6 }).map((_, i) => <ProfessionalCardSkeleton key={i} />)}
-</div>
-```
-
-Exports: `ProfessionalCard`, `ProfessionalCardSkeleton`, `ProfessionalCardSkeletonGrid`.
-
----
-
-### O que NÃO muda
-Nenhum arquivo existente é tocado.
