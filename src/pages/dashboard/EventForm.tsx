@@ -163,9 +163,14 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
 }
 
 export default function EventForm() {
+  const { id } = useParams<{ id: string }>();
+  const isEditing = !!id;
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { mutateAsync: createEvento, isPending } = useCreateEvento();
+  const { mutateAsync: createEvento, isPending: isCreating } = useCreateEvento();
+  const { mutateAsync: updateEvento, isPending: isUpdating } = useUpdateEvento();
+  const { data: eventoData, isLoading: isLoadingEvento } = useEventoById(id);
+  const isPending = isCreating || isUpdating;
   const {
     estados,
     municipios,
@@ -187,6 +192,41 @@ export default function EventForm() {
       link_externo: "",
     },
   });
+
+  // Populate form when editing
+  const [formPopulated, setFormPopulated] = useState(false);
+  useEffect(() => {
+    if (!eventoData || formPopulated) return;
+
+    const dInicio = new Date(eventoData.data_inicio);
+    const dFim = new Date(eventoData.data_fim);
+
+    const tz = "America/Sao_Paulo";
+    const hInicio = dInicio.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+    const hFim = dFim.toLocaleTimeString("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false });
+
+    // Pre-fetch municipalities if there's a state
+    if (eventoData.estado) {
+      fetchMunicipios(eventoData.estado);
+    }
+
+    form.reset({
+      nome: eventoData.nome,
+      descricao: eventoData.descricao || "",
+      dateRange: {
+        from: new Date(dInicio.toLocaleDateString("en-CA", { timeZone: tz })),
+        to: new Date(dFim.toLocaleDateString("en-CA", { timeZone: tz })),
+      },
+      horario_inicio: hInicio,
+      horario_fim: hFim,
+      modalidade: eventoData.modalidade as "presencial" | "hibrido" | "online",
+      estado: eventoData.estado || "",
+      cidade: eventoData.cidade || "",
+      endereco: eventoData.endereco || "",
+      link_externo: eventoData.link_externo || "",
+    });
+    setFormPopulated(true);
+  }, [eventoData, formPopulated, form, fetchMunicipios]);
 
   const { isDirty } = form.formState;
   const modalidade = form.watch("modalidade");
