@@ -631,12 +631,14 @@ export default function EventForm() {
                         Salvando...
                       </>
                     ) : (
-                      "Criar Evento"
+                      isEditing ? "Salvar Alterações" : "Criar Evento"
                     )}
                   </Button>
                 </div>
               </form>
             </Form>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>
