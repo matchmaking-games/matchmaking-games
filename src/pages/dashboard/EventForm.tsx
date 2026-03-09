@@ -278,7 +278,7 @@ export default function EventForm() {
                   name="descricao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Descrição</FormLabel>
+                      <FormLabel>Descrição<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                     <Textarea
                       placeholder="Descreva o evento, programação, público-alvo..."
