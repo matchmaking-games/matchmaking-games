@@ -54,7 +54,7 @@ async function fetchProfessionals(params: ProfessionalsQueryParams): Promise<Pro
     throw new Error("Não foi possível carregar os profissionais.");
   }
 
-  const allResults = (data || []) as ProfessionalCard[];
+  const allResults = (data || []) as unknown as ProfessionalCard[];
 
   const hasNextPage = allResults.length > pageSize;
   const professionals = hasNextPage ? allResults.slice(0, pageSize) : allResults;
