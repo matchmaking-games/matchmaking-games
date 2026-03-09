@@ -563,7 +563,7 @@ export default function EventForm() {
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => navigate("/dashboard/events")}
+                    onClick={handleNavigateBack}
                   >
                     Cancelar
                   </Button>

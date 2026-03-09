@@ -127,10 +127,16 @@ export default function EventsPage() {
               <h1 className="font-display text-3xl font-bold text-foreground">
                 Meus Eventos
               </h1>
-              <Button onClick={() => navigate("/dashboard/events/new")} className="flex-shrink-0">
-                <Plus className="h-4 w-4" />
-                Criar Evento
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => navigate("/eventos")} className="flex-shrink-0">
+                  <CalendarRange className="h-4 w-4" />
+                  Ver comunidade
+                </Button>
+                <Button onClick={() => navigate("/dashboard/events/new")} className="flex-shrink-0">
+                  <Plus className="h-4 w-4" />
+                  Criar Evento
+                </Button>
+              </div>
             </div>
 
             {/* Loading */}
