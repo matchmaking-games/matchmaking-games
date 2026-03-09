@@ -131,7 +131,7 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
     <div className="flex gap-2">
       <Select value={hour} onValueChange={handleHourChange}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="HH" />
+          <SelectValue placeholder="Hora" />
         </SelectTrigger>
         <SelectContent>
           {HOURS.map((h) => (
@@ -143,7 +143,7 @@ function TimeSelect({ value, onChange }: TimeSelectProps) {
       </Select>
       <Select value={minute} onValueChange={handleMinuteChange}>
         <SelectTrigger className="flex-1">
-          <SelectValue placeholder="MM" />
+          <SelectValue placeholder="Min" />
         </SelectTrigger>
         <SelectContent>
           {MINUTES.map((m) => (
