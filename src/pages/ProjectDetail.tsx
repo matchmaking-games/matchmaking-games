@@ -174,9 +174,9 @@ export default function ProjectDetail() {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {habilidades.map((skill) => (
-                          <span key={skill.id} className="bg-muted text-foreground text-xs rounded-md px-2 py-1">
+                          <Badge key={skill.id} variant="secondary" className="text-xs">
                             {skill.nome}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     </CardContent>
