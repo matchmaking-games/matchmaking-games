@@ -522,7 +522,7 @@ export default function EventForm() {
                   name="link_externo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Link para mais detalhes</FormLabel>
+                      <FormLabel>Link para mais detalhes<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="https://..." {...field} />
                       </FormControl>
