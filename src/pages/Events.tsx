@@ -187,14 +187,16 @@ export default function Events() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pt-16">
       <Header />
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-10">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
         <h1 className="font-display font-bold text-4xl text-foreground mb-2">Eventos</h1>
         <p className="text-muted-foreground mb-8">Encontre eventos da comunidade de games e criação digital.</p>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-end gap-4 mb-8">
+        <Card className="mb-8">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-1.5">
             <Label className="text-sm text-muted-foreground">Modalidade</Label>
             <Select value={modalidade} onValueChange={setModalidade}>
