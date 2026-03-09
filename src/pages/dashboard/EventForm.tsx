@@ -377,7 +377,7 @@ export default function EventForm() {
                     name="horario_fim"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Horário de fim</FormLabel>
+                        <FormLabel>Horário de fim<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                           <TimeSelect
                             value={field.value}
