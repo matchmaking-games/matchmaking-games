@@ -228,6 +228,16 @@ export default function EventForm() {
     setFormPopulated(true);
   }, [eventoData, formPopulated, form, fetchMunicipios]);
 
+  // Block editing finished events
+  const isEncerrado = isEditing && eventoData ? new Date(eventoData.data_fim) < new Date() : false;
+
+  useEffect(() => {
+    if (isEncerrado) {
+      toast({ title: "Eventos encerrados não podem ser editados.", variant: "destructive" });
+      navigate("/dashboard/events");
+    }
+  }, [isEncerrado, toast, navigate]);
+
   const { isDirty } = form.formState;
   const modalidade = form.watch("modalidade");
   const estadoSelecionado = form.watch("estado");
