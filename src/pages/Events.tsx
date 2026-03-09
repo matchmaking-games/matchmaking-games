@@ -191,11 +191,12 @@ export default function Events() {
     <div className="min-h-screen flex flex-col bg-background pt-16">
       <Header />
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8">
-        <h1 className="font-display font-bold text-4xl text-foreground mb-2">Eventos</h1>
-        <p className="text-muted-foreground mb-8">Encontre eventos da comunidade de games e criação digital.</p>
-
-        {/* Filters */}
+        {/* Header + Filters Card */}
         <Card className="mb-8">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display font-bold text-4xl text-foreground">Eventos</CardTitle>
+            <CardDescription>Encontre eventos da comunidade de games e criação digital.</CardDescription>
+          </CardHeader>
           <CardContent className="py-4">
             <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-1.5">
