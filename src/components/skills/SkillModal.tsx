@@ -126,7 +126,7 @@ export function SkillModal({ open, onOpenChange, editingSkill, existingSkillIds,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col sm:max-w-[425px] max-h-[90dvh] overflow-y-auto">
+      <DialogContent className="flex flex-col sm:max-w-[425px] max-h-[90dvh] overflow-y-auto scrollbar-thin">
         <DialogHeader className="shrink-0">
           <DialogTitle>{isEditMode ? "Editar Habilidade" : "Adicionar Habilidade"}</DialogTitle>
           <DialogDescription>
@@ -218,7 +218,7 @@ export function SkillModal({ open, onOpenChange, editingSkill, existingSkillIds,
                 </div>
 
                 {/* Lista de itens */}
-                <div className="max-h-48 overflow-y-auto">
+                <div className="max-h-48 overflow-y-auto scrollbar-thin">
                   {filteredSkills.length === 0 ? (
                     <p className="px-3 py-4 text-sm text-center text-muted-foreground">
                       Nenhuma habilidade encontrada.

@@ -516,7 +516,7 @@ export default function JobForm() {
                         <PopoverContent className="w-full p-0" align="start">
                           <Command>
                             <CommandInput placeholder="Buscar função..." />
-                            <CommandList className="max-h-[200px] overflow-y-auto">
+                            <CommandList className="max-h-[200px] overflow-y-auto scrollbar-thin">
                               <CommandEmpty>Nenhuma função encontrada.</CommandEmpty>
                               <CommandGroup>
                                 {tiposFuncao
