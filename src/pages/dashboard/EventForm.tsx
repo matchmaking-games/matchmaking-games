@@ -260,7 +260,7 @@ export default function EventForm() {
                   name="nome"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nome do evento</FormLabel>
+                      <FormLabel>Nome do evento<span className="text-destructive ml-1">*</span></FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ex: Global Game Jam São Paulo 2025"
