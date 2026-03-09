@@ -1,33 +1,33 @@
 
 
-## Plano: Constants, Types e Hooks para busca de projetos
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-4 arquivos novos, nenhum arquivo existente alterado. O hook `useProjects.ts` existente (CRUD do dashboard) **não será tocado** — o novo hook de busca pública terá nome diferente.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Arquivo 1: `src/constants/project-labels.ts`
-Criar com 3 objetos `Record<string, string>` exportados: `ENGINE_LABELS`, `PLATAFORMA_LABELS`, `GENERO_LABELS` com todos os mapeamentos valor → label legível conforme especificado.
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-### Arquivo 2: `src/types/project-search.ts`
-Criar com 3 interfaces exportadas: `ProjectCard`, `ProjectFilters`, `ProjectCursor` — campos conforme especificado na instrução.
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-### Arquivo 3: `src/hooks/useProjectFilters.ts`
-Hook seguindo o padrão exato de `useStudioFilters`:
-- Lê `q`, `engine`, `plataformas`, `genero` dos search params
-- Expõe `filters`, `setFilter`, `setPlataformas`, `setGenero`, `clearAllFilters`, `activeFilterCount`, `hasActiveFilters`
-- `activeFilterCount` soma: `searchText` (+1), `engine` (+1), `plataformas.length`, `genero.length`
+### Change 2 — `src/lib/formatters.ts`
 
-### Arquivo 4: `src/hooks/useProjectSearch.ts`
-Hook seguindo o padrão exato de `useStudios` (nome diferente de `useProjects` que já existe):
-- Chama `supabase.rpc("search_projects", rpcParams)`
-- Converte string vazia e arrays vazios para null antes de montar params
-- Paginação: solicita `pageSize + 1`, detecta `hasNextPage`, monta `nextCursor`
-- React Query com `staleTime: 30_000`, `retry: 2`, queryKey incluindo todos os parâmetros
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-**Nota sobre naming**: O hook existente `useProjects.ts` é o CRUD do dashboard. O novo hook de busca pública será nomeado `useProjectSearch.ts` para evitar conflito de nomes. Se preferir outro nome, me avise.
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-### Arquivos afetados
-- `src/constants/project-labels.ts` (criar)
-- `src/types/project-search.ts` (criar)
-- `src/hooks/useProjectFilters.ts` (criar)
-- `src/hooks/useProjectSearch.ts` (criar)
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
+
+No other files are touched.
 
