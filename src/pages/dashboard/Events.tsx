@@ -61,15 +61,13 @@ function EventCard({ evento }: { evento: Evento }) {
           <span className="font-medium text-foreground">{evento.nome}</span>
           <div className="flex flex-wrap items-center gap-1.5">
             {isEncerrado && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-950 text-red-300 border border-red-800">
+              <Badge variant="outline" className="text-xs bg-red-950 text-red-300 border border-red-800">
                 Encerrado
-              </span>
+              </Badge>
             )}
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.className}`}
-            >
+            <Badge variant="outline" className={`text-xs ${config.className}`}>
               {config.label}
-            </span>
+            </Badge>
           </div>
         </div>
 

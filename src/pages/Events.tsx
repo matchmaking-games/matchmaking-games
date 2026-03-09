@@ -49,17 +49,17 @@ const modalidadeLabels: Record<string, string> = {
 
 function ModalidadeBadge({ modalidade }: { modalidade: string }) {
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${modalidadeStyles[modalidade] ?? ""}`}>
+    <Badge variant="outline" className={`text-xs ${modalidadeStyles[modalidade] ?? ""}`}>
       {modalidadeLabels[modalidade] ?? modalidade}
-    </span>
+    </Badge>
   );
 }
 
 function EncerradoBadge() {
   return (
-    <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-950 text-red-300 border border-red-800">
+    <Badge variant="outline" className="text-xs bg-red-950 text-red-300 border border-red-800">
       Encerrado
-    </span>
+    </Badge>
   );
 }
 

@@ -145,20 +145,18 @@ export function ProjectCard({
         {project.projeto_habilidades && project.projeto_habilidades.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-border">
             {project.projeto_habilidades.slice(0, 5).map((ph) => (
-              <span
+              <Badge
                 key={ph.id}
-                className={cn(
-                  "text-xs px-1.5 py-0.5 rounded border",
-                  getSkillBadgeClasses(ph.habilidade.categoria)
-                )}
+                variant="outline"
+                className={cn("text-xs", getSkillBadgeClasses(ph.habilidade.categoria))}
               >
                 {ph.habilidade.nome}
-              </span>
+              </Badge>
             ))}
             {project.projeto_habilidades.length > 5 && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              <Badge variant="secondary" className="text-xs">
                 +{project.projeto_habilidades.length - 5}
-              </span>
+              </Badge>
             )}
           </div>
         )}

@@ -45,7 +45,7 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
               <span className="text-sm text-muted-foreground">{education.instituicao}</span>
               <Badge
                 variant="outline"
-                className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${tipoEducacaoStyle}`}
+                className={`text-xs whitespace-nowrap ${tipoEducacaoStyle}`}
               >
                 {tipoEducacaoLabel}
               </Badge>
