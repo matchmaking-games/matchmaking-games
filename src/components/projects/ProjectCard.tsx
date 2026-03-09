@@ -126,24 +126,14 @@ export function ProjectCard({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Type badge */}
-          <span
-            className={cn(
-              "text-xs px-2 py-0.5 rounded-full border",
-              getTypeBadgeClasses(project.tipo)
-            )}
-          >
+          <Badge variant="outline" className={cn("text-xs", getTypeBadgeClasses(project.tipo))}>
             {formatTipoProjeto(project.tipo)}
-          </span>
+          </Badge>
 
           {/* Status badge */}
-          <span
-            className={cn(
-              "text-xs px-2 py-0.5 rounded-full border",
-              getStatusBadgeClasses(project.status)
-            )}
-          >
+          <Badge variant="outline" className={cn("text-xs", getStatusBadgeClasses(project.status))}>
             {formatStatusProjeto(project.status)}
-          </span>
+          </Badge>
 
           {/* Star indicator when highlighted */}
           {project.destaque && (
