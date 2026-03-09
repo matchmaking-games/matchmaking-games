@@ -40,9 +40,8 @@ const eventoSchema = z
       .max(150, "O nome deve ter no máximo 150 caracteres"),
     descricao: z
       .string()
-      .max(1000, "A descrição deve ter no máximo 1000 caracteres")
-      .optional()
-      .or(z.literal("")),
+      .min(10, "A descrição deve ter pelo menos 10 caracteres")
+      .max(1000, "A descrição deve ter no máximo 1000 caracteres"),
     dateRange: z.object(
       {
         from: z.date({ required_error: "Selecione a data de início" }),
@@ -66,12 +65,8 @@ const eventoSchema = z
     endereco: z.string().optional().or(z.literal("")),
     link_externo: z
       .string()
-      .optional()
-      .or(z.literal(""))
-      .refine(
-        (val) => !val || z.string().url().safeParse(val).success,
-        "Informe uma URL válida"
-      ),
+      .min(1, "Informe o link do evento")
+      .url("Informe uma URL válida (ex: https://...)"),
   })
   .superRefine((data, ctx) => {
     if (data.modalidade !== "online") {
@@ -87,6 +82,13 @@ const eventoSchema = z
           code: z.ZodIssueCode.custom,
           message: "Selecione a cidade",
           path: ["cidade"],
+        });
+      }
+      if (!data.endereco) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Informe o endereço do evento",
+          path: ["endereco"],
         });
       }
     }
