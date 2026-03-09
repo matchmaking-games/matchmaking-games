@@ -1,35 +1,33 @@
 
 
-## Plano: Criar arquivos de enums e schemas Zod para projetos
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-Como os arquivos `src/types/enums.ts` e `src/schemas/enums.ts` não existem, serão criados do zero seguindo o padrão descrito.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Arquivo 1: `src/types/enums.ts`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-Criar com 4 enums (objetos `as const` + tipos exportados):
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-- **StatusProjeto** — `em_andamento`, `concluido`, `pausado`
-- **EngineProjeto** — 25 valores (unity, unreal, godot, etc.)
-- **PlataformaProjeto** — 20 valores (pc_windows, mobile_android, etc.)
-- **GeneroProjeto** — 67 valores (acao, aventura, rpg, etc.) com `QUATRO_X: '4x'` para o caso especial
+### Change 2 — `src/lib/formatters.ts`
 
-Padrão: chaves UPPER_SNAKE_CASE, valores snake_case.
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
 
-### Arquivo 2: `src/schemas/enums.ts`
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
 
-Criar com 4 schemas Zod (`z.enum([...])` exportados):
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```
 
-- **statusProjetoSchema** — 3 valores
-- **engineProjetoSchema** — 25 valores
-- **plataformaProjetoSchema** — 20 valores
-- **generoProjetoSchema** — 67 valores
-
-### Correção complementar: `src/lib/formatters.ts`
-
-Adicionar `pausado: "Pausado"` ao map de `formatStatusProjeto` (linha 148), que atualmente só tem `em_andamento` e `concluido`.
-
-### Arquivos afetados
-- `src/types/enums.ts` (criar)
-- `src/schemas/enums.ts` (criar)
-- `src/lib/formatters.ts` (corrigir map do StatusProjeto)
+No other files are touched.
 
