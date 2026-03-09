@@ -204,9 +204,9 @@ export default function EventsPage() {
                 Meus Eventos
               </h1>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate("/eventos")} className="flex-shrink-0">
+                <Button variant="ghost" onClick={() => navigate("/eventos")} className="flex-shrink-0">
                   <CalendarRange className="h-4 w-4" />
-                  Ver comunidade
+                  Eventos da comunidade
                 </Button>
                 <Button onClick={() => navigate("/dashboard/events/new")} className="flex-shrink-0">
                   <Plus className="h-4 w-4" />
