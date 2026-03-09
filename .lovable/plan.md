@@ -1,33 +1,17 @@
 
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+## Criar `src/components/studios/StudioCard.tsx`
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+Componente card clicável seguindo o padrão do `ProfessionalCard`, adaptado para estúdios.
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+### Estrutura
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
+- `<a>` externo com `href="/studio/{slug}"`, `target="_blank"`, `rel="noopener noreferrer"`
+- `<Card>` com `hover:border-primary/50 transition-colors` (diferente do ProfessionalCard que usa `hover:border-border/80`)
+- **Cabeçalho**: Avatar `rounded-lg w-12 h-12` + info (nome com `font-display font-semibold`, localização com `MapPin w-3.5 h-3.5`, website com `Globe` + `e.stopPropagation()`) + badge tamanho `variant="secondary"` no canto direito
+- **Especialidades**: até 3 badges `variant="outline"` + badge `+N` se houver mais, separada por `border-t` como no ProfessionalCard
+- Mapa de tamanho: `{ micro: "Micro", pequeno: "Pequeno", medio: "Médio", grande: "Grande" }`
+- Imports: `MapPin`, `Globe` de lucide-react; `Card`, `Avatar*`, `Badge` de shadcn; `StudioCard` de types
 
-### Change 2 — `src/lib/formatters.ts`
-
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
-
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
-
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
-```
-
-No other files are touched.
+Um único arquivo novo, zero alterações em arquivos existentes.
 
