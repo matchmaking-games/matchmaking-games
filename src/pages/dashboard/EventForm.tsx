@@ -234,24 +234,22 @@ export default function EventForm() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header — fora do Card */}
-        <div className="flex items-center justify-between">
-          <h1 className="font-display font-bold text-3xl text-foreground">
-            Criar Evento
-          </h1>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/eventos")}
-            className="gap-2"
-          >
-            <CalendarRange className="h-4 w-4" />
-            Ver eventos da comunidade
-          </Button>
-        </div>
-
-        {/* Formulário dentro do Card */}
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h1 className="font-display font-bold text-3xl text-foreground">
+                Criar Evento
+              </h1>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/eventos")}
+                className="gap-2"
+              >
+                <CalendarRange className="h-4 w-4" />
+                Ver eventos da comunidade
+              </Button>
+            </div>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Nome */}
