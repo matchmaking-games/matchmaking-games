@@ -1,41 +1,33 @@
 
 
-## Substituir scrollbar nativo pelo ScrollArea do shadcn no CommandList
+## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
 
-O scroll nativo vem do `CommandList` em `src/components/ui/command.tsx` (linha 63: `overflow-y-auto`). A solução é envolver o conteúdo do `CommandList` com o `ScrollArea` do shadcn e remover o overflow nativo.
+Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
 
-### Arquivo: `src/components/ui/command.tsx`
+### Change 1 — `src/components/education/EducationModal.tsx`
 
-**Mudança no `CommandList`:**
-- Remover `overflow-y-auto overflow-x-hidden` do className
-- Manter `max-h-[300px]` para limitar a altura
-- Envolver o children internamente com `ScrollArea` + `ScrollBar`
+- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
+- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
+- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
+- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
 
-```tsx
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+### Change 2 — `src/lib/formatters.ts`
 
-const CommandList = React.forwardRef<...>(({ className, children, ...props }, ref) => (
-  <CommandPrimitive.List
-    ref={ref}
-    className={cn("max-h-[300px] overflow-hidden", className)}
-    {...props}
-  >
-    <ScrollArea className="h-full max-h-[inherit]">
-      <div className="[&_[cmdk-list-sizer]]:contents">
-        {children}
-      </div>
-      <ScrollBar orientation="vertical" />
-    </ScrollArea>
-  </CommandPrimitive.List>
-));
+Rewrite `formatEducationPeriod` to work with year-only strings:
+- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
+- Both present: show `startYear - endYear` (or just one year if equal)
+- Only `inicio`: show `year - Em andamento` or `Concluído em year`
+- Only `fim`: show the year
+- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
+- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
+
+### Change 3 — `src/components/ImportReviewDrawer.tsx`
+
+Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
+```ts
+inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
+fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
 ```
 
-**Risco:** O `CommandPrimitive.List` do cmdk gerencia internamente um `[cmdk-list-sizer]` div. Envolver com ScrollArea pode conflitar com a medição de altura do cmdk. Se isso acontecer, a alternativa segura é aplicar apenas CSS para estilizar o scrollbar nativo com aparência similar ao shadcn, sem trocar o mecanismo de scroll.
-
-**Alternativa mais segura (CSS-only):** Adicionar classes utilitárias no `CommandList` para estilizar a scrollbar nativa com cores do tema, sem envolver com ScrollArea. Isso evita qualquer conflito com o cmdk.
-
-### Escopo
-- 1 arquivo alterado: `src/components/ui/command.tsx`
-- Afeta todos os usos de `CommandList` (MultiSelectCombobox e qualquer outro combobox)
-- Nenhum outro arquivo precisa ser alterado
+No other files are touched.
 
