@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, CalendarDays, Clock, MapPin, CalendarRange, EllipsisVertical, Pencil, Trash2, ExternalLink } from "lucide-react";
+import {
+  Plus,
+  CalendarDays,
+  Clock,
+  MapPin,
+  CalendarRange,
+  EllipsisVertical,
+  Pencil,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -75,15 +85,16 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
     className: "bg-muted text-muted-foreground border border-border",
   };
   const showLocation =
-    (evento.modalidade === "presencial" || evento.modalidade === "hibrido") &&
-    (evento.cidade || evento.estado);
+    (evento.modalidade === "presencial" || evento.modalidade === "hibrido") && (evento.cidade || evento.estado);
 
   return (
     <Card className={isEncerrado ? "opacity-60 bg-muted/40" : ""}>
       <CardContent className="pt-5 pb-5">
         {/* Row 1: name + badges + actions */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className={`font-medium ${isEncerrado ? "text-muted-foreground" : "text-foreground"}`}>{evento.nome}</span>
+          <span className={`font-medium ${isEncerrado ? "text-muted-foreground" : "text-foreground"}`}>
+            {evento.nome}
+          </span>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {isEncerrado && (
               <Badge variant="outline" className="text-xs bg-red-950 text-red-300 border border-red-800">
@@ -101,20 +112,19 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => window.open(`/events?id=${evento.id}`, "_blank")}
-                  >
+                  <DropdownMenuItem onClick={() => window.open(`/events?id=${evento.id}`, "_blank")}>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Ver evento
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onEdit(evento)}
-                  >
+                  <DropdownMenuItem onClick={() => onEdit(evento)}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onDelete(evento)} className="text-destructive focus:text-destructive">
+                  <DropdownMenuItem
+                    onClick={() => onDelete(evento)}
+                    className="text-destructive focus:text-destructive"
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Excluir
                   </DropdownMenuItem>
@@ -134,9 +144,7 @@ function EventCard({ evento, onEdit, onDelete }: EventCardProps) {
         {showLocation && (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {[evento.cidade, evento.estado].filter(Boolean).join(", ")}
-            </span>
+            <span>{[evento.cidade, evento.estado].filter(Boolean).join(", ")}</span>
           </div>
         )}
 
@@ -168,10 +176,7 @@ export default function EventsPage() {
 
   const now = new Date();
   const sorted = data
-    ? [
-        ...data.filter((e) => new Date(e.data_fim) >= now),
-        ...data.filter((e) => new Date(e.data_fim) < now),
-      ]
+    ? [...data.filter((e) => new Date(e.data_fim) >= now), ...data.filter((e) => new Date(e.data_fim) < now)]
     : [];
 
   const handleEdit = (evento: Evento) => {
@@ -200,15 +205,13 @@ export default function EventsPage() {
           <CardContent className="pt-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <h1 className="font-display text-3xl font-bold text-foreground">
-                Meus Eventos
-              </h1>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => navigate("/eventos")} className="flex-shrink-0">
+              <h1 className="font-display text-3xl font-bold text-foreground">Meus Eventos</h1>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="ghost" onClick={() => navigate("/eventos")} className="w-full sm:w-auto">
                   <CalendarRange className="h-4 w-4" />
                   Eventos da comunidade
                 </Button>
-                <Button onClick={() => navigate("/dashboard/events/new")} className="flex-shrink-0">
+                <Button onClick={() => navigate("/dashboard/events/new")} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4" />
                   Criar Evento
                 </Button>
@@ -241,16 +244,12 @@ export default function EventsPage() {
               <div className="flex flex-col items-center gap-4 py-14 text-center">
                 <CalendarDays className="h-12 w-12 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-foreground mb-1">
-                    Você ainda não criou nenhum evento
-                  </p>
+                  <p className="font-medium text-foreground mb-1">Você ainda não criou nenhum evento</p>
                   <p className="text-sm text-muted-foreground">
                     Compartilhe eventos da comunidade de games com outros profissionais.
                   </p>
                 </div>
-                <Button onClick={() => navigate("/dashboard/events/new")}>
-                  Criar meu primeiro evento
-                </Button>
+                <Button onClick={() => navigate("/dashboard/events/new")}>Criar meu primeiro evento</Button>
               </div>
             )}
 
@@ -258,12 +257,7 @@ export default function EventsPage() {
             {!isLoading && !error && sorted.length > 0 && (
               <div className="flex flex-col gap-3">
                 {sorted.map((evento) => (
-                  <EventCard
-                    key={evento.id}
-                    evento={evento}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteRequest}
-                  />
+                  <EventCard key={evento.id} evento={evento} onEdit={handleEdit} onDelete={handleDeleteRequest} />
                 ))}
               </div>
             )}
@@ -279,8 +273,8 @@ export default function EventsPage() {
             <AlertDialogDescription>
               {eventoToDelete ? (
                 <>
-                  O evento <strong>"{eventoToDelete.nome}"</strong> será removido
-                  permanentemente. Esta ação é irreversível.
+                  O evento <strong>"{eventoToDelete.nome}"</strong> será removido permanentemente. Esta ação é
+                  irreversível.
                 </>
               ) : (
                 "Esta ação não pode ser desfeita."
