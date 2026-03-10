@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { MapPin, Users, Globe, Calendar } from "lucide-react";
 import { SocialIcon } from "@/components/SocialIcon";
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -161,6 +162,8 @@ export default function StudioPublicProfile() {
           </CardContent>
         </Card>
       </main>
+
+      <Footer />
     </div>
   );
 }

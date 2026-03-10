@@ -328,7 +328,7 @@ function TipoFuncaoFilter({ value, onChange }: TipoFuncaoFilterProps) {
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <CommandInput placeholder="Buscar função..." />
-            <CommandList className="max-h-[200px] overflow-y-auto">
+            <CommandList className="max-h-[200px] overflow-y-auto scrollbar-thin">
               <CommandEmpty>Nenhuma função encontrada</CommandEmpty>
               <CommandGroup>
                 <CommandItem

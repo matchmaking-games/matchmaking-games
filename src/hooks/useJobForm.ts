@@ -87,9 +87,7 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
   const [existingTiposFuncao, setExistingTiposFuncao] = useState<string[]>([]);
 
   // Helper URL for navigation — always preserves ?studio= when available
-  const jobsUrl = studioIdFromUrl
-    ? `/studio/manage/jobs?studio=${studioIdFromUrl}`
-    : "/studio/manage/jobs";
+  const jobsUrl = studioIdFromUrl ? `/studio/manage/jobs?studio=${studioIdFromUrl}` : "/studio/manage/jobs";
 
   // Effect 1: Check membership and authorization
   useEffect(() => {
@@ -599,21 +597,36 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
       try {
         setIsSaving(true);
 
-        // Check if title changed, regenerate slug if needed
         let slug = existingJob?.slug || "";
         if (existingJob && data.titulo !== existingJob.titulo) {
           slug = await generateUniqueSlug(data.titulo, id);
         }
 
-        // Update job (NOT including expira_em - keep original value)
-        // Also don't update status or ativa for published jobs
+        const isCurrentlyDraft = existingJob?.status === "rascunho" || existingJob?.status === "aguardando_pagamento";
+
+        // Determinar campos de status com base no status atual e tipo de publicação
+        let statusFields: Record<string, unknown> = {};
+        if (isCurrentlyDraft) {
+          if (data.tipo_publicacao === "gratuita") {
+            statusFields = {
+              status: "publicada",
+              ativa: true,
+              expira_em: addDays(new Date(), 30).toISOString(),
+            };
+          } else if (data.tipo_publicacao === "destaque") {
+            statusFields = {
+              status: "aguardando_pagamento",
+              ativa: false,
+            };
+          }
+        }
+
         const { error: updateError } = await supabase
           .from("vagas")
           .update({
             titulo: data.titulo,
             slug,
             descricao: data.descricao,
-
             nivel: data.nivel,
             tipo_emprego: data.tipo_emprego,
             remoto: data.remoto,
@@ -621,9 +634,10 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
             cidade: data.cidade,
             salario_min: data.salario_min,
             salario_max: data.salario_max,
-            // Don't update tipo_publicacao for published jobs
+            mostrar_salario: data.mostrar_salario,
             tipo_publicacao: existingJob?.status === "publicada" ? existingJob.tipo_publicacao : data.tipo_publicacao,
             contato_candidatura: data.contato_candidatura,
+            ...statusFields,
           })
           .eq("id", id);
 
@@ -632,24 +646,35 @@ export function useJobForm(jobId?: string, studioIdFromUrl?: string | null): Use
           throw new Error("Erro ao atualizar vaga.");
         }
 
-        // Delete old skills
-        const { error: deleteError } = await supabase.from("vaga_habilidades").delete().eq("vaga_id", id);
-
-        if (deleteError) {
-          console.error("Error deleting old skills:", deleteError);
-          throw new Error("Erro ao atualizar habilidades.");
-        }
-
-        // Insert new skills
+        await supabase.from("vaga_habilidades").delete().eq("vaga_id", id);
         await insertSkills(id, data.habilidades_obrigatorias, data.habilidades_desejaveis);
-
-        // Delete old tipos_funcao and insert new ones
         await supabase.from("vaga_tipos_funcao").delete().eq("vaga_id", id);
         await insertTiposFuncao(id, data.tipo_funcao_ids);
 
+        // Destaque a partir de rascunho: redirecionar para Stripe
+        if (isCurrentlyDraft && data.tipo_publicacao === "destaque") {
+          const { data: checkoutData, error: checkoutError } = await supabase.functions.invoke(
+            "create-checkout-session",
+            { body: { vaga_id: id } },
+          );
+
+          if (checkoutError || !checkoutData?.url) {
+            console.error("Error creating checkout session:", checkoutError);
+            toast({
+              title: "Erro ao processar pagamento",
+              description: "Tente novamente ou entre em contato com o suporte.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          window.location.href = checkoutData.url;
+          return;
+        }
+
         toast({
-          title: "Vaga atualizada!",
-          description: `A vaga "${data.titulo}" foi atualizada com sucesso.`,
+          title: isCurrentlyDraft ? "Vaga publicada!" : "Vaga atualizada!",
+          description: `A vaga "${data.titulo}" foi ${isCurrentlyDraft ? "publicada" : "atualizada"} com sucesso.`,
         });
 
         navigate(jobsUrl);

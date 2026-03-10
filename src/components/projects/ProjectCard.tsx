@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -125,24 +126,14 @@ export function ProjectCard({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Type badge */}
-          <span
-            className={cn(
-              "text-xs px-2 py-0.5 rounded-full border",
-              getTypeBadgeClasses(project.tipo)
-            )}
-          >
+          <Badge variant="outline" className={cn("text-xs", getTypeBadgeClasses(project.tipo))}>
             {formatTipoProjeto(project.tipo)}
-          </span>
+          </Badge>
 
           {/* Status badge */}
-          <span
-            className={cn(
-              "text-xs px-2 py-0.5 rounded-full border",
-              getStatusBadgeClasses(project.status)
-            )}
-          >
+          <Badge variant="outline" className={cn("text-xs", getStatusBadgeClasses(project.status))}>
             {formatStatusProjeto(project.status)}
-          </span>
+          </Badge>
 
           {/* Star indicator when highlighted */}
           {project.destaque && (
@@ -154,20 +145,18 @@ export function ProjectCard({
         {project.projeto_habilidades && project.projeto_habilidades.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-border">
             {project.projeto_habilidades.slice(0, 5).map((ph) => (
-              <span
+              <Badge
                 key={ph.id}
-                className={cn(
-                  "text-xs px-1.5 py-0.5 rounded border",
-                  getSkillBadgeClasses(ph.habilidade.categoria)
-                )}
+                variant="outline"
+                className={cn("text-xs", getSkillBadgeClasses(ph.habilidade.categoria))}
               >
                 {ph.habilidade.nome}
-              </span>
+              </Badge>
             ))}
             {project.projeto_habilidades.length > 5 && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+              <Badge variant="secondary" className="text-xs">
                 +{project.projeto_habilidades.length - 5}
-              </span>
+              </Badge>
             )}
           </div>
         )}

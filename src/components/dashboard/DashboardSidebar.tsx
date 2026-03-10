@@ -4,6 +4,11 @@ import {
   LayoutDashboard,
   Briefcase,
   User,
+  Users,
+  Building2,
+  Layers,
+  CalendarDays,
+  CalendarRange,
   ChevronDown,
   Settings,
   Mail,
@@ -44,10 +49,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
 
-const navItems = [
+const personalItems = [
   { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
   { title: "Meu perfil", url: "/dashboard/profile", icon: User },
+];
+
+const discoveryItems = [
+  { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
+  { title: "Buscar profissionais", url: "/professionals", icon: Users },
+  { title: "Buscar estúdios", url: "/studios", icon: Building2 },
+  { title: "Buscar projetos", url: "/projects", icon: Layers },
+];
+
+const communityItems = [
+  { title: "Ver eventos", url: "/events", icon: CalendarRange },
+  { title: "Meus eventos", url: "/dashboard/events", icon: CalendarDays },
 ];
 
 const getInitials = (name: string) => {
@@ -85,27 +101,36 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/dashboard"}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
-                    >
-                      <item.icon className="h-[22px] w-[22px]" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {[
+          { label: "Pessoal", items: personalItems },
+          { label: "Descoberta", items: discoveryItems, className: "mt-4" },
+          { label: "Comunidade", items: communityItems, className: "mt-4" },
+        ].map((group) => (
+          <SidebarGroup key={group.label} className={group.className}>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider px-3 mb-1">
+              {group.label}
+            </span>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/dashboard"}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-300 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-[15px]"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
+                      >
+                        <item.icon className="h-[22px] w-[22px]" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">

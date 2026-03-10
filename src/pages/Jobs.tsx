@@ -10,6 +10,7 @@ import { useJobs, JobCursor } from "@/hooks/useJobs";
 import { useJobFilters } from "@/hooks/useJobFilters";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
+import { Footer } from "@/components/layout/Footer";
 
 export default function Jobs() {
   const { toast } = useToast();
@@ -217,6 +218,8 @@ export default function Jobs() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

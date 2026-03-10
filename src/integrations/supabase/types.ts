@@ -309,7 +309,9 @@ export type Database = {
           criado_em: string | null
           criado_por: string
           dribbble_url: string | null
-          especialidades: string[] | null
+          especialidades:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado: string | null
           facebook_url: string | null
           fundado_em: string | null
@@ -321,6 +323,7 @@ export type Database = {
           logo_url: string | null
           nome: string
           pinterest_url: string | null
+          search_vector: unknown
           slug: string
           sobre: string | null
           steam_url: string | null
@@ -339,7 +342,9 @@ export type Database = {
           criado_em?: string | null
           criado_por: string
           dribbble_url?: string | null
-          especialidades?: string[] | null
+          especialidades?:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado?: string | null
           facebook_url?: string | null
           fundado_em?: string | null
@@ -351,6 +356,7 @@ export type Database = {
           logo_url?: string | null
           nome: string
           pinterest_url?: string | null
+          search_vector?: unknown
           slug: string
           sobre?: string | null
           steam_url?: string | null
@@ -369,7 +375,9 @@ export type Database = {
           criado_em?: string | null
           criado_por?: string
           dribbble_url?: string | null
-          especialidades?: string[] | null
+          especialidades?:
+            | Database["public"]["Enums"]["especialidade_estudio"][]
+            | null
           estado?: string | null
           facebook_url?: string | null
           fundado_em?: string | null
@@ -381,6 +389,7 @@ export type Database = {
           logo_url?: string | null
           nome?: string
           pinterest_url?: string | null
+          search_vector?: unknown
           slug?: string
           sobre?: string | null
           steam_url?: string | null
@@ -407,6 +416,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      eventos: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          criado_por: string
+          data_fim: string
+          data_inicio: string
+          descricao: string | null
+          endereco: string | null
+          estado: string | null
+          id: string
+          link_externo: string | null
+          modalidade: string
+          nome: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          criado_por: string
+          data_fim: string
+          data_inicio: string
+          descricao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          link_externo?: string | null
+          modalidade: string
+          nome: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          criado_por?: string
+          data_fim?: string
+          data_inicio?: string
+          descricao?: string | null
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          link_externo?: string | null
+          modalidade?: string
+          nome?: string
+        }
+        Relationships: []
       }
       experiencia: {
         Row: {
@@ -737,16 +791,19 @@ export type Database = {
           descricao: string | null
           descricao_rich: Json | null
           destaque: boolean | null
-          engine: string | null
+          engine: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id: string | null
           fim: string | null
-          genero: string[] | null
+          genero: Database["public"]["Enums"]["genero_projeto"][] | null
           id: string
           imagem_capa_url: string | null
           inicio: string | null
           ordem: number | null
           papel: string | null
-          plataformas: string[] | null
+          plataformas:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
+          search_vector: unknown
           slug: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url: string | null
@@ -764,16 +821,19 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
-          engine?: string | null
+          engine?: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id?: string | null
           fim?: string | null
-          genero?: string[] | null
+          genero?: Database["public"]["Enums"]["genero_projeto"][] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
-          plataformas?: string[] | null
+          plataformas?:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
+          search_vector?: unknown
           slug?: string | null
           status: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -791,16 +851,19 @@ export type Database = {
           descricao?: string | null
           descricao_rich?: Json | null
           destaque?: boolean | null
-          engine?: string | null
+          engine?: Database["public"]["Enums"]["engine_projeto"] | null
           estudio_id?: string | null
           fim?: string | null
-          genero?: string[] | null
+          genero?: Database["public"]["Enums"]["genero_projeto"][] | null
           id?: string
           imagem_capa_url?: string | null
           inicio?: string | null
           ordem?: number | null
           papel?: string | null
-          plataformas?: string[] | null
+          plataformas?:
+            | Database["public"]["Enums"]["plataforma_projeto"][]
+            | null
+          search_vector?: unknown
           slug?: string | null
           status?: Database["public"]["Enums"]["status_projeto"]
           steam_url?: string | null
@@ -930,6 +993,7 @@ export type Database = {
           pinterest_url: string | null
           portfolio_url: string | null
           pronomes: string | null
+          search_vector: unknown
           slug: string
           sobre: string | null
           steam_url: string | null
@@ -969,6 +1033,7 @@ export type Database = {
           pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
+          search_vector?: unknown
           slug: string
           sobre?: string | null
           steam_url?: string | null
@@ -1008,6 +1073,7 @@ export type Database = {
           pinterest_url?: string | null
           portfolio_url?: string | null
           pronomes?: string | null
+          search_vector?: unknown
           slug?: string
           sobre?: string | null
           steam_url?: string | null
@@ -1328,12 +1394,232 @@ export type Database = {
       delete_expired_backups: { Args: never; Returns: undefined }
       expirar_vagas_antigas: { Args: never; Returns: number }
       get_invite_by_token: { Args: { invite_token: string }; Returns: Json }
+      is_estudio_member: { Args: { p_estudio_id: string }; Returns: boolean }
+      search_professionals: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_disponivel?: boolean
+          p_estado?: string
+          p_habilidades?: string[]
+          p_limit?: number
+          p_search?: string
+          p_tipo_trabalho?: string[]
+        }
+        Returns: {
+          avatar_url: string
+          bio_curta: string
+          cidade: string
+          criado_em: string
+          disponivel_para_trabalho: boolean
+          estado: string
+          habilidades: Json
+          id: string
+          nome_completo: string
+          rank: number
+          slug: string
+          tipo_trabalho_preferido: string[]
+          titulo_profissional: string
+          total_habilidades: number
+        }[]
+      }
+      search_projects: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_engine?: string
+          p_genero?: string[]
+          p_limit?: number
+          p_plataformas?: string[]
+          p_search?: string
+        }
+        Returns: {
+          codigo_url: string
+          criado_em: string
+          demo_url: string
+          descricao: string
+          destaque: boolean
+          engine: string
+          estudio_id: string
+          estudio_logo_url: string
+          estudio_nome: string
+          estudio_slug: string
+          genero: string[]
+          id: string
+          imagem_capa_url: string
+          plataformas: string[]
+          rank: number
+          slug: string
+          status: string
+          steam_url: string
+          tipo: string
+          titulo: string
+          user_avatar_url: string
+          user_id: string
+          user_nome: string
+          user_slug: string
+          visualizacoes: number
+        }[]
+      }
+      search_studios: {
+        Args: {
+          p_cursor_criado_em?: string
+          p_cursor_id?: string
+          p_especialidades?: string[]
+          p_estado?: string
+          p_limit?: number
+          p_search?: string
+          p_tamanho?: string
+        }
+        Returns: {
+          cidade: string
+          criado_em: string
+          especialidades: string[]
+          estado: string
+          id: string
+          logo_url: string
+          nome: string
+          rank: number
+          slug: string
+          sobre: string
+          tamanho: string
+          website: string
+        }[]
+      }
     }
     Enums: {
       categoria_habilidade: "habilidades" | "softwares"
+      engine_projeto:
+        | "unity"
+        | "unreal"
+        | "godot"
+        | "gamemaker"
+        | "construct"
+        | "rpg_maker"
+        | "defold"
+        | "cocos"
+        | "pygame"
+        | "custom"
+        | "renpy"
+        | "heaps"
+        | "bevy"
+        | "flax"
+        | "cryengine"
+        | "source_2"
+        | "gdevelop"
+        | "solar2d"
+        | "bitsy"
+        | "pico_8"
+        | "adventure_game_studio"
+        | "openfl"
+        | "monogame"
+        | "stride"
+        | "outro"
+      especialidade_estudio:
+        | "Mobile"
+        | "PC"
+        | "Console"
+        | "VR"
+        | "Casual"
+        | "Indie"
+        | "AA"
+        | "AAA"
+        | "F2P"
+      genero_projeto:
+        | "acao"
+        | "aventura"
+        | "rpg"
+        | "estrategia"
+        | "simulacao"
+        | "esportes"
+        | "corrida"
+        | "puzzle"
+        | "plataforma"
+        | "terror"
+        | "ficcao_cientifica"
+        | "casual"
+        | "idle"
+        | "tower_defense"
+        | "battle_royale"
+        | "mmo"
+        | "visual_novel"
+        | "metroidvania"
+        | "roguelike"
+        | "roguelite"
+        | "soulslike"
+        | "sandbox"
+        | "sobrevivencia"
+        | "musical"
+        | "luta"
+        | "tiro_fps"
+        | "tiro_tps"
+        | "card_game"
+        | "party_game"
+        | "educativo"
+        | "hack_and_slash"
+        | "stealth"
+        | "point_and_click"
+        | "walking_simulator"
+        | "bullet_hell"
+        | "shoot_em_up"
+        | "beat_em_up"
+        | "jrpg"
+        | "wrpg"
+        | "tactical_rpg"
+        | "dungeon_crawler"
+        | "arpg"
+        | "rts"
+        | "tbs"
+        | "grand_strategy"
+        | "4x"
+        | "auto_battler"
+        | "tycoon"
+        | "life_sim"
+        | "farming_sim"
+        | "god_game"
+        | "immersive_sim"
+        | "survivors_like"
+        | "hidden_object"
+        | "social_deduction"
+        | "trivia"
+        | "pinball"
+        | "ritmo"
+        | "fmv"
+        | "terror_psicologico"
+        | "survival_horror"
+        | "moba"
+        | "clicker"
+        | "deckbuilder"
+        | "metajogo"
+        | "noir"
+        | "fantasia"
+        | "cyberpunk"
+        | "steampunk"
+        | "outro"
       modalidade_trabalho: "presencial" | "hibrido" | "remoto"
       nivel_habilidade: "basico" | "intermediario" | "avancado" | "expert"
       nivel_vaga: "iniciante" | "junior" | "pleno" | "senior" | "lead"
+      plataforma_projeto:
+        | "pc_windows"
+        | "pc_linux"
+        | "pc_macos"
+        | "mobile_android"
+        | "mobile_ios"
+        | "console_playstation_4"
+        | "console_playstation_5"
+        | "console_xbox_one"
+        | "console_xbox_series"
+        | "console_nintendo_switch"
+        | "web_browser"
+        | "vr_meta_quest"
+        | "vr_steamvr"
+        | "vr_psvr"
+        | "ar_core"
+        | "ar_kit"
+        | "arcade"
+        | "cloud_gaming"
+        | "handheld_retro"
+        | "outro"
       status_candidatura:
         | "pendente"
         | "visualizada"
@@ -1491,9 +1777,141 @@ export const Constants = {
   public: {
     Enums: {
       categoria_habilidade: ["habilidades", "softwares"],
+      engine_projeto: [
+        "unity",
+        "unreal",
+        "godot",
+        "gamemaker",
+        "construct",
+        "rpg_maker",
+        "defold",
+        "cocos",
+        "pygame",
+        "custom",
+        "renpy",
+        "heaps",
+        "bevy",
+        "flax",
+        "cryengine",
+        "source_2",
+        "gdevelop",
+        "solar2d",
+        "bitsy",
+        "pico_8",
+        "adventure_game_studio",
+        "openfl",
+        "monogame",
+        "stride",
+        "outro",
+      ],
+      especialidade_estudio: [
+        "Mobile",
+        "PC",
+        "Console",
+        "VR",
+        "Casual",
+        "Indie",
+        "AA",
+        "AAA",
+        "F2P",
+      ],
+      genero_projeto: [
+        "acao",
+        "aventura",
+        "rpg",
+        "estrategia",
+        "simulacao",
+        "esportes",
+        "corrida",
+        "puzzle",
+        "plataforma",
+        "terror",
+        "ficcao_cientifica",
+        "casual",
+        "idle",
+        "tower_defense",
+        "battle_royale",
+        "mmo",
+        "visual_novel",
+        "metroidvania",
+        "roguelike",
+        "roguelite",
+        "soulslike",
+        "sandbox",
+        "sobrevivencia",
+        "musical",
+        "luta",
+        "tiro_fps",
+        "tiro_tps",
+        "card_game",
+        "party_game",
+        "educativo",
+        "hack_and_slash",
+        "stealth",
+        "point_and_click",
+        "walking_simulator",
+        "bullet_hell",
+        "shoot_em_up",
+        "beat_em_up",
+        "jrpg",
+        "wrpg",
+        "tactical_rpg",
+        "dungeon_crawler",
+        "arpg",
+        "rts",
+        "tbs",
+        "grand_strategy",
+        "4x",
+        "auto_battler",
+        "tycoon",
+        "life_sim",
+        "farming_sim",
+        "god_game",
+        "immersive_sim",
+        "survivors_like",
+        "hidden_object",
+        "social_deduction",
+        "trivia",
+        "pinball",
+        "ritmo",
+        "fmv",
+        "terror_psicologico",
+        "survival_horror",
+        "moba",
+        "clicker",
+        "deckbuilder",
+        "metajogo",
+        "noir",
+        "fantasia",
+        "cyberpunk",
+        "steampunk",
+        "outro",
+      ],
       modalidade_trabalho: ["presencial", "hibrido", "remoto"],
       nivel_habilidade: ["basico", "intermediario", "avancado", "expert"],
       nivel_vaga: ["iniciante", "junior", "pleno", "senior", "lead"],
+      plataforma_projeto: [
+        "pc_windows",
+        "pc_linux",
+        "pc_macos",
+        "mobile_android",
+        "mobile_ios",
+        "console_playstation_4",
+        "console_playstation_5",
+        "console_xbox_one",
+        "console_xbox_series",
+        "console_nintendo_switch",
+        "web_browser",
+        "vr_meta_quest",
+        "vr_steamvr",
+        "vr_psvr",
+        "ar_core",
+        "ar_kit",
+        "arcade",
+        "cloud_gaming",
+        "handheld_retro",
+        "outro",
+      ],
       status_candidatura: [
         "pendente",
         "visualizada",

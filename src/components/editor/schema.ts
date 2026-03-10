@@ -11,6 +11,7 @@ export const schema = BlockNoteSchema.create({
     codeBlock: defaultBlockSpecs.codeBlock,
     quote: defaultBlockSpecs.quote,
     image: defaultBlockSpecs.image,
+    divider: defaultBlockSpecs.divider,
     youtube: YouTubeBlock(),
   },
 });

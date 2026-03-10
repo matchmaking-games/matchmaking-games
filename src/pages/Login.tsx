@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading } = useAuth();
+  const { session, hasProfile, isLoading: authLoading } = useAuth();
   const redirect = new URLSearchParams(window.location.search).get("redirect");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,28 +22,18 @@ const Login = () => {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      if (authLoading) return;
-      
-      if (user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          navigate(redirect || '/dashboard', { replace: true });
-        } else {
-          navigate(redirect ? `/onboarding?redirect=${encodeURIComponent(redirect)}` : '/onboarding', { replace: true });
-        }
+    if (authLoading) return;
+
+    if (session) {
+      if (hasProfile) {
+        navigate(redirect || "/dashboard", { replace: true });
       } else {
-        setCheckingAuth(false);
+        navigate(redirect ? `/onboarding?redirect=${encodeURIComponent(redirect)}` : "/onboarding", { replace: true });
       }
-    };
-    
-    checkAuthAndRedirect();
-  }, [user, authLoading, navigate]);
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [session, hasProfile, authLoading, navigate, redirect]);
 
   if (authLoading || checkingAuth) {
     return (
@@ -88,7 +80,7 @@ const Login = () => {
     setIsLoading(true);
     setError(null);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -99,21 +91,15 @@ const Login = () => {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', data.session.user.id)
-      .maybeSingle();
-
-    if (profile) {
-      navigate(redirect || "/dashboard");
-    } else {
-      navigate("/onboarding");
-    }
+    // AuthContext detecta o SIGNED_IN via onAuthStateChange e atualiza session/hasProfile.
+    // O useEffect de redirect acima cuida do navigate automaticamente.
+    // Não precisamos fazer nada aqui — o estado do contexto vai mudar e o useEffect roda.
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <>
+      <Header />
+      <div className="min-h-screen pt-16 flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background grid pattern - 24px for connection feel */}
       <div className="absolute inset-0 bg-grid-pattern" />
       
@@ -271,7 +257,9 @@ const Login = () => {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 };
 

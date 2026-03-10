@@ -1,33 +1,44 @@
 
+## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-## Fix: Education Dates — Switch from MM/YYYY to Year-only (YYYY)
+Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
 
-Three targeted changes across three files to fix the "undefined 2022" bug and standardize education dates to year-only format.
+### Arquivo 1: `src/hooks/useStudioProject.ts`
 
-### Change 1 — `src/components/education/EducationModal.tsx`
+Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
 
-- Remove `MonthYearPicker` import (line 16) and `currentMonth` variable (line 176)
-- Update Zod schema: replace `inicio` and `fim` validation with a custom year validator that accepts empty string or 4-digit year between 1900 and current year, with error message "Informe um ano válido (ex: 2020)"
-- In the `useEffect` that populates editing data (lines 109-110): change `.substring(0, 7)` to `.substring(0, 4)` for both `inicio` and `fim`
-- Replace both `MonthYearPicker` usages (lines 262-267 and 282-287) with simple `<Input>` fields: `placeholder="Ex: 2020"`, `type="text"`, `maxLength={4}`
-
-### Change 2 — `src/lib/formatters.ts`
-
-Rewrite `formatEducationPeriod` to work with year-only strings:
-- No `inicio` and no `fim`: return "Em andamento" or "Concluído" based on `concluido`
-- Both present: show `startYear - endYear` (or just one year if equal)
-- Only `inicio`: show `year - Em andamento` or `Concluído em year`
-- Only `fim`: show the year
-- Use `.substring(0, 4)` to handle legacy "YYYY-MM" values
-- Remove the `date-fns` usage within this function (the `format`/`capitalize` calls)
-
-### Change 3 — `src/components/ImportReviewDrawer.tsx`
-
-Add defensive `.substring(0, 4)` in the `mappedEducation` construction (lines 469-470):
-```ts
-inicio: edu.start_year ? String(edu.start_year).substring(0, 4) : "",
-fim: edu.end_year ? String(edu.end_year).substring(0, 4) : null,
+```typescript
+interface StudioProjectData {
+  // Campos do projeto + estúdio aninhado
+  id, titulo, descricao, tipo, status, engine, plataformas, genero,
+  imagem_capa_url, demo_url, codigo_url, steam_url, ...
+  estudio: { id, nome, slug, logo_url }
+}
 ```
 
-No other files are touched.
+- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
+- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
+- Retorna `{ project, isLoading, error }`
 
+### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
+
+Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
+
+**Estrutura:**
+- Header + Footer padrão
+- Skeleton durante loading (imagem, título, descrição)
+- Estado de erro: "Projeto não encontrado" + link para `/projects`
+
+**Layout quando encontrado:**
+1. Imagem de capa (16:9) se existir
+2. Título (`font-display font-semibold text-3xl`)
+3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
+4. Descrição simples (campo `descricao`, não o `descricao_rich`)
+5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
+6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
+
+**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
+
+### Arquivos afetados
+- `src/hooks/useStudioProject.ts` (criar)
+- `src/pages/StudioProjectDetail.tsx` (criar)

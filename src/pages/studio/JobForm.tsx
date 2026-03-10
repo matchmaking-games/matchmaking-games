@@ -94,8 +94,6 @@ export default function JobForm() {
   const [formSaved, setFormSaved] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
-
-
   const form = useForm<VagaFormSchemaType>({
     resolver: zodResolver(vagaFormSchema),
     defaultValues: {
@@ -147,9 +145,7 @@ export default function JobForm() {
 
   // Handle cancel button click with unsaved changes check
   const studioParam = searchParams.get("studio");
-  const jobsUrl = studioParam
-    ? `/studio/manage/jobs?studio=${studioParam}`
-    : "/studio/manage/jobs";
+  const jobsUrl = studioParam ? `/studio/manage/jobs?studio=${studioParam}` : "/studio/manage/jobs";
 
   const handleCancelClick = () => {
     if (hasUnsavedChanges && !formSaved) {
@@ -171,7 +167,7 @@ export default function JobForm() {
 
   // Load existing job data into form
   useEffect(() => {
-    if (existingJob) {
+    if (existingJob && existingTiposFuncao.length >= 0) {
       form.reset({
         titulo: existingJob.titulo,
         tipo_funcao: existingTiposFuncao || [],
@@ -196,7 +192,7 @@ export default function JobForm() {
       // Reset unsaved changes after loading existing job
       setHasUnsavedChanges(false);
     }
-  }, [existingJob, form, fetchMunicipios]);
+  }, [existingJob, existingTiposFuncao, form, fetchMunicipios]);
 
   // Load existing skills
   useEffect(() => {
@@ -520,7 +516,7 @@ export default function JobForm() {
                         <PopoverContent className="w-full p-0" align="start">
                           <Command>
                             <CommandInput placeholder="Buscar função..." />
-                            <CommandList className="max-h-[200px] overflow-y-auto">
+                            <CommandList className="max-h-[200px] overflow-y-auto scrollbar-thin">
                               <CommandEmpty>Nenhuma função encontrada.</CommandEmpty>
                               <CommandGroup>
                                 {tiposFuncao
