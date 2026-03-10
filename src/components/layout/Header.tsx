@@ -10,6 +10,7 @@ import {
   Users,
   Building2,
   Layers,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -200,8 +201,10 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent font-normal text-sm font-sans">
-                  Explorar
+                <NavigationMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    Explorar <ChevronDown className="h-3 w-3" />
+                  </Button>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="w-64 p-2">
