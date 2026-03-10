@@ -22,6 +22,7 @@ import Experience from "./pages/Experience";
 import Education from "./pages/Education";
 import Projects from "./pages/Projects";
 import ProjectFormPage from "./pages/dashboard/ProjectFormPage";
+import ProjectsDashboard from "./pages/ProjectsDashboard";
 import EventForm from "./pages/dashboard/EventForm";
 import EventsPage from "./pages/dashboard/Events";
 import Jobs from "./pages/Jobs";
@@ -55,176 +56,176 @@ const queryClient = new QueryClient();
 const App = () => (
   <AuthProvider>
     <Sentry.ErrorBoundary fallback={<p>Algo deu errado. Por favor, recarregue a página.</p>}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <SpeedInsights />
-      <Analytics />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-          path="/dashboard/profile/links"
-          element={
-            <ProtectedRoute>
-              <ProfileLinks />
-            </ProtectedRoute>
-          }
-          />
-          <Route
-            path="/dashboard/profile/skills"
-            element={
-              <ProtectedRoute>
-                <Skills />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile/experience"
-            element={
-              <ProtectedRoute>
-                <Experience />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile/education"
-            element={
-              <ProtectedRoute>
-                <Education />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/profile/projects"
-            element={
-              <ProtectedRoute>
-                <Projects />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/projects/new"
-            element={
-              <ProtectedRoute>
-                <ProjectFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/projects/:id/edit"
-            element={
-              <ProtectedRoute>
-                <ProjectFormPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/events"
-            element={
-              <ProtectedRoute>
-                <EventsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/events/new"
-            element={
-              <ProtectedRoute>
-                <EventForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard/events/:id/edit"
-            element={
-              <ProtectedRoute>
-                <EventForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/jobs" element={<Jobs />} />
-          <Route path="/professionals" element={<Professionals />} />
-          <Route path="/studios" element={<Studios />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/jobs/:slug" element={<JobDetail />} />
-          <Route path="/p/:slug" element={<PublicProfile />} />
-          <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
-          <Route path="/studio/:slug" element={<StudioPublicProfile />} />
-          <Route path="/studio/:slug/project/:projectSlug" element={<StudioProjectDetail />} />
-          <Route path="/invite/:token" element={<AcceptInvite />} />
-          <Route
-            path="/studio/manage/new"
-            element={
-              <ProtectedRoute>
-                <NewStudio />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            element={
-              <ProtectedRoute>
-                <StudioManageLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/studio/manage/dashboard" element={<StudioDashboard />} />
-            <Route path="/studio/manage/profile" element={<StudioProfile />} />
-            <Route path="/studio/manage/profile/links" element={<StudioProfileLinks />} />
-            <Route path="/studio/manage/jobs" element={<StudioJobs />} />
-            <Route path="/studio/manage/jobs/new" element={<JobForm />} />
-            <Route path="/studio/manage/jobs/:id/edit" element={<JobForm />} />
-            <Route path="/studio/manage/team" element={<Team />} />
-            <Route path="/studio/manage/billing" element={<Billing />} />
-          </Route>
-          <Route
-            path="/dashboard/settings"
-            element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/support"
-            element={
-              <ProtectedRoute>
-                <Support />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <SpeedInsights />
+          <Analytics />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile/links"
+                element={
+                  <ProtectedRoute>
+                    <ProfileLinks />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile/skills"
+                element={
+                  <ProtectedRoute>
+                    <Skills />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile/experience"
+                element={
+                  <ProtectedRoute>
+                    <Experience />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile/education"
+                element={
+                  <ProtectedRoute>
+                    <Education />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/profile/projects"
+                element={
+                  <ProtectedRoute>
+                    <ProjectsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/projects/new"
+                element={
+                  <ProtectedRoute>
+                    <ProjectFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/projects/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <ProjectFormPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/events"
+                element={
+                  <ProtectedRoute>
+                    <EventsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/events/new"
+                element={
+                  <ProtectedRoute>
+                    <EventForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/events/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <EventForm />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/professionals" element={<Professionals />} />
+              <Route path="/studios" element={<Studios />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/jobs/:slug" element={<JobDetail />} />
+              <Route path="/p/:slug" element={<PublicProfile />} />
+              <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
+              <Route path="/studio/:slug" element={<StudioPublicProfile />} />
+              <Route path="/studio/:slug/project/:projectSlug" element={<StudioProjectDetail />} />
+              <Route path="/invite/:token" element={<AcceptInvite />} />
+              <Route
+                path="/studio/manage/new"
+                element={
+                  <ProtectedRoute>
+                    <NewStudio />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <StudioManageLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/studio/manage/dashboard" element={<StudioDashboard />} />
+                <Route path="/studio/manage/profile" element={<StudioProfile />} />
+                <Route path="/studio/manage/profile/links" element={<StudioProfileLinks />} />
+                <Route path="/studio/manage/jobs" element={<StudioJobs />} />
+                <Route path="/studio/manage/jobs/new" element={<JobForm />} />
+                <Route path="/studio/manage/jobs/:id/edit" element={<JobForm />} />
+                <Route path="/studio/manage/team" element={<Team />} />
+                <Route path="/studio/manage/billing" element={<Billing />} />
+              </Route>
+              <Route
+                path="/dashboard/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/support"
+                element={
+                  <ProtectedRoute>
+                    <Support />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
     </Sentry.ErrorBoundary>
   </AuthProvider>
 );
