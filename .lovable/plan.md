@@ -1,41 +1,44 @@
 
+## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-## Plano: Criar página Projects.tsx
+Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
 
-Replicar a estrutura exata de `Studios.tsx`, adaptando para projetos. Diferenças: grid `lg:grid-cols-3` (em vez de 2), ícone `Gamepad2`, e hooks/componentes de projeto.
+### Arquivo 1: `src/hooks/useStudioProject.ts`
 
-### Estrutura
+Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
 
-Cópia fiel de Studios.tsx com estas substituições:
-
-| Studios.tsx | Projects.tsx |
-|---|---|
-| `useStudioFilters` | `useProjectFilters` |
-| `useStudios` | `useProjectSearch` |
-| `StudiosSidebar` | `ProjectsSidebar` |
-| `StudioCard` | `ProjectSearchCard` |
-| `StudioCardSkeletonGrid` | `ProjectSearchCardSkeletonGrid` |
-| `StudioCursor` | `ProjectCursor` |
-| `Building2` | `Gamepad2` |
-| `lg:grid-cols-2` | `lg:grid-cols-3` |
-
-### Sidebar props
-```
-filters, setFilter, setPlataformas, setGenero, handleClearAll, activeFilterCount
-```
-
-### filtersKey
 ```typescript
-JSON.stringify({ engine: filters.engine, plataformas: filters.plataformas, genero: filters.genero, searchText: debouncedSearch })
+interface StudioProjectData {
+  // Campos do projeto + estúdio aninhado
+  id, titulo, descricao, tipo, status, engine, plataformas, genero,
+  imagem_capa_url, demo_url, codigo_url, steam_url, ...
+  estudio: { id, nome, slug, logo_url }
+}
 ```
 
-### Textos
-- Hero: "Projetos" / "Conheça os projetos da comunidade de games do Brasil"
-- Search placeholder: "Buscar por título ou descrição..."
-- Empty com filtros: "Nenhum projeto encontrado com esses filtros"
-- Empty sem filtros: "Nenhum projeto cadastrado ainda"
-- Toast erro: "Erro ao carregar projetos"
+- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
+- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
+- Retorna `{ project, isLoading, error }`
+
+### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
+
+Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
+
+**Estrutura:**
+- Header + Footer padrão
+- Skeleton durante loading (imagem, título, descrição)
+- Estado de erro: "Projeto não encontrado" + link para `/projects`
+
+**Layout quando encontrado:**
+1. Imagem de capa (16:9) se existir
+2. Título (`font-display font-semibold text-3xl`)
+3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
+4. Descrição simples (campo `descricao`, não o `descricao_rich`)
+5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
+6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
+
+**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
 
 ### Arquivos afetados
-- `src/pages/Projects.tsx` (criar)
-
+- `src/hooks/useStudioProject.ts` (criar)
+- `src/pages/StudioProjectDetail.tsx` (criar)
