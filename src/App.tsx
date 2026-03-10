@@ -44,6 +44,7 @@ import StudioProfileLinks from "./pages/studio/StudioProfileLinks";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/Settings";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
+import StudioProjectDetail from "./pages/StudioProjectDetail";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
