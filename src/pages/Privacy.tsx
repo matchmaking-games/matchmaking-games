@@ -142,11 +142,15 @@ const Privacy = () => {
                 <a href="https://supabase.com" {...linkProps}>
                   https://supabase.com
                 </a>
-                ) para armazenamento e banco de dados utilizando a infraestrutura da Amazon AWS, e da Sentry (
+                ) para armazenamento e banco de dados utilizando a infraestrutura da Amazon AWS, da Sentry (
                 <a href="https://sentry.io" {...linkProps}>
                   https://sentry.io
                 </a>
-                ) para monitoramento de erros e estabilidade do aplicativo.
+                ) para monitoramento de erros e estabilidade do aplicativo, e do Microsoft Clarity (
+                <a href="https://clarity.microsoft.com" {...linkProps}>
+                  https://clarity.microsoft.com
+                </a>
+                ) para análise de comportamento e interação visual do usuário.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
                 O Sentry pode coletar automaticamente dados técnicos quando ocorrem falhas, como informações do
@@ -159,10 +163,14 @@ const Privacy = () => {
                 ,{" "}
                 <a href="https://vercel.com/legal/privacy-policy" {...linkProps}>
                   https://vercel.com/legal/privacy-policy
-                </a>{" "}
-                e{" "}
+                </a>
+                ,{" "}
                 <a href="https://sentry.io/privacy/" {...linkProps}>
                   https://sentry.io/privacy/
+                </a>{" "}
+                e{" "}
+                <a href="https://privacy.microsoft.com/pt-br/privacystatement" {...linkProps}>
+                  https://privacy.microsoft.com/pt-br/privacystatement
                 </a>
                 . Por essa razão, a eventual transferência internacional de dados pessoais pela Empresa para esses
                 serviços obedece o inciso I do artigo 33 da LGPD.
@@ -309,23 +317,30 @@ const Privacy = () => {
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-3">
                 Faz-se saber que a Empresa utiliza o Google Analytics, uma ferramenta de análise de dados da internet
-                (web analytics), para acompanhar os dados de audiência do aplicativo e entender como os visitantes
-                interagem e navegam por nossas páginas. O Google Analytics coleta informações de forma anônima, ou seja,
-                relata as tendências do site, como páginas visitadas, tempo de permanência no site, entre outras
-                informações, sem identificar visitantes individuais. Portanto, os dados pessoais compartilhados pelo
-                Google Analytics com a Empresa são anonimizados, nos termos do inciso III do Artigo 5º da LGPD. Neste
-                sentido, não se aplica a LGPD, conforme previsto no seu Artigo 12. Mais detalhes sobre a política de
-                privacidade do Google Analytics podem ser encontrados em{" "}
+                (web analytics), e o Microsoft Clarity, uma ferramenta de análise comportamental, para acompanhar os
+                dados de audiência do aplicativo e entender como os visitantes interagem e navegam por nossas páginas
+                (incluindo a geração de mapas de calor e gravações de sessão). Essas ferramentas coletam informações de
+                forma anônima, ou seja, relatam as tendências do site, como páginas visitadas, tempo de permanência no
+                site, cliques e interações visuais, entre outras informações, sem identificar visitantes individuais.
+                Portanto, os dados pessoais compartilhados pelo Google Analytics e pelo Microsoft Clarity com a Empresa
+                são anonimizados, nos termos do inciso III do Artigo 5º da LGPD. Neste sentido, não se aplica a LGPD,
+                conforme previsto no seu Artigo 12. Mais detalhes sobre as políticas de privacidade podem ser
+                encontrados em{" "}
                 <a href="http://www.google.com/intl/en_uk/analytics/privacyoverview.html" {...linkProps}>
                   http://www.google.com/intl/en_uk/analytics/privacyoverview.html
-                </a>
-                .
+                </a>{" "}
+                para o Google Analytics e em{" "}
+                <a href="https://privacy.microsoft.com/pt-br/privacystatement" {...linkProps}>
+                  https://privacy.microsoft.com/pt-br/privacystatement
+                </a>{" "}
+                para o Microsoft Clarity.
               </p>
               <p className="text-base text-muted-foreground leading-relaxed mt-2">
                 O aplicativo da Empresa foi desenvolvido utilizando a Vercel para hospedagem, a Supabase para
-                armazenamento de dados e a Sentry para monitoramento de erros e estabilidade do aplicativo. Essas
-                empresas poderão ter acesso a determinadas informações inseridas no aplicativo da Empresa apenas quando
-                necessário para a prestação de seus serviços, nos estritos termos previstos na LGPD.
+                armazenamento de dados, a Sentry para monitoramento de erros e estabilidade do aplicativo, e o Microsoft
+                Clarity para análise da experiência do usuário. Essas empresas poderão ter acesso a determinadas
+                informações inseridas no aplicativo da Empresa apenas quando necessário para a prestação de seus
+                serviços, nos estritos termos previstos na LGPD.
               </p>
             </section>
 
