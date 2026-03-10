@@ -176,6 +176,7 @@ const App = () => (
           <Route path="/p/:slug" element={<PublicProfile />} />
           <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
           <Route path="/studio/:slug" element={<StudioPublicProfile />} />
+          <Route path="/studio/:slug/project/:projectSlug" element={<StudioProjectDetail />} />
           <Route path="/invite/:token" element={<AcceptInvite />} />
           <Route
             path="/studio/manage/new"
