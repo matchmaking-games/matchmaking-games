@@ -43,6 +43,7 @@ import StudioProfileLinks from "./pages/studio/StudioProfileLinks";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Settings from "./pages/Settings";
 import StudioPublicProfile from "./pages/StudioPublicProfile";
+import StudioProjectDetail from "./pages/StudioProjectDetail";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 import Support from "./pages/Support";
@@ -168,11 +169,13 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/professionals" element={<Professionals />} />
           <Route path="/studios" element={<Studios />} />
+          <Route path="/projects" element={<Projects />} />
           <Route path="/events" element={<Events />} />
           <Route path="/jobs/:slug" element={<JobDetail />} />
           <Route path="/p/:slug" element={<PublicProfile />} />
           <Route path="/p/:slug/project/:projectSlug" element={<ProjectDetail />} />
           <Route path="/studio/:slug" element={<StudioPublicProfile />} />
+          <Route path="/studio/:slug/project/:projectSlug" element={<StudioProjectDetail />} />
           <Route path="/invite/:token" element={<AcceptInvite />} />
           <Route
             path="/studio/manage/new"
