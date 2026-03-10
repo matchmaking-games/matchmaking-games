@@ -207,7 +207,7 @@ export default function EventsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <h1 className="font-display text-3xl font-bold text-foreground">Meus Eventos</h1>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Button variant="ghost" onClick={() => navigate("/eventos")} className="w-full sm:w-auto">
+                <Button variant="ghost" onClick={() => navigate("/events")} className="w-full sm:w-auto">
                   <CalendarRange className="h-4 w-4" />
                   Eventos da comunidade
                 </Button>
