@@ -18,11 +18,14 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
   const ownerAvatar = project.estudio_id ? project.estudio_logo_url : project.user_avatar_url;
   const ownerType = project.estudio_id ? "Estúdio" : "Profissional";
 
-  const visiblePlataformas = project.plataformas.slice(0, 3);
-  const extraPlataformas = project.plataformas.length - 3;
+  const plataformas = project.plataformas ?? [];
+  const genero = project.genero ?? [];
 
-  const visibleGeneros = project.genero.slice(0, 2);
-  const extraGeneros = project.genero.length - 2;
+  const visiblePlataformas = plataformas.slice(0, 3);
+  const extraPlataformas = plataformas.length - 3;
+
+  const visibleGeneros = genero.slice(0, 2);
+  const extraGeneros = genero.length - 2;
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className="block">
@@ -30,11 +33,7 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
         {/* Cover image */}
         <div className="aspect-video bg-muted relative flex items-center justify-center overflow-hidden">
           {project.imagem_capa_url ? (
-            <img
-              src={project.imagem_capa_url}
-              alt={project.titulo}
-              className="w-full h-full object-cover"
-            />
+            <img src={project.imagem_capa_url} alt={project.titulo} className="w-full h-full object-cover" />
           ) : (
             <Gamepad2 className="h-12 w-12 text-muted-foreground/50" />
           )}
@@ -44,9 +43,7 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
         <div className="p-4 space-y-2">
           {/* Title + engine */}
           <div className="flex items-start justify-between gap-2">
-            <p className="font-display font-semibold text-foreground truncate leading-tight">
-              {project.titulo}
-            </p>
+            <p className="font-display font-semibold text-foreground truncate leading-tight">{project.titulo}</p>
             {project.engine && ENGINE_LABELS[project.engine] && (
               <Badge variant="secondary" className="text-xs flex-shrink-0">
                 {ENGINE_LABELS[project.engine]}
@@ -55,7 +52,7 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
           </div>
 
           {/* Platforms */}
-          {project.plataformas.length > 0 && (
+          {plataformas.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
               {visiblePlataformas.map((p) => (
                 <Badge key={p} variant="outline" className="text-xs">
@@ -71,7 +68,7 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
           )}
 
           {/* Genres */}
-          {project.genero.length > 0 && (
+          {genero.length > 0 && (
             <div className="flex flex-wrap items-center gap-1">
               {visibleGeneros.map((g) => (
                 <Badge key={g} variant="outline" className="text-xs">
@@ -96,9 +93,7 @@ export function ProjectSearchCard({ project }: ProjectSearchCardProps) {
                 {ownerName?.[0]?.toUpperCase() || "?"}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-muted-foreground truncate">
-              {ownerName}
-            </span>
+            <span className="text-sm text-muted-foreground truncate">{ownerName}</span>
             <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
               {ownerType}
             </Badge>
