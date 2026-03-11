@@ -1,42 +1,44 @@
 
+## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-## Plano: Adicionar campos engine, plataformas, gêneros e Steam ao ProjectFormPage
+Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
 
-Único arquivo alterado: `src/pages/dashboard/ProjectFormPage.tsx`
+### Arquivo 1: `src/hooks/useStudioProject.ts`
 
-### Mudanças
+Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
 
-1. **Imports** (linha 1-23): Adicionar `MultiSelectCombobox` e labels (`ENGINE_LABELS`, `PLATAFORMA_LABELS`, `GENERO_LABELS`)
-
-2. **Schema** (linha 26-37): Adicionar `engine` e `steam_url` ao `projectSchema`:
-   - `engine: z.string().optional().or(z.literal(""))`
-   - `steam_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional()`
-
-3. **Constantes** (após linha 47): Adicionar `ENGINE_OPTIONS`, `PLATAFORMA_OPTIONS`, `GENERO_OPTIONS`
-
-4. **Estado local** (junto ao `selectedSkillIds`, linha 65):
-   - `selectedPlataformas` e `selectedGeneros` como `useState<string[]>([])`
-
-5. **Default values** (linha 86-100): Adicionar `engine: ""` e `steam_url: ""`
-
-6. **useEffect de edição** (linha 103-123): Adicionar `engine` e `steam_url` ao `form.reset`, e `setSelectedPlataformas`/`setSelectedGeneros`
-
-7. **onSubmit** (linha 182-194): Adicionar `engine`, `plataformas`, `genero`, `steam_url` ao `projectData`
-
-8. **Campos visuais** — Inserir entre imagem de capa (linha 322) e seção Tipo/Papel (linha 324):
-   - Seção "Detalhes do Jogo" com `h4`
-   - `FormField` Select para Engine (com opção "Nenhuma")
-   - `MultiSelectCombobox` para Plataformas (com Label, fora do FormField)
-   - `MultiSelectCombobox` para Gêneros (com Label, fora do FormField)
-
-9. **Steam URL** — Adicionar após o campo `codigo_url` (linha 463), dentro da seção Links
-
-### Posicionamento dos campos no formulário
-```text
-Título → Slug → Imagem de Capa
-→ [NOVO] Detalhes do Jogo (Engine, Plataformas, Gêneros)
-→ Tipo/Papel → Descrição breve → Status
-→ Links (Demo, Código, [NOVO] Steam)
-→ Skills → Destaque → Rich Text → Botões
+```typescript
+interface StudioProjectData {
+  // Campos do projeto + estúdio aninhado
+  id, titulo, descricao, tipo, status, engine, plataformas, genero,
+  imagem_capa_url, demo_url, codigo_url, steam_url, ...
+  estudio: { id, nome, slug, logo_url }
+}
 ```
 
+- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
+- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
+- Retorna `{ project, isLoading, error }`
+
+### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
+
+Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
+
+**Estrutura:**
+- Header + Footer padrão
+- Skeleton durante loading (imagem, título, descrição)
+- Estado de erro: "Projeto não encontrado" + link para `/projects`
+
+**Layout quando encontrado:**
+1. Imagem de capa (16:9) se existir
+2. Título (`font-display font-semibold text-3xl`)
+3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
+4. Descrição simples (campo `descricao`, não o `descricao_rich`)
+5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
+6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
+
+**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
+
+### Arquivos afetados
+- `src/hooks/useStudioProject.ts` (criar)
+- `src/pages/StudioProjectDetail.tsx` (criar)

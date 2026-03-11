@@ -21,6 +21,9 @@ import { ProjectImageUpload } from "@/components/projects/ProjectImageUpload";
 import { ProjectSkillsSelect } from "@/components/projects/ProjectSkillsSelect";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
+import { ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS } from "@/constants/project-labels";
+import type { Database } from "@/integrations/supabase/types";
 
 // Fix 8: added "pausado" to status enum
 const projectSchema = z.object({
@@ -32,6 +35,8 @@ const projectSchema = z.object({
   status: z.enum(["em_andamento", "concluido", "pausado"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
+  steam_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
+  engine: z.string().optional().or(z.literal("")),
   destaque: z.boolean().default(false),
   imagem_capa_url: z.string().url().nullable().optional(),
 });
@@ -45,6 +50,10 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number):
     timeoutId = setTimeout(() => fn(...args), delay);
   };
 }
+
+const ENGINE_OPTIONS = Object.entries(ENGINE_LABELS).map(([value, label]) => ({ value, label }));
+const PLATAFORMA_OPTIONS = Object.entries(PLATAFORMA_LABELS).map(([value, label]) => ({ value, label }));
+const GENERO_OPTIONS = Object.entries(GENERO_LABELS).map(([value, label]) => ({ value, label }));
 
 export default function ProjectFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +72,8 @@ export default function ProjectFormPage() {
   const [userSlug, setUserSlug] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [selectedPlataformas, setSelectedPlataformas] = useState<string[]>([]);
+  const [selectedGeneros, setSelectedGeneros] = useState<string[]>([]);
   const tempProjectIdRef = useRef<string | null>(null);
   const [richContent, setRichContent] = useState<string | null>(null);
   // Fix 6: track rich content dirty state
@@ -94,6 +105,8 @@ export default function ProjectFormPage() {
       status: "em_andamento",
       demo_url: "",
       codigo_url: "",
+      steam_url: "",
+      engine: "",
       destaque: false,
       imagem_capa_url: null,
     },
@@ -111,12 +124,16 @@ export default function ProjectFormPage() {
         status: editingProject.status,
         demo_url: editingProject.demo_url ?? "",
         codigo_url: editingProject.codigo_url ?? "",
+        steam_url: (editingProject as Record<string, unknown>).steam_url as string ?? "",
+        engine: (editingProject as Record<string, unknown>).engine as string ?? "",
         destaque: editingProject.destaque ?? false,
         imagem_capa_url: editingProject.imagem_capa_url ?? null,
       });
       setPreviousGeneratedSlug(editingProject.slug ?? "");
       const skillIds = editingProject.projeto_habilidades?.map((ph) => ph.habilidade_id) || [];
       setSelectedSkillIds(skillIds);
+      setSelectedPlataformas((editingProject as Record<string, unknown>).plataformas as string[] ?? []);
+      setSelectedGeneros((editingProject as Record<string, unknown>).genero as string[] ?? []);
       setRichContent(editingProject.descricao_rich ? JSON.stringify(editingProject.descricao_rich) : null);
       setRichContentDirty(false);
     }
@@ -189,6 +206,10 @@ export default function ProjectFormPage() {
         status: values.status,
         demo_url: values.demo_url || null,
         codigo_url: values.codigo_url || null,
+        steam_url: values.steam_url || null,
+        engine: (values.engine || null) as Database["public"]["Enums"]["engine_projeto"] | null,
+        plataformas: (selectedPlataformas.length > 0 ? selectedPlataformas : null) as Database["public"]["Enums"]["plataforma_projeto"][] | null,
+        genero: (selectedGeneros.length > 0 ? selectedGeneros : null) as Database["public"]["Enums"]["genero_projeto"][] | null,
         destaque: values.destaque,
         imagem_capa_url: values.imagem_capa_url || null,
       };
@@ -320,6 +341,61 @@ export default function ProjectFormPage() {
                     disabled={isSubmitting}
                   />
                 )}
+
+                {/* Game Details */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-foreground">Detalhes do Jogo</h4>
+
+                  <FormField
+                    control={form.control}
+                    name="engine"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Engine</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar engine..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">Nenhuma</SelectItem>
+                            {ENGINE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <Label>Plataformas</Label>
+                    <MultiSelectCombobox
+                      options={PLATAFORMA_OPTIONS}
+                      selected={selectedPlataformas}
+                      onSelectionChange={setSelectedPlataformas}
+                      placeholder="Selecionar plataformas..."
+                      searchPlaceholder="Buscar plataforma..."
+                      emptyMessage="Nenhuma plataforma encontrada"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gêneros</Label>
+                    <MultiSelectCombobox
+                      options={GENERO_OPTIONS}
+                      selected={selectedGeneros}
+                      onSelectionChange={setSelectedGeneros}
+                      placeholder="Selecionar gêneros..."
+                      searchPlaceholder="Buscar gênero..."
+                      emptyMessage="Nenhum gênero encontrado"
+                    />
+                  </div>
+                </div>
 
                 {/* Type and Role */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -456,6 +532,20 @@ export default function ProjectFormPage() {
                         <FormLabel>Código</FormLabel>
                         <FormControl>
                           <Input placeholder="https://github.com/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="steam_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Steam</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://store.steampowered.com/app/..." {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
