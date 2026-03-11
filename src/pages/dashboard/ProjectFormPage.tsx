@@ -206,7 +206,7 @@ export default function ProjectFormPage() {
         demo_url: values.demo_url || null,
         codigo_url: values.codigo_url || null,
         steam_url: values.steam_url || null,
-        engine: values.engine || null,
+        engine: (values.engine || null) as Database["public"]["Enums"]["engine_projeto"] | null,
         plataformas: selectedPlataformas.length > 0 ? selectedPlataformas : null,
         genero: selectedGeneros.length > 0 ? selectedGeneros : null,
         destaque: values.destaque,
