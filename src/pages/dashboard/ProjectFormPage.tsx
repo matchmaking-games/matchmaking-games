@@ -34,6 +34,8 @@ const projectSchema = z.object({
   status: z.enum(["em_andamento", "concluido", "pausado"]),
   demo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
   codigo_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
+  steam_url: z.union([z.literal(""), z.string().url("URL inválida")]).optional(),
+  engine: z.string().optional().or(z.literal("")),
   destaque: z.boolean().default(false),
   imagem_capa_url: z.string().url().nullable().optional(),
 });
