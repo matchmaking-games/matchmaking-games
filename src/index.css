@@ -220,10 +220,3 @@
     background-color: hsl(var(--ring));
   }
 }
-
-.navigation-menu-trigger-custom {
-  color: hsl(var(--foreground)) !important;
-  font-weight: 400 !important;
-  font-size: 14px !important;
-  background: transparent !important;
-}
