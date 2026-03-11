@@ -123,12 +123,16 @@ export default function ProjectFormPage() {
         status: editingProject.status,
         demo_url: editingProject.demo_url ?? "",
         codigo_url: editingProject.codigo_url ?? "",
+        steam_url: (editingProject as Record<string, unknown>).steam_url as string ?? "",
+        engine: (editingProject as Record<string, unknown>).engine as string ?? "",
         destaque: editingProject.destaque ?? false,
         imagem_capa_url: editingProject.imagem_capa_url ?? null,
       });
       setPreviousGeneratedSlug(editingProject.slug ?? "");
       const skillIds = editingProject.projeto_habilidades?.map((ph) => ph.habilidade_id) || [];
       setSelectedSkillIds(skillIds);
+      setSelectedPlataformas((editingProject as Record<string, unknown>).plataformas as string[] ?? []);
+      setSelectedGeneros((editingProject as Record<string, unknown>).genero as string[] ?? []);
       setRichContent(editingProject.descricao_rich ? JSON.stringify(editingProject.descricao_rich) : null);
       setRichContentDirty(false);
     }
