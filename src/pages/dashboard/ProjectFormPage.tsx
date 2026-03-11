@@ -106,7 +106,7 @@ export default function ProjectFormPage() {
       demo_url: "",
       codigo_url: "",
       steam_url: "",
-      engine: "",
+      engine: "__none__",
       destaque: false,
       imagem_capa_url: null,
     },
@@ -125,7 +125,7 @@ export default function ProjectFormPage() {
         demo_url: editingProject.demo_url ?? "",
         codigo_url: editingProject.codigo_url ?? "",
         steam_url: (editingProject as Record<string, unknown>).steam_url as string ?? "",
-        engine: (editingProject as Record<string, unknown>).engine as string ?? "",
+        engine: (editingProject as Record<string, unknown>).engine as string ?? "__none__",
         destaque: editingProject.destaque ?? false,
         imagem_capa_url: editingProject.imagem_capa_url ?? null,
       });
@@ -207,7 +207,7 @@ export default function ProjectFormPage() {
         demo_url: values.demo_url || null,
         codigo_url: values.codigo_url || null,
         steam_url: values.steam_url || null,
-        engine: (values.engine || null) as Database["public"]["Enums"]["engine_projeto"] | null,
+        engine: (values.engine === "__none__" ? null : values.engine || null) as Database["public"]["Enums"]["engine_projeto"] | null,
         plataformas: (selectedPlataformas.length > 0 ? selectedPlataformas : null) as Database["public"]["Enums"]["plataforma_projeto"][] | null,
         genero: (selectedGeneros.length > 0 ? selectedGeneros : null) as Database["public"]["Enums"]["genero_projeto"][] | null,
         destaque: values.destaque,
@@ -352,14 +352,14 @@ export default function ProjectFormPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Engine</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select onValueChange={field.onChange} value={field.value || "__none__"}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecionar engine..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Nenhuma</SelectItem>
+                            <SelectItem value="__none__">Nenhuma</SelectItem>
                             {ENGINE_OPTIONS.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
