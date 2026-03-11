@@ -50,6 +50,10 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number):
   };
 }
 
+const ENGINE_OPTIONS = Object.entries(ENGINE_LABELS).map(([value, label]) => ({ value, label }));
+const PLATAFORMA_OPTIONS = Object.entries(PLATAFORMA_LABELS).map(([value, label]) => ({ value, label }));
+const GENERO_OPTIONS = Object.entries(GENERO_LABELS).map(([value, label]) => ({ value, label }));
+
 export default function ProjectFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
