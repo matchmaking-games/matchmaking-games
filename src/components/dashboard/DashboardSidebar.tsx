@@ -6,7 +6,7 @@ import {
   User,
   Users,
   Building2,
-  Layers,
+  Gamepad2,
   CalendarDays,
   ChevronDown,
   Settings,
@@ -57,7 +57,7 @@ const discoveryItems = [
   { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
   { title: "Buscar profissionais", url: "/professionals", icon: Users },
   { title: "Buscar estúdios", url: "/studios", icon: Building2 },
-  { title: "Buscar projetos", url: "/projects", icon: Layers },
+  { title: "Buscar projetos", url: "/projects", icon: Gamepad2 },
 ];
 
 const communityItems = [{ title: "Eventos", url: "/dashboard/events", icon: CalendarDays }];
