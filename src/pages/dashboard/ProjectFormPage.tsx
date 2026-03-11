@@ -536,6 +536,20 @@ export default function ProjectFormPage() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="steam_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Steam</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://store.steampowered.com/app/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 {/* Skills — Fix 7: maxSkills 20 */}
