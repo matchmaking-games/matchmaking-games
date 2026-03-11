@@ -49,7 +49,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
 
 const personalItems = [
-  { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Painel geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Meu perfil", url: "/dashboard/profile", icon: User },
 ];
 
