@@ -200,8 +200,11 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent h-9 px-3 text-sm font-normal text-foreground rounded-md">
-                  Explorar
+                <NavigationMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    Explorar
+                    <ChevronDown className="h-3 w-3 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </Button>
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="w-64 p-2">
