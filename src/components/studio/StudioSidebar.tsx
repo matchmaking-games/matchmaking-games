@@ -49,7 +49,7 @@ import { Separator } from "@/components/ui/separator";
 import { StudioMembership } from "@/hooks/useStudioMembership";
 
 const navItems = [
-  { title: "Dashboard", url: "/studio/manage/dashboard", icon: LayoutDashboard },
+  { title: "Painel do estúdio", url: "/studio/manage/dashboard", icon: LayoutDashboard },
   { title: "Minhas vagas", url: "/studio/manage/jobs", icon: Briefcase },
   { title: "Perfil do estúdio", url: "/studio/manage/profile", icon: BuildingIcon },
   { title: "Minha equipe", url: "/studio/manage/team", icon: Users },
@@ -180,10 +180,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
                 {profileSwitchOpen && (
                   <div className="border-l-2 border-border ml-4 pl-1">
                     {user && (
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard")}
-                        className="cursor-pointer"
-                      >
+                      <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer">
                         <div className="flex items-center gap-2 w-full">
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={user.avatar_url || undefined} />
@@ -209,9 +206,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
                             </AvatarFallback>
                           </Avatar>
                           <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
-                          {studio.estudio.id === membership.estudio.id && (
-                            <Check className="h-4 w-4 text-primary" />
-                          )}
+                          {studio.estudio.id === membership.estudio.id && <Check className="h-4 w-4 text-primary" />}
                         </div>
                       </DropdownMenuItem>
                     ))}
@@ -226,10 +221,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {user && (
-                    <DropdownMenuItem
-                      onClick={() => navigate("/dashboard")}
-                      className="cursor-pointer"
-                    >
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer">
                       <div className="flex items-center gap-2 w-full">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={user.avatar_url || undefined} />
@@ -255,9 +247,7 @@ export function StudioSidebar({ membership, studios, onStudioChange }: StudioSid
                           </AvatarFallback>
                         </Avatar>
                         <span className="flex-1 truncate max-w-[140px] text-sm">{studio.estudio.nome}</span>
-                        {studio.estudio.id === membership.estudio.id && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
+                        {studio.estudio.id === membership.estudio.id && <Check className="h-4 w-4 text-primary" />}
                       </div>
                     </DropdownMenuItem>
                   ))}
