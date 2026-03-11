@@ -10,7 +10,6 @@ import {
   Users,
   Building2,
   Layers,
-  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -180,7 +179,7 @@ export function Header() {
           </Sheet>
         </div>
 
-        {/* Logo - centered on mobile */}
+        {/* Logo */}
         <Link
           to={!isAuthenticated && !isLoading ? "/" : "/dashboard"}
           className="flex items-center gap-2 md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
@@ -188,16 +187,9 @@ export function Header() {
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
         </Link>
 
-        {/* Desktop: Right section (Vagas + Explorar + Auth) */}
+        {/* Desktop: navegação */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Vagas (desktop only) */}
-          <Link to="/jobs">
-            <Button variant="ghost" size="sm">
-              Vagas
-            </Button>
-          </Link>
-
-          {/* Explorar dropdown */}
+          {/* Explorar dropdown — primeiro */}
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -225,6 +217,13 @@ export function Header() {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+
+          {/* Vagas — segundo */}
+          <Link to="/jobs">
+            <Button variant="ghost" size="sm">
+              Vagas
+            </Button>
+          </Link>
 
           {isLoading ? (
             <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
@@ -276,7 +275,7 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: placeholder for layout balance */}
+        {/* Mobile: placeholder */}
         <div className="md:hidden w-9" />
       </div>
     </header>
