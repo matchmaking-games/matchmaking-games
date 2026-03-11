@@ -104,6 +104,8 @@ export default function ProjectFormPage() {
       status: "em_andamento",
       demo_url: "",
       codigo_url: "",
+      steam_url: "",
+      engine: "",
       destaque: false,
       imagem_capa_url: null,
     },
