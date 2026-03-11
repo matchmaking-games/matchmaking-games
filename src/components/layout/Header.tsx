@@ -9,7 +9,7 @@ import {
   CalendarRange,
   Users,
   Building2,
-  Layers,
+  Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const exploreItems = [
   { title: "Eventos", description: "Encontros e game jams", href: "/events", icon: CalendarRange },
   { title: "Profissionais", description: "Talentos da indústria", href: "/professionals", icon: Users },
   { title: "Estúdios", description: "Empresas de games", href: "/studios", icon: Building2 },
-  { title: "Projetos", description: "Portfólios e jogos", href: "/projects", icon: Layers },
+  { title: "Projetos", description: "Portfólios e jogos", href: "/projects", icon: Gamepad2 },
 ];
 
 export function Header() {
