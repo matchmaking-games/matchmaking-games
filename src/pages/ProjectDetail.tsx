@@ -13,6 +13,8 @@ import { Footer } from "@/components/layout/Footer";
 import { RichTextViewer } from "@/components/editor/RichTextViewer";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
 import { Play, Code2 } from "lucide-react";
+import { SocialIcon } from "@/components/SocialIcon";
+import { ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS } from "@/constants/project-labels";
 
 // --- Skeleton ---
 
@@ -99,7 +101,14 @@ export default function ProjectDetail() {
 
   const { project, owner, skills, studios } = data;
 
-  const hasLinks = project.demo_url || project.codigo_url;
+  // New fields — cast safely since they may not yet be in the generated type
+  const engine = ((project as Record<string, unknown>).engine as string | null) ?? null;
+  const plataformas = ((project as Record<string, unknown>).plataformas as string[] | null) ?? [];
+  const genero = ((project as Record<string, unknown>).genero as string[] | null) ?? [];
+  const steamUrl = ((project as Record<string, unknown>).steam_url as string | null) ?? null;
+
+  const hasLinks = project.demo_url || project.codigo_url || steamUrl;
+  const hasGameDetails = engine || plataformas.length > 0 || genero.length > 0;
 
   const habilidades = skills.filter((s) => s.categoria === "habilidades");
   const softwares = skills.filter((s) => s.categoria === "softwares");
@@ -157,9 +166,41 @@ export default function ProjectDetail() {
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </Link>
 
+          {/* Studios — positioned right after author */}
+          {studios.length > 0 && (
+            <Card className="mt-3">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Estúdios Colaboradores</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {studios.map((studio) => {
+                  const content = (
+                    <div className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-accent cursor-pointer">
+                      <Avatar className="w-8 h-8 rounded-md">
+                        <AvatarImage src={studio.logo_url || undefined} alt={studio.nome} />
+                        <AvatarFallback className="rounded-md bg-primary/10 text-primary text-sm">
+                          {studio.nome.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{studio.nome}</span>
+                    </div>
+                  );
+
+                  return studio.slug ? (
+                    <Link key={studio.id} to={`/studio/${studio.slug}`}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={studio.id}>{content}</div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Short description */}
           {project.descricao && (
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{project.descricao}</p>
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{project.descricao}</p>
           )}
 
           {/* Content section */}
@@ -202,6 +243,49 @@ export default function ProjectDetail() {
               </div>
             )}
 
+            {/* Game details card — engine, plataformas, genero */}
+            {hasGameDetails && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold">Detalhes do Jogo</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {engine && ENGINE_LABELS[engine] && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Engine</p>
+                      <Badge variant="secondary" className="text-xs">
+                        {ENGINE_LABELS[engine]}
+                      </Badge>
+                    </div>
+                  )}
+                  {plataformas.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Plataformas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {plataformas.map((p) => (
+                          <Badge key={p} variant="secondary" className="text-xs">
+                            {PLATAFORMA_LABELS[p] ?? p}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {genero.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Gêneros</p>
+                      <div className="flex flex-wrap gap-2">
+                        {genero.map((g) => (
+                          <Badge key={g} variant="secondary" className="text-xs">
+                            {GENERO_LABELS[g] ?? g}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Links card */}
             {hasLinks && (
               <Card>
@@ -226,6 +310,14 @@ export default function ProjectDetail() {
                         </a>
                       </Button>
                     )}
+                    {steamUrl && (
+                      <Button variant="outline" asChild>
+                        <a href={steamUrl} target="_blank" rel="noopener noreferrer">
+                          <SocialIcon network="steam" size={16} className="mr-2" />
+                          Steam
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -241,38 +333,6 @@ export default function ProjectDetail() {
                   <div className="[&_.bn-editor]:bg-transparent [&_.bn-block-outer]:bg-transparent [&_.bn-editor]:pl-0">
                     <RichTextViewer content={JSON.stringify(project.descricao_rich)} />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Studios */}
-            {studios.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-semibold">Estúdios Colaboradores</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {studios.map((studio) => {
-                    const content = (
-                      <div className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-accent cursor-pointer">
-                        <Avatar className="w-8 h-8 rounded-md">
-                          <AvatarImage src={studio.logo_url || undefined} alt={studio.nome} />
-                          <AvatarFallback className="rounded-md bg-primary/10 text-primary text-sm">
-                            {studio.nome.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{studio.nome}</span>
-                      </div>
-                    );
-
-                    return studio.slug ? (
-                      <Link key={studio.id} to={`/studio/${studio.slug}`}>
-                        {content}
-                      </Link>
-                    ) : (
-                      <div key={studio.id}>{content}</div>
-                    );
-                  })}
                 </CardContent>
               </Card>
             )}
