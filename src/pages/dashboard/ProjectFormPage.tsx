@@ -23,6 +23,7 @@ import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
 import { ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS } from "@/constants/project-labels";
+import type { Database } from "@/integrations/supabase/types";
 
 // Fix 8: added "pausado" to status enum
 const projectSchema = z.object({
