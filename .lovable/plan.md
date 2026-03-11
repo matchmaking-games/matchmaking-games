@@ -1,44 +1,26 @@
 
-## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
+## Plano: Correção crítica do formulário de projetos
 
-### Arquivo 1: `src/hooks/useStudioProject.ts`
+### Problema
+`SelectItem value=""` causa crash fatal no Radix UI. O formulário de projetos está inacessível.
 
-Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
+### Ações
 
-```typescript
-interface StudioProjectData {
-  // Campos do projeto + estúdio aninhado
-  id, titulo, descricao, tipo, status, engine, plataformas, genero,
-  imagem_capa_url, demo_url, codigo_url, steam_url, ...
-  estudio: { id, nome, slug, logo_url }
-}
-```
+**1. Deletar** `src/components/projects/ProjectForm.tsx` — arquivo órfão, não importado por ninguém.
 
-- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
-- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
-- Retorna `{ project, isLoading, error }`
+**2. Corrigir** `src/pages/dashboard/ProjectFormPage.tsx` — 4 alterações cirúrgicas:
 
-### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
+| Local | Linha | De | Para |
+|---|---|---|---|
+| SelectItem Engine | 362 | `value=""` | `value="__none__"` |
+| defaultValues | 109 | `engine: ""` | `engine: "__none__"` |
+| useEffect reset | 128 | `?? ""` | `?? "__none__"` |
+| onSubmit engine | 210 | `values.engine \|\| null` | `values.engine === "__none__" ? null : values.engine \|\| null` |
 
-Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
-
-**Estrutura:**
-- Header + Footer padrão
-- Skeleton durante loading (imagem, título, descrição)
-- Estado de erro: "Projeto não encontrado" + link para `/projects`
-
-**Layout quando encontrado:**
-1. Imagem de capa (16:9) se existir
-2. Título (`font-display font-semibold text-3xl`)
-3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
-4. Descrição simples (campo `descricao`, não o `descricao_rich`)
-5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
-6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
-
-**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
+Linha 355 do Select: `value={field.value || ""}` → `value={field.value || "__none__"}` (para manter consistência).
 
 ### Arquivos afetados
-- `src/hooks/useStudioProject.ts` (criar)
-- `src/pages/StudioProjectDetail.tsx` (criar)
+- `src/components/projects/ProjectForm.tsx` (deletar)
+- `src/pages/dashboard/ProjectFormPage.tsx` (4-5 linhas alteradas)
+
