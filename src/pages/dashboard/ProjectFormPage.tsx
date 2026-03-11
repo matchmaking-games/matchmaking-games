@@ -205,6 +205,10 @@ export default function ProjectFormPage() {
         status: values.status,
         demo_url: values.demo_url || null,
         codigo_url: values.codigo_url || null,
+        steam_url: values.steam_url || null,
+        engine: values.engine || null,
+        plataformas: selectedPlataformas.length > 0 ? selectedPlataformas : null,
+        genero: selectedGeneros.length > 0 ? selectedGeneros : null,
         destaque: values.destaque,
         imagem_capa_url: values.imagem_capa_url || null,
       };
