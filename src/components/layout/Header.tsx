@@ -201,15 +201,7 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger
-                  style={{
-                    color: "hsl(var(--foreground))",
-                    fontWeight: 400,
-                    fontSize: "14px",
-                    background: "transparent",
-                  }}
-                  className="hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent h-9 px-3"
-                >
+                <NavigationMenuTrigger className="hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent h-9 px-3 navigation-menu-trigger-custom">
                   Explorar
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
