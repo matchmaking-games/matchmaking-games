@@ -341,6 +341,61 @@ export default function ProjectFormPage() {
                   />
                 )}
 
+                {/* Game Details */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-foreground">Detalhes do Jogo</h4>
+
+                  <FormField
+                    control={form.control}
+                    name="engine"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Engine</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar engine..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">Nenhuma</SelectItem>
+                            {ENGINE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <Label>Plataformas</Label>
+                    <MultiSelectCombobox
+                      options={PLATAFORMA_OPTIONS}
+                      selected={selectedPlataformas}
+                      onSelectionChange={setSelectedPlataformas}
+                      placeholder="Selecionar plataformas..."
+                      searchPlaceholder="Buscar plataforma..."
+                      emptyMessage="Nenhuma plataforma encontrada"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gêneros</Label>
+                    <MultiSelectCombobox
+                      options={GENERO_OPTIONS}
+                      selected={selectedGeneros}
+                      onSelectionChange={setSelectedGeneros}
+                      placeholder="Selecionar gêneros..."
+                      searchPlaceholder="Buscar gênero..."
+                      emptyMessage="Nenhum gênero encontrado"
+                    />
+                  </div>
+                </div>
+
                 {/* Type and Role */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
