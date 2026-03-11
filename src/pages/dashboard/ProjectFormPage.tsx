@@ -71,6 +71,8 @@ export default function ProjectFormPage() {
   const [userSlug, setUserSlug] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
+  const [selectedPlataformas, setSelectedPlataformas] = useState<string[]>([]);
+  const [selectedGeneros, setSelectedGeneros] = useState<string[]>([]);
   const tempProjectIdRef = useRef<string | null>(null);
   const [richContent, setRichContent] = useState<string | null>(null);
   // Fix 6: track rich content dirty state
