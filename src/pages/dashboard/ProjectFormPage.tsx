@@ -352,14 +352,14 @@ export default function ProjectFormPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Engine</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select onValueChange={field.onChange} value={field.value || "__none__"}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecionar engine..." />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Nenhuma</SelectItem>
+                            <SelectItem value="__none__">Nenhuma</SelectItem>
                             {ENGINE_OPTIONS.map((opt) => (
                               <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
