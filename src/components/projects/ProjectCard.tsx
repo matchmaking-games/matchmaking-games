@@ -47,34 +47,24 @@ function getSkillBadgeClasses(categoria: string): string {
   return map[categoria] || "bg-muted text-muted-foreground border-border";
 }
 
-export function ProjectCard({
-  project,
-  userSlug,
-  onEdit,
-  onDelete,
-  onToggleDestaque,
-}: ProjectCardProps) {
+export function ProjectCard({ project, userSlug, onEdit, onDelete, onToggleDestaque }: ProjectCardProps) {
   return (
     <Card className="overflow-hidden group relative">
       {/* Image or placeholder with aspect ratio */}
       <div className="aspect-video bg-muted relative flex items-center justify-center overflow-hidden">
         {project.imagem_capa_url ? (
-          <img
-            src={project.imagem_capa_url}
-            alt={project.titulo}
-            className="w-full h-full object-cover"
-          />
+          <img src={project.imagem_capa_url} alt={project.titulo} className="w-full h-full object-cover" />
         ) : (
           <Gamepad2 className="h-12 w-12 text-muted-foreground/50" />
         )}
 
-        {/* Dropdown menu */}
+        {/* Dropdown menu — always visible on touch devices, hover-only on desktop */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-2 right-2 h-8 w-8 bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-2 right-2 h-8 w-8 bg-background/80 hover:bg-background opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
@@ -95,24 +85,12 @@ export function ProjectCard({
             <DropdownMenuItem onClick={() => onEdit(project)}>
               <Pencil className="h-4 w-4 mr-2" /> Editar
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() =>
-                onToggleDestaque(project.id, project.destaque ?? false)
-              }
-            >
-              <Star
-                className={cn(
-                  "h-4 w-4 mr-2",
-                  project.destaque && "fill-yellow-400 text-yellow-400"
-                )}
-              />
+            <DropdownMenuItem onClick={() => onToggleDestaque(project.id, project.destaque ?? false)}>
+              <Star className={cn("h-4 w-4 mr-2", project.destaque && "fill-yellow-400 text-yellow-400")} />
               {project.destaque ? "Remover destaque" : "Destacar no topo"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(project)}
-              className="text-destructive focus:text-destructive"
-            >
+            <DropdownMenuItem onClick={() => onDelete(project)} className="text-destructive focus:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" /> Excluir
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -120,9 +98,7 @@ export function ProjectCard({
       </div>
 
       <CardContent className="p-4">
-        <h3 className="font-semibold text-foreground truncate mb-2">
-          {project.titulo}
-        </h3>
+        <h3 className="font-semibold text-foreground truncate mb-2">{project.titulo}</h3>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Type badge */}
@@ -136,9 +112,7 @@ export function ProjectCard({
           </Badge>
 
           {/* Star indicator when highlighted */}
-          {project.destaque && (
-            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 ml-auto" />
-          )}
+          {project.destaque && <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 ml-auto" />}
         </div>
 
         {/* Skills badges */}
