@@ -127,7 +127,7 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
-                  <Layers className="h-4 w-4" />
+                  <Gamepad2 className="h-4 w-4" />
                   Projetos
                 </Link>
 
