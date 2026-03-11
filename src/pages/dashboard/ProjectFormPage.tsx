@@ -106,7 +106,7 @@ export default function ProjectFormPage() {
       demo_url: "",
       codigo_url: "",
       steam_url: "",
-      engine: "",
+      engine: "__none__",
       destaque: false,
       imagem_capa_url: null,
     },
