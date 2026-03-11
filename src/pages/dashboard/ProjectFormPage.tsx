@@ -125,7 +125,7 @@ export default function ProjectFormPage() {
         demo_url: editingProject.demo_url ?? "",
         codigo_url: editingProject.codigo_url ?? "",
         steam_url: (editingProject as Record<string, unknown>).steam_url as string ?? "",
-        engine: (editingProject as Record<string, unknown>).engine as string ?? "",
+        engine: (editingProject as Record<string, unknown>).engine as string ?? "__none__",
         destaque: editingProject.destaque ?? false,
         imagem_capa_url: editingProject.imagem_capa_url ?? null,
       });
