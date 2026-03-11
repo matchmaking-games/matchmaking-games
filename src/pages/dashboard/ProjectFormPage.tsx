@@ -21,6 +21,8 @@ import { ProjectImageUpload } from "@/components/projects/ProjectImageUpload";
 import { ProjectSkillsSelect } from "@/components/projects/ProjectSkillsSelect";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
+import { ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS } from "@/constants/project-labels";
 
 // Fix 8: added "pausado" to status enum
 const projectSchema = z.object({
