@@ -83,6 +83,15 @@ export default function StudioDashboard() {
         )}
       </div>
 
+      {showCTA && !ctaLoading && estudioId && (
+        <div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+            Sua equipe
+          </h2>
+          <StudioInviteCTACard onDismiss={dismiss} estudioId={estudioId} />
+        </div>
+      )}
+
       {/* Bloco 2 — Ações rápidas */}
       <div>
         <h2 className="font-display text-2xl font-bold text-foreground mb-4">Ações rápidas</h2>
