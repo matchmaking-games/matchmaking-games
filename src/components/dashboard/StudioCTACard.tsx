@@ -36,7 +36,7 @@ export function StudioCTACard({ onDismiss }: StudioCTACardProps) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-            <Button size="sm" onClick={() => navigate("/studio/new")}>
+            <Button size="sm" onClick={() => navigate("/studio/manage/new")}>
               Criar estúdio
             </Button>
             <Button variant="ghost" size="sm" onClick={handleDismiss} disabled={isDismissing}>
