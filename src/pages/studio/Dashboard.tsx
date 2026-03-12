@@ -25,6 +25,7 @@ export default function StudioDashboard() {
   const { activeStudio } = useActiveStudio();
   const estudioId = activeStudio?.estudio.id ?? null;
   const { stats, isLoading } = useStudioDashboardStats(estudioId);
+  const { showCTA, isLoading: ctaLoading, dismiss } = useStudioInviteCTA(estudioId);
 
   // Detect payment cancellation from Stripe redirect
   useEffect(() => {
