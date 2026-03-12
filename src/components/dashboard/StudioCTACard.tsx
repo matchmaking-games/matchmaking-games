@@ -28,29 +28,19 @@ export function StudioCTACard({ onDismiss }: StudioCTACardProps) {
           <Building2 className="h-8 w-8 text-muted-foreground shrink-0" />
 
           <div className="flex-1 space-y-1">
-            <p className="font-medium text-foreground">
-              Você tem um estúdio de games?
-            </p>
+            <p className="font-medium text-foreground">Você tem um estúdio de games?</p>
             <p className="text-sm text-muted-foreground">
-              Crie a página do seu estúdio no Matchmaking e publique vagas para
-              encontrar os melhores talentos da indústria.
+              Crie a página do seu estúdio no Matchmaking e publique vagas para encontrar os melhores talentos da
+              indústria.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-            <Button
-              size="sm"
-              onClick={() => navigate("/studio/new")}
-            >
+            <Button size="sm" onClick={() => navigate("/studio/new")}>
               Criar estúdio
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDismiss}
-              disabled={isDismissing}
-            >
-              {isDismissing ? "Salvando..." : "Não tenho um estúdio"}
+            <Button variant="ghost" size="sm" onClick={handleDismiss} disabled={isDismissing}>
+              {isDismissing ? "Salvando..." : "Agora não"}
             </Button>
           </div>
         </div>
