@@ -30,6 +30,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, skillsCount, isLoading: profileLoading } = useDashboardProfile();
   const { jobs, isLoading: jobsLoading } = useRecentJobs();
+  const { showCTA, isLoading: ctaLoading, dismiss } = useStudioCTA();
 
   const profileItems: ProfileItem[] = user
     ? [
