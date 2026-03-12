@@ -7,6 +7,7 @@ import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
 import { useStudioInviteCTA } from "@/hooks/useStudioInviteCTA";
 import { StudioInviteCTACard } from "@/components/studio/StudioInviteCTACard";
 import { StudioProfileCompletion } from "@/components/studio/StudioProfileCompletion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";

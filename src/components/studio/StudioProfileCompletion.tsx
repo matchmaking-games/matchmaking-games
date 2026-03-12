@@ -9,11 +9,9 @@ import { useStudioProfileCompletion } from "@/hooks/useStudioProfileCompletion";
 export function StudioProfileCompletion() {
   const { activeStudio, isLoading } = useActiveStudio();
 
-  const estudioData = activeStudio
-    ? { ...activeStudio.estudio } as Parameters<typeof useStudioProfileCompletion>[0]
-    : null;
+  const estudioData = activeStudio?.estudio ?? null;
 
-  const { percentage, incompleteItems } = useStudioProfileCompletion(estudioData);
+  const { percentage, incompleteItems } = useStudioProfileCompletion(estudioData as Parameters<typeof useStudioProfileCompletion>[0]);
 
   return (
     <Card>
