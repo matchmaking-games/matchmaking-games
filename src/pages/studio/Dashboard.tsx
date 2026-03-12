@@ -4,6 +4,8 @@ import { Briefcase, FileText, Clock, Sparkles, Plus, Settings, ExternalLink } fr
 
 import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
+import { useStudioInviteCTA } from "@/hooks/useStudioInviteCTA";
+import { StudioInviteCTACard } from "@/components/studio/StudioInviteCTACard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
