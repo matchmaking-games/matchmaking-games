@@ -6,6 +6,7 @@ import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
 import { useStudioInviteCTA } from "@/hooks/useStudioInviteCTA";
 import { StudioInviteCTACard } from "@/components/studio/StudioInviteCTACard";
+import { StudioProfileCompletion } from "@/components/studio/StudioProfileCompletion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,6 +48,14 @@ export default function StudioDashboard() {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+      {/* Bloco 0 — Completude do perfil */}
+      <div>
+        <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+          Perfil do Estúdio
+        </h2>
+        <StudioProfileCompletion />
+      </div>
+
       {/* Bloco 1 — Resumo de vagas */}
       <div>
         <h2 className="font-display text-2xl font-bold text-foreground mb-4">Suas Vagas</h2>
