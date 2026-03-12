@@ -4,6 +4,8 @@ import { Briefcase, FileText, Clock, Sparkles, Plus, Settings, ExternalLink } fr
 
 import { useActiveStudio } from "@/hooks/useActiveStudio";
 import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
+import { useStudioInviteCTA } from "@/hooks/useStudioInviteCTA";
+import { StudioInviteCTACard } from "@/components/studio/StudioInviteCTACard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +25,7 @@ export default function StudioDashboard() {
   const { activeStudio } = useActiveStudio();
   const estudioId = activeStudio?.estudio.id ?? null;
   const { stats, isLoading } = useStudioDashboardStats(estudioId);
+  const { showCTA, isLoading: ctaLoading, dismiss } = useStudioInviteCTA(estudioId);
 
   // Detect payment cancellation from Stripe redirect
   useEffect(() => {
@@ -79,6 +82,15 @@ export default function StudioDashboard() {
           </div>
         )}
       </div>
+
+      {showCTA && !ctaLoading && estudioId && (
+        <div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+            Sua equipe
+          </h2>
+          <StudioInviteCTACard onDismiss={dismiss} estudioId={estudioId} />
+        </div>
+      )}
 
       {/* Bloco 2 — Ações rápidas */}
       <div>
