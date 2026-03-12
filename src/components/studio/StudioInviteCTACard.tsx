@@ -29,29 +29,19 @@ export function StudioInviteCTACard({ onDismiss, estudioId }: StudioInviteCTACar
           <Users className="h-8 w-8 text-muted-foreground shrink-0" />
 
           <div className="flex-1 space-y-1">
-            <p className="font-medium text-foreground">
-              Seu estúdio está sozinho por aqui
-            </p>
+            <p className="font-medium text-foreground">Seu estúdio está sozinho por aqui</p>
             <p className="text-sm text-muted-foreground">
-              Convide outros membros da sua equipe para colaborar no estúdio.
-              Eles poderão gerenciar vagas e o perfil do estúdio junto com você.
+              Convide outros membros da sua equipe para colaborar no estúdio. Eles poderão gerenciar vagas e o perfil do
+              estúdio junto com você.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-            <Button
-              size="sm"
-              onClick={() => navigate(`/studio/manage/team?studio=${estudioId}`)}
-            >
+            <Button size="sm" onClick={() => navigate(`/studio/manage/team?studio=${estudioId}`)}>
               Convidar membros
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDismiss}
-              disabled={isDismissing}
-            >
-              {isDismissing ? "Salvando..." : "Trabalho sozinho"}
+            <Button variant="ghost" size="sm" onClick={handleDismiss} disabled={isDismissing}>
+              {isDismissing ? "Salvando..." : "Agora não"}
             </Button>
           </div>
         </div>
