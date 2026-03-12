@@ -11,7 +11,7 @@ export function StudioProfileCompletion() {
 
   const estudioData = activeStudio?.estudio ?? null;
 
-  const { percentage, incompleteItems } = useStudioProfileCompletion(estudioData as Parameters<typeof useStudioProfileCompletion>[0]);
+  const { percentage, incompleteItems } = useStudioProfileCompletion(estudioData);
 
   return (
     <Card>
