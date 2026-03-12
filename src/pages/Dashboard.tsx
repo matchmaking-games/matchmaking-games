@@ -136,6 +136,15 @@ export default function Dashboard() {
           </Card>
         </div>
 
+        {showCTA && !ctaLoading && (
+          <div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+              Expanda sua presença
+            </h2>
+            <StudioCTACard onDismiss={dismiss} />
+          </div>
+        )}
+
         {/* Bloco 3 — Vagas recentes */}
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground mb-4">Vagas abertas</h2>
