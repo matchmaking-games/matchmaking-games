@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 import { useRecentJobs } from "@/hooks/useRecentJobs";
+import { useStudioCTA } from "@/hooks/useStudioCTA";
+import { StudioCTACard } from "@/components/dashboard/StudioCTACard";
 
 const nivelLabels: Record<string, string> = {
   iniciante: "Iniciante",
@@ -28,6 +30,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { user, skillsCount, isLoading: profileLoading } = useDashboardProfile();
   const { jobs, isLoading: jobsLoading } = useRecentJobs();
+  const { showCTA, isLoading: ctaLoading, dismiss } = useStudioCTA();
 
   const profileItems: ProfileItem[] = user
     ? [
@@ -132,6 +135,15 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {showCTA && !ctaLoading && (
+          <div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">
+              Expanda sua presença
+            </h2>
+            <StudioCTACard onDismiss={dismiss} />
+          </div>
+        )}
 
         {/* Bloco 3 — Vagas recentes */}
         <div>
