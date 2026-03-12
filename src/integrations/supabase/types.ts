@@ -967,6 +967,39 @@ export type Database = {
           },
         ]
       }
+      user_ui_states: {
+        Row: {
+          key: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          key: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          key?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ui_states_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_ui_states_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           artstation_url: string | null

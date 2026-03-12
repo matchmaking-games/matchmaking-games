@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 import { useRecentJobs } from "@/hooks/useRecentJobs";
+import { useStudioCTA } from "@/hooks/useStudioCTA";
+import { StudioCTACard } from "@/components/dashboard/StudioCTACard";
 
 const nivelLabels: Record<string, string> = {
   iniciante: "Iniciante",
