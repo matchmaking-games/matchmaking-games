@@ -48,10 +48,10 @@ async function fetchMemberships(): Promise<StudioMembership[]> {
       role,
       ativo,
       estudios!estudio_id (
-        id,
-        nome,
-        slug,
-        logo_url
+        id, nome, slug, logo_url, sobre, cidade, estado, especialidades, website,
+        linkedin_url, instagram_url, twitter_url, youtube_url, twitch_url,
+        facebook_url, artstation_url, dribbble_url, behance_url, itch_url,
+        pinterest_url, steam_url, telegram_url, github_url
       )
     `)
     .eq("user_id", session.user.id)
