@@ -109,9 +109,10 @@ export default function Dashboard() {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <FileText className="h-8 w-8 text-muted-foreground shrink-0" />
                         <div className="flex-1 space-y-1">
-                          <p className="font-medium text-foreground">Importe seus dados do LinkedIn</p>
+                          <p className="font-medium text-foreground">Você não precisa começar do zero</p>
                           <p className="text-sm text-muted-foreground">
-                            Acelere o preenchimento do seu perfil importando suas experiências, formações e habilidades diretamente do LinkedIn em formato PDF.
+                            Facilite o preenchimento do seu perfil importando suas experiências e formações diretamente
+                            do LinkedIn em formato PDF.
                           </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
@@ -178,9 +179,7 @@ export default function Dashboard() {
 
         {showCTA && !ctaLoading && (
           <div>
-            <h2 className="font-display text-2xl font-bold text-foreground mb-4">
-              Expanda sua presença
-            </h2>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-4">Expanda sua presença</h2>
             <StudioCTACard onDismiss={dismiss} />
           </div>
         )}
