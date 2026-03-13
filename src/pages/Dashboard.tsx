@@ -116,7 +116,13 @@ export default function Dashboard() {
                           </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
-                          <Button size="sm" onClick={() => navigate("/dashboard/profile")}>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              dismissLinkedIn();
+                              navigate("/dashboard/profile");
+                            }}
+                          >
                             Importar PDF
                           </Button>
                           <Button
