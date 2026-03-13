@@ -34,6 +34,8 @@ export default function Dashboard() {
   const { user, skillsCount, isLoading: profileLoading } = useDashboardProfile();
   const { jobs, isLoading: jobsLoading } = useRecentJobs();
   const { showCTA, isLoading: ctaLoading, dismiss } = useStudioCTA();
+  const { showCTA: showLinkedInCTA, isLoading: linkedInCTALoading, dismiss: dismissLinkedIn } = useLinkedInImportCTA();
+  const [isDismissingLinkedIn, setIsDismissingLinkedIn] = useState(false);
 
   const profileItems: ProfileItem[] = user
     ? [
