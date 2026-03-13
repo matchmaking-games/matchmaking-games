@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, User, CheckCircle, AlertCircle, Briefcase, MapPin } from "lucide-react";
+import { ExternalLink, Plus, User, CheckCircle, AlertCircle, Briefcase, MapPin, FileText } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 import { useRecentJobs } from "@/hooks/useRecentJobs";
 import { useStudioCTA } from "@/hooks/useStudioCTA";
+import { useLinkedInImportCTA } from "@/hooks/useLinkedInImportCTA";
 import { StudioCTACard } from "@/components/dashboard/StudioCTACard";
 
 const nivelLabels: Record<string, string> = {
