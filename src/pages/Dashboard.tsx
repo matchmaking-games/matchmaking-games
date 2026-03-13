@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, User, CheckCircle, AlertCircle, Briefcase, MapPin } from "lucide-react";
+import { ExternalLink, Plus, User, CheckCircle, AlertCircle, Briefcase, MapPin, FileText } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useDashboardProfile } from "@/hooks/useDashboardProfile";
 import { useRecentJobs } from "@/hooks/useRecentJobs";
 import { useStudioCTA } from "@/hooks/useStudioCTA";
+import { useLinkedInImportCTA } from "@/hooks/useLinkedInImportCTA";
 import { StudioCTACard } from "@/components/dashboard/StudioCTACard";
 
 const nivelLabels: Record<string, string> = {
@@ -31,6 +34,8 @@ export default function Dashboard() {
   const { user, skillsCount, isLoading: profileLoading } = useDashboardProfile();
   const { jobs, isLoading: jobsLoading } = useRecentJobs();
   const { showCTA, isLoading: ctaLoading, dismiss } = useStudioCTA();
+  const { showCTA: showLinkedInCTA, isLoading: linkedInCTALoading, dismiss: dismissLinkedIn } = useLinkedInImportCTA();
+  const [isDismissingLinkedIn, setIsDismissingLinkedIn] = useState(false);
 
   const profileItems: ProfileItem[] = user
     ? [
@@ -96,6 +101,41 @@ export default function Dashboard() {
                         </li>
                       ))}
                     </ul>
+                  )}
+
+                  {showLinkedInCTA && !linkedInCTALoading && (
+                    <>
+                      <Separator />
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <FileText className="h-8 w-8 text-muted-foreground shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <p className="font-medium text-foreground">Importe seus dados do LinkedIn</p>
+                          <p className="text-sm text-muted-foreground">
+                            Acelere o preenchimento do seu perfil importando suas experiências, formações e habilidades diretamente do LinkedIn em formato PDF.
+                          </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
+                          <Button size="sm" onClick={() => navigate("/dashboard/profile")}>
+                            Importar PDF
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={isDismissingLinkedIn}
+                            onClick={async () => {
+                              setIsDismissingLinkedIn(true);
+                              try {
+                                await dismissLinkedIn();
+                              } finally {
+                                setIsDismissingLinkedIn(false);
+                              }
+                            }}
+                          >
+                            {isDismissingLinkedIn ? "Salvando..." : "Agora não"}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </>
               )}
