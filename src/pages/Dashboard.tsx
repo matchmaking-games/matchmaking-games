@@ -102,6 +102,41 @@ export default function Dashboard() {
                       ))}
                     </ul>
                   )}
+
+                  {showLinkedInCTA && !linkedInCTALoading && (
+                    <>
+                      <Separator />
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <FileText className="h-8 w-8 text-muted-foreground shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <p className="font-medium text-foreground">Importe seus dados do LinkedIn</p>
+                          <p className="text-sm text-muted-foreground">
+                            Acelere o preenchimento do seu perfil importando suas experiências, formações e habilidades diretamente do LinkedIn em formato PDF.
+                          </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2 sm:shrink-0">
+                          <Button size="sm" onClick={() => navigate("/dashboard/profile")}>
+                            Importar PDF
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={isDismissingLinkedIn}
+                            onClick={async () => {
+                              setIsDismissingLinkedIn(true);
+                              try {
+                                await dismissLinkedIn();
+                              } finally {
+                                setIsDismissingLinkedIn(false);
+                              }
+                            }}
+                          >
+                            {isDismissingLinkedIn ? "Salvando..." : "Agora não"}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </CardContent>
