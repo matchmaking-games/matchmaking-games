@@ -575,8 +575,7 @@ export function ImportReviewDrawer({ open, onClose, onSave }: ImportReviewDrawer
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     Ao confirmar a importação, todas as suas experiências profissionais e formações acadêmicas salvas
-                    serão apagadas e substituídas pelos dados extraídos do PDF. Esta ação é permanente. Um backup
-                    automático será criado antes da importação.
+                    serão apagadas e substituídas pelos dados extraídos do PDF. Esta ação é permanente.
                   </AlertDescription>
                 </Alert>
 

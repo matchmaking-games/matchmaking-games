@@ -6,9 +6,8 @@ import {
   User,
   Users,
   Building2,
-  Layers,
+  Gamepad2,
   CalendarDays,
-  CalendarRange,
   ChevronDown,
   Settings,
   Mail,
@@ -50,7 +49,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStudioMembership } from "@/hooks/useStudioMembership";
 
 const personalItems = [
-  { title: "Visão geral", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Painel geral", url: "/dashboard", icon: LayoutDashboard },
   { title: "Meu perfil", url: "/dashboard/profile", icon: User },
 ];
 
@@ -58,13 +57,10 @@ const discoveryItems = [
   { title: "Buscar vagas", url: "/jobs", icon: Briefcase },
   { title: "Buscar profissionais", url: "/professionals", icon: Users },
   { title: "Buscar estúdios", url: "/studios", icon: Building2 },
-  { title: "Buscar projetos", url: "/projects", icon: Layers },
+  { title: "Buscar projetos", url: "/projects", icon: Gamepad2 },
 ];
 
-const communityItems = [
-  { title: "Ver eventos", url: "/events", icon: CalendarRange },
-  { title: "Meus eventos", url: "/dashboard/events", icon: CalendarDays },
-];
+const communityItems = [{ title: "Eventos", url: "/dashboard/events", icon: CalendarDays }];
 
 const getInitials = (name: string) => {
   return name
@@ -107,9 +103,7 @@ export function DashboardSidebar() {
           { label: "Comunidade", items: communityItems, className: "mt-4" },
         ].map((group) => (
           <SidebarGroup key={group.label} className={group.className}>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider px-3 mb-1">
-              {group.label}
-            </span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wider px-3 mb-1">{group.label}</span>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
@@ -170,10 +164,7 @@ export function DashboardSidebar() {
                   </DropdownMenuItem>
                   {profileSwitchOpen && (
                     <div className="border-l-2 border-border ml-4 pl-1">
-                      <DropdownMenuItem
-                        onClick={() => navigate("/dashboard")}
-                        className="cursor-pointer"
-                      >
+                      <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer">
                         <div className="flex items-center gap-2 w-full">
                           <Avatar className="h-6 w-6">
                             <AvatarImage src={user.avatar_url || undefined} />
@@ -212,10 +203,7 @@ export function DashboardSidebar() {
                     Trocar de perfil
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/dashboard")}
-                      className="cursor-pointer"
-                    >
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer">
                       <div className="flex items-center gap-2 w-full">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={user.avatar_url || undefined} />

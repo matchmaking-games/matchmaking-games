@@ -8,6 +8,25 @@ export interface StudioMembership {
     nome: string;
     slug: string;
     logo_url: string | null;
+    sobre: string | null;
+    cidade: string | null;
+    estado: string | null;
+    especialidades: string[] | null;
+    website: string | null;
+    linkedin_url: string | null;
+    instagram_url: string | null;
+    twitter_url: string | null;
+    youtube_url: string | null;
+    twitch_url: string | null;
+    facebook_url: string | null;
+    artstation_url: string | null;
+    dribbble_url: string | null;
+    behance_url: string | null;
+    itch_url: string | null;
+    pinterest_url: string | null;
+    steam_url: string | null;
+    telegram_url: string | null;
+    github_url: string | null;
   };
   role: "super_admin" | "member";
   ativo: boolean;
@@ -29,10 +48,10 @@ async function fetchMemberships(): Promise<StudioMembership[]> {
       role,
       ativo,
       estudios!estudio_id (
-        id,
-        nome,
-        slug,
-        logo_url
+        id, nome, slug, logo_url, sobre, cidade, estado, especialidades, website,
+        linkedin_url, instagram_url, twitter_url, youtube_url, twitch_url,
+        facebook_url, artstation_url, dribbble_url, behance_url, itch_url,
+        pinterest_url, steam_url, telegram_url, github_url
       )
     `)
     .eq("user_id", session.user.id)

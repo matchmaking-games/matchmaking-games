@@ -9,7 +9,7 @@ import {
   CalendarRange,
   Users,
   Building2,
-  Layers,
+  Gamepad2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -34,8 +34,8 @@ import matchmakingLogo from "@/assets/matchmaking-logo.png";
 const exploreItems = [
   { title: "Eventos", description: "Encontros e game jams", href: "/events", icon: CalendarRange },
   { title: "Profissionais", description: "Talentos da indústria", href: "/professionals", icon: Users },
-  { title: "Estúdios", description: "Empresas de games", href: "/studios", icon: Building2 },
-  { title: "Projetos", description: "Portfólios e jogos", href: "/projects", icon: Layers },
+  { title: "Estúdios", description: "Estúdios de games", href: "/studios", icon: Building2 },
+  { title: "Projetos", description: "Portfólios e jogos", href: "/projects", icon: Gamepad2 },
 ];
 
 export function Header() {
@@ -127,7 +127,7 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-3 py-2 rounded-md text-foreground hover:bg-muted transition-colors"
                 >
-                  <Layers className="h-4 w-4" />
+                  <Gamepad2 className="h-4 w-4" />
                   Projetos
                 </Link>
 
@@ -179,7 +179,7 @@ export function Header() {
           </Sheet>
         </div>
 
-        {/* Logo - centered on mobile */}
+        {/* Logo */}
         <Link
           to={!isAuthenticated && !isLoading ? "/" : "/dashboard"}
           className="flex items-center gap-2 md:flex-none absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0"
@@ -187,20 +187,13 @@ export function Header() {
           <img src={matchmakingLogo} alt="Matchmaking" className="h-8 w-auto" />
         </Link>
 
-        {/* Desktop: Right section (Vagas + Explorar + Auth) */}
+        {/* Desktop: navegação */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Vagas (desktop only) */}
-          <Link to="/jobs">
-            <Button variant="ghost" size="sm">
-              Vagas
-            </Button>
-          </Link>
-
-          {/* Explorar dropdown */}
+          {/* Explorar dropdown — primeiro */}
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent h-9 px-3 text-sm !font-medium rounded-md">
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent h-9 px-3 text-sm">
                   Explorar
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -224,6 +217,13 @@ export function Header() {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+
+          {/* Vagas — segundo */}
+          <Link to="/jobs">
+            <Button variant="ghost" size="sm">
+              Vagas
+            </Button>
+          </Link>
 
           {isLoading ? (
             <div className="h-9 w-20 bg-muted animate-pulse rounded-md" />
@@ -275,7 +275,7 @@ export function Header() {
           )}
         </div>
 
-        {/* Mobile: placeholder for layout balance */}
+        {/* Mobile: placeholder */}
         <div className="md:hidden w-9" />
       </div>
     </header>
