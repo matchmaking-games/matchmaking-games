@@ -200,6 +200,8 @@ const App = () => (
                 <Route path="/studio/manage/team" element={<Team />} />
                 <Route path="/studio/manage/billing" element={<Billing />} />
               </Route>
+              <Route path="/studio/:slug" element={<StudioPublicProfile />} />
+              <Route path="/studio/:slug/project/:projectSlug" element={<StudioProjectDetail />} />
               <Route
                 path="/dashboard/settings"
                 element={
