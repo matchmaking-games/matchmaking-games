@@ -379,6 +379,10 @@ export default function Profile() {
                       id="slug"
                       value={slug}
                       onChange={(e) => handleSlugChange(e.target.value)}
+                      onFocus={() => setSlugTouched(true)}
+                      onBlur={() => {
+                        if (slug === originalSlug) setSlugTouched(false);
+                      }}
                       placeholder="seu-username"
                       maxLength={30}
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 lowercase pr-10" />
