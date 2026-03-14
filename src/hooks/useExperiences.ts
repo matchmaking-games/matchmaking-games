@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { parseDateSafe } from "@/lib/formatters";
 
 // Types from Supabase schema
 export type Experience = Database["public"]["Tables"]["experiencia"]["Row"];
@@ -75,12 +76,12 @@ function validateDatesOverlap(
   newCargo: { inicio: string; fim: string | null; atualmente: boolean | null },
   existingCargos: Array<{ inicio: string; fim: string | null; atualmente: boolean | null }>
 ): string | null {
-  const newStart = new Date(newCargo.inicio);
-  const newEnd = newCargo.atualmente ? null : (newCargo.fim ? new Date(newCargo.fim) : null);
+  const newStart = parseDateSafe(newCargo.inicio);
+  const newEnd = newCargo.atualmente ? null : (newCargo.fim ? parseDateSafe(newCargo.fim) : null);
 
   for (const existing of existingCargos) {
-    const existingStart = new Date(existing.inicio);
-    const existingEnd = existing.atualmente ? null : (existing.fim ? new Date(existing.fim) : null);
+    const existingStart = parseDateSafe(existing.inicio);
+    const existingEnd = existing.atualmente ? null : (existing.fim ? parseDateSafe(existing.fim) : null);
 
     // Caso especial: dois cargos "atualmente trabalhando"
     if (newCargo.atualmente && existing.atualmente) {
@@ -156,7 +157,7 @@ export function useExperiences(): UseExperiencesReturn {
       const experiencesWithSortedCargos = (data || []).map(exp => ({
         ...exp,
         cargos: (exp.cargos || []).sort((a: CargoExperiencia, b: CargoExperiencia) => 
-          new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
+          parseDateSafe(b.inicio).getTime() - parseDateSafe(a.inicio).getTime()
         )
       })) as ExperienceWithCargos[];
 

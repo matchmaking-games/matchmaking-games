@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { parseDateSafe } from "@/lib/formatters";
 
 type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
 type TipoEducacao = Database["public"]["Enums"]["tipo_educacao"];
@@ -213,7 +214,7 @@ async function fetchPublicProfile(slug: string): Promise<PublicProfileData> {
   const experiencesWithSortedCargos = (experiencesRes.data || []).map((exp) => ({
     ...exp,
     cargos: (exp.cargos || []).sort(
-      (a: PublicCargoData, b: PublicCargoData) => new Date(b.inicio).getTime() - new Date(a.inicio).getTime(),
+      (a: PublicCargoData, b: PublicCargoData) => parseDateSafe(b.inicio).getTime() - parseDateSafe(a.inicio).getTime(),
     ),
   }));
 
