@@ -387,16 +387,18 @@ export default function Profile() {
                       maxLength={30}
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 lowercase pr-10" />
 
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {slugIcon()}
-                      </div>
+                      {slugTouched && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {slugIcon()}
+                        </div>
+                      )}
                     </div>
                     {slug &&
                   <p className="text-xs text-muted-foreground">
                         matchmaking.games/p/{slug}
                       </p>
                   }
-                    {slugMessage() &&
+                    {slugTouched && slugMessage() &&
                   <p className="text-sm">{slugMessage()}</p>
                   }
                     {validationErrors.slug &&
