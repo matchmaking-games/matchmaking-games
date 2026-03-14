@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { parseDateSafe } from "@/lib/formatters";
 
 type TipoEmprego = Database["public"]["Enums"]["tipo_emprego"];
 type TipoEducacao = Database["public"]["Enums"]["tipo_educacao"];
