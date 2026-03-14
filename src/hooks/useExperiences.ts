@@ -157,7 +157,7 @@ export function useExperiences(): UseExperiencesReturn {
       const experiencesWithSortedCargos = (data || []).map(exp => ({
         ...exp,
         cargos: (exp.cargos || []).sort((a: CargoExperiencia, b: CargoExperiencia) => 
-          new Date(b.inicio).getTime() - new Date(a.inicio).getTime()
+          parseDateSafe(b.inicio).getTime() - parseDateSafe(a.inicio).getTime()
         )
       })) as ExperienceWithCargos[];
 

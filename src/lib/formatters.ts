@@ -51,7 +51,7 @@ export function formatDateRange(
   fim: string | null,
   atualmenteTrabalhando: boolean | null
 ): string {
-  const startDate = new Date(inicio);
+  const startDate = parseDateSafe(inicio);
   const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
 
   if (atualmenteTrabalhando) {
@@ -60,7 +60,7 @@ export function formatDateRange(
   }
 
   if (fim) {
-    const endDate = new Date(fim);
+    const endDate = parseDateSafe(fim);
     const endFormatted = capitalize(format(endDate, "MMM yyyy", { locale: ptBR }));
     const duration = formatDuration(startDate, endDate);
     return `${startFormatted} - ${endFormatted} (${duration})`;
