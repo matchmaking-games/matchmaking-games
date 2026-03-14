@@ -293,8 +293,8 @@ export function ExperienceModal({
           estado: data.remoto === "remoto" ? null : data.estado || null,
           cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
-          inicio: data.inicio,
-          fim: data.fim || null,
+          inicio: inicioDate,
+          fim: fimDate,
           atualmente_trabalhando: data.atualmente_trabalhando,
           descricao: data.descricao || null,
         };
