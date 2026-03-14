@@ -82,6 +82,7 @@ export default function Profile() {
   const [slug, setSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugTouched, setSlugTouched] = useState(false);
   const [pronomes, setPronomes] = useState("");
   const [tituloProfissional, setTituloProfissional] = useState("");
   const [disponivelParaTrabalho, setDisponivelParaTrabalho] = useState(false);
