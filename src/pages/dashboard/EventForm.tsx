@@ -332,7 +332,7 @@ export default function EventForm() {
                             Nome do evento<span className="text-destructive ml-1">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Global Game Jam São Paulo 2025" {...field} />
+                            <Input placeholder="Ex: Evento da Associação Regional" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
