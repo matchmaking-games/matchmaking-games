@@ -486,20 +486,26 @@ export default function StudioProfile() {
                       id="slug"
                       value={slug}
                       onChange={(e) => handleSlugChange(e.target.value)}
+                      onFocus={() => setSlugTouched(true)}
+                      onBlur={() => {
+                        if (slug === originalSlug) setSlugTouched(false);
+                      }}
                       placeholder="slug-do-estudio"
                       maxLength={30}
                       className="h-11 lowercase pr-10"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {slugIcon()}
-                    </div>
+                    {slugTouched && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {slugIcon()}
+                      </div>
+                    )}
                   </div>
                   {slug && (
                     <p className="text-xs text-muted-foreground">
                       matchmaking.games/studio/{slug}
                     </p>
                   )}
-                  {slugMessage() && (
+                  {slugTouched && slugMessage() && (
                     <p className="text-sm">{slugMessage()}</p>
                   )}
                   {validationErrors.slug && (
