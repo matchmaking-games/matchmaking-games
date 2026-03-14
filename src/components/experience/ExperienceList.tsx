@@ -2,7 +2,7 @@ import { Briefcase, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExperienceCard } from "./ExperienceCard";
-import type { ExperienceWithCargos } from "@/hooks/useExperiences";
+import type { ExperienceWithCargos } from "@/hooks/dashboard/useExperiences";
 
 interface ExperienceListProps {
   experiences: ExperienceWithCargos[];

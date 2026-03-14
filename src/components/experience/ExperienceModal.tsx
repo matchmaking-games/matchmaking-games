@@ -11,9 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useExperiences, type ExperienceWithCargos } from "@/hooks/useExperiences";
+import { useToast } from "@/hooks/shared/use-toast";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useExperiences, type ExperienceWithCargos } from "@/hooks/dashboard/useExperiences";
 import { MonthYearPicker } from "./MonthYearPicker";
 
 // Zod validation schema with conditional location validation

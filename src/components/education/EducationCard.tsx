@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatTipoEducacao, formatEducationPeriod } from "@/lib/formatters";
-import type { Education } from "@/hooks/useEducations";
+import type { Education } from "@/hooks/dashboard/useEducations";
 
 interface EducationCardProps {
   education: Education;

@@ -17,8 +17,8 @@ import {
   Plus,
   Check,
 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { NavLink } from "@/components/NavLink";
+import { useIsMobile } from "@/hooks/shared/use-mobile";
+import { NavLink } from "@/components/shared/NavLink";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,9 +44,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useStudioMembership } from "@/hooks/useStudioMembership";
+import { useToast } from "@/hooks/shared/use-toast";
+import { useCurrentUser } from "@/hooks/dashboard/useCurrentUser";
+import { useStudioMembership } from "@/hooks/studio/useStudioMembership";
 
 const personalItems = [
   { title: "Painel geral", url: "/dashboard", icon: LayoutDashboard },

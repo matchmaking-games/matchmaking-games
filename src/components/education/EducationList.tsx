@@ -2,7 +2,7 @@ import { GraduationCap, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EducationCard } from "./EducationCard";
-import type { Education } from "@/hooks/useEducations";
+import type { Education } from "@/hooks/dashboard/useEducations";
 
 interface EducationListProps {
   educations: Education[];

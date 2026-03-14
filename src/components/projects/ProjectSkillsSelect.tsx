@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { useAvailableSkills, type Habilidade } from "@/hooks/useAvailableSkills";
+import { useAvailableSkills, type Habilidade } from "@/hooks/shared/useAvailableSkills";
 import { cn } from "@/lib/utils";
 
 interface ProjectSkillsSelectProps {

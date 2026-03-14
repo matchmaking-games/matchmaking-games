@@ -22,7 +22,7 @@ import {
 import { Plus, Youtube } from "lucide-react";
 import React from "react";
 import { schema } from "./schema";
-import { useProjectImageUpload } from "@/hooks/useProjectImageUpload";
+import { useProjectImageUpload } from "@/hooks/dashboard/useProjectImageUpload";
 
 // --- Item customizado do YouTube para o slash menu ---
 const insertYouTube = (

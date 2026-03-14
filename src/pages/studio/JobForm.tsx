@@ -29,11 +29,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { JobSkillsSelector } from "@/components/studio/JobSkillsSelector";
-import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/useJobForm";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useTiposFuncao } from "@/hooks/useTiposFuncao";
-import { useToast } from "@/hooks/use-toast";
+import { JobSkillsSelector } from "@/components/jobs/JobSkillsSelector";
+import { useJobForm, type VagaFormData, type VagaCompleta } from "@/hooks/studio/useJobForm";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useTiposFuncao } from "@/hooks/shared/useTiposFuncao";
+import { useToast } from "@/hooks/shared/use-toast";
 import { cn } from "@/lib/utils";
 
 // Form schema with Zod

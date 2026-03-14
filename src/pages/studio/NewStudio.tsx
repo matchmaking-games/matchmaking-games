@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useCheckStudioSlug } from "@/hooks/useCheckStudioSlug";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useCheckStudioSlug } from "@/hooks/studio/useCheckStudioSlug";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
 
 const createStudioSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(100, "Nome muito longo"),
