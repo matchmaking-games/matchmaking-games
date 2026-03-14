@@ -144,6 +144,7 @@ export default function StudioProfile() {
   const handleSlugChange = (value: string) => {
     const filtered = filterSlugInput(value);
     setSlug(filtered);
+    setSlugTouched(true);
     if (!filtered || filtered.length < 3) {
       setSlugStatus("invalid");
     } else if (!slugRegex.test(filtered)) {
