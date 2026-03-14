@@ -1,44 +1,34 @@
 
-## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
+## Plano: Correção cross-browser de parsing de datas `"YYYY-MM"`
 
-### Arquivo 1: `src/hooks/useStudioProject.ts`
+### Problema
+`new Date("2023-05")` retorna `Invalid Date` no Safari/mobile, causando `RangeError: Invalid time value` que derruba a página de experiências.
 
-Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
+### Arquivos afetados (4 alterações + 1 criação de função)
 
+**1. `src/lib/formatters.ts`** — Adicionar e exportar `parseDateSafe`:
 ```typescript
-interface StudioProjectData {
-  // Campos do projeto + estúdio aninhado
-  id, titulo, descricao, tipo, status, engine, plataformas, genero,
-  imagem_capa_url, demo_url, codigo_url, steam_url, ...
-  estudio: { id, nome, slug, logo_url }
+export function parseDateSafe(dateStr: string): Date {
+  const safe = dateStr.length === 7 ? dateStr + "-01" : dateStr.substring(0, 10);
+  const [year, month, day] = safe.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 ```
+Substituir `new Date(inicio)` e `new Date(fim)` por `parseDateSafe()` na função `formatDateRange`.
 
-- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
-- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
-- Retorna `{ project, isLoading, error }`
+**2. `src/hooks/useExperiences.ts`** — Importar `parseDateSafe` e substituir 5 ocorrências:
+- Linha 78: `new Date(newCargo.inicio)` → `parseDateSafe(newCargo.inicio)`
+- Linha 79: `new Date(newCargo.fim)` → `parseDateSafe(newCargo.fim)`
+- Linha 82: `new Date(existing.inicio)` → `parseDateSafe(existing.inicio)`
+- Linha 83: `new Date(existing.fim)` → `parseDateSafe(existing.fim)`
+- Linhas 158-159: `.sort()` — substituir ambos `new Date(...)` por `parseDateSafe(...)`
 
-### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
+**3. `src/hooks/usePublicProfile.ts`** — Importar `parseDateSafe` e corrigir linha 216 no `.sort()`.
 
-Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
+**4. `src/components/experience/ExperienceModal.tsx`** — No `onSubmit`, os modos `edit` e `create` (linhas 296 e 316) ainda gravam `data.inicio` e `data.fim` como `"YYYY-MM"`. Substituir por `inicioDate` e `fimDate` (que já existem nas linhas 267-268 com `-01` appendado) em todos os 3 modos.
 
-**Estrutura:**
-- Header + Footer padrão
-- Skeleton durante loading (imagem, título, descrição)
-- Estado de erro: "Projeto não encontrado" + link para `/projects`
+### O que NÃO muda
+- Schemas Zod, MonthYearPicker, componentes de UI, layout, estilos
+- Campos ISO completo (`created_at`, `expira_em`, etc.) — já são seguros
 
-**Layout quando encontrado:**
-1. Imagem de capa (16:9) se existir
-2. Título (`font-display font-semibold text-3xl`)
-3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
-4. Descrição simples (campo `descricao`, não o `descricao_rich`)
-5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
-6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
-
-**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
-
-### Arquivos afetados
-- `src/hooks/useStudioProject.ts` (criar)
-- `src/pages/StudioProjectDetail.tsx` (criar)
