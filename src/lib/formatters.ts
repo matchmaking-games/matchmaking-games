@@ -2,6 +2,16 @@ import { format, differenceInMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 /**
+ * Safely parses a date string that may be "YYYY-MM", "YYYY-MM-DD", or full ISO.
+ * Uses numeric constructor to avoid cross-browser issues (Safari rejects "YYYY-MM").
+ */
+export function parseDateSafe(dateStr: string): Date {
+  const safe = dateStr.length === 7 ? dateStr + "-01" : dateStr.substring(0, 10);
+  const [year, month, day] = safe.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/**
  * Capitalizes the first letter of a string
  */
 function capitalize(str: string): string {
@@ -41,7 +51,7 @@ export function formatDateRange(
   fim: string | null,
   atualmenteTrabalhando: boolean | null
 ): string {
-  const startDate = new Date(inicio);
+  const startDate = parseDateSafe(inicio);
   const startFormatted = capitalize(format(startDate, "MMM yyyy", { locale: ptBR }));
 
   if (atualmenteTrabalhando) {
@@ -50,7 +60,7 @@ export function formatDateRange(
   }
 
   if (fim) {
-    const endDate = new Date(fim);
+    const endDate = parseDateSafe(fim);
     const endFormatted = capitalize(format(endDate, "MMM yyyy", { locale: ptBR }));
     const duration = formatDuration(startDate, endDate);
     return `${startFormatted} - ${endFormatted} (${duration})`;
