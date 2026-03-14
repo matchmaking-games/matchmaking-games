@@ -91,6 +91,7 @@ export default function StudioProfile() {
   const [slug, setSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugTouched, setSlugTouched] = useState(false);
   const [sobre, setSobre] = useState("");
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
