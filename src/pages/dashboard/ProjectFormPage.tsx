@@ -248,6 +248,10 @@ export default function ProjectFormPage() {
   const destaqueValue = form.watch("destaque");
   const imagemCapaUrl = form.watch("imagem_capa_url");
 
+  const editorKey = editingProject
+    ? (richContent !== null ? editingProject.id : "loading")
+    : "new";
+
   // Show not found if editing but project not found after loading
   if (isEditing && !loading && !editingProject) {
     return (
