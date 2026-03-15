@@ -90,7 +90,7 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
 
             {/* Credential link */}
             {education.credencial_url && (
-              
+              <a
                 href={education.credencial_url}
                 target="_blank"
                 rel="noopener noreferrer"
