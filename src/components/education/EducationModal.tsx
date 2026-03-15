@@ -68,6 +68,8 @@ interface EducationModalProps {
   onOpenChange: (open: boolean) => void;
   editingEducation: Education | null;
   onSuccess: () => void;
+  addEducation: (data: Omit<EducationInsert, "user_id" | "ordem">) => Promise<Education>;
+  updateEducation: (id: string, data: EducationUpdate) => Promise<Education>;
 }
 
 export function EducationModal({ open, onOpenChange, editingEducation, onSuccess }: EducationModalProps) {
