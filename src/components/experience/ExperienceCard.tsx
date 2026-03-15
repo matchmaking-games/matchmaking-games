@@ -18,6 +18,12 @@ interface EducationCardProps {
   onDelete: (education: Education) => void;
 }
 
+interface ActionsDropdownProps {
+  education: Education;
+  onEdit: (education: Education) => void;
+  onDelete: (education: Education) => void;
+}
+
 const tipoEducacaoStyles: Record<string, string> = {
   graduacao: "bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20",
   pos: "bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/20",
@@ -26,12 +32,8 @@ const tipoEducacaoStyles: Record<string, string> = {
   certificacao: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/20",
 };
 
-export function EducationCard({ education, onEdit, onDelete }: EducationCardProps) {
-  const period = formatEducationPeriod(education.inicio, education.fim, education.concluido);
-  const tipoEducacaoLabel = formatTipoEducacao(education.tipo);
-  const tipoEducacaoStyle = tipoEducacaoStyles[education.tipo] || tipoEducacaoStyles.graduacao;
-
-  const ActionsDropdown = () => (
+function ActionsDropdown({ education, onEdit, onDelete }: ActionsDropdownProps) {
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
@@ -44,24 +46,30 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
           Editar
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onDelete(education)} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={() => onDelete(education)}
+          className="text-destructive focus:text-destructive"
+        >
           <Trash2 className="h-4 w-4 mr-2" />
           Excluir
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+export function EducationCard({ education, onEdit, onDelete }: EducationCardProps) {
+  const period = formatEducationPeriod(education.inicio, education.fim, education.concluido);
+  const tipoEducacaoLabel = formatTipoEducacao(education.tipo);
+  const tipoEducacaoStyle = tipoEducacaoStyles[education.tipo] || tipoEducacaoStyles.graduacao;
 
   return (
     <Card className="group transition-all hover:border-primary/30">
       <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          {/* Content */}
           <div className="flex-1 min-w-0 space-y-1.5">
-            {/* Title */}
             <h3 className="text-sm sm:text-base font-semibold text-foreground">{education.titulo}</h3>
 
-            {/* Institution + Type */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-muted-foreground">{education.instituicao}</span>
               <Badge
@@ -72,23 +80,21 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
               </Badge>
             </div>
 
-            {/* Date range */}
             <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3 flex-shrink-0 mt-0.5" />
               <span>{period}</span>
             </div>
 
-            {/* Area of study */}
-            {education.area && <p className="text-xs sm:text-sm text-muted-foreground">{education.area}</p>}
+            {education.area && (
+              <p className="text-xs sm:text-sm text-muted-foreground">{education.area}</p>
+            )}
 
-            {/* Description */}
             {education.descricao && (
               <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed pt-1">
                 {education.descricao}
               </p>
             )}
 
-            {/* Credential link */}
             {education.credencial_url && (
               
                 href={education.credencial_url}
@@ -102,8 +108,11 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
             )}
           </div>
 
-          {/* Action dropdown (⋮) */}
-          <ActionsDropdown />
+          <ActionsDropdown
+            education={education}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         </div>
       </CardContent>
     </Card>
