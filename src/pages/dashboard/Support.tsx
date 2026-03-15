@@ -6,15 +6,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/shared/use-toast";
-import { useSupportForm, supportFormSchema, validateImage } from "@/hooks/shared/useSupportForm";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useSupportForm, supportFormSchema, validateImage } from "@/hooks/useSupportForm";
 
 export default function Support() {
   const { toast } = useToast();
@@ -118,9 +112,7 @@ export default function Support() {
                   placeholder="Descreva brevemente o motivo do contato"
                   maxLength={100}
                 />
-                {errors.assunto && (
-                  <p className="text-sm text-destructive">{errors.assunto}</p>
-                )}
+                {errors.assunto && <p className="text-sm text-destructive">{errors.assunto}</p>}
               </div>
 
               {/* Tipo */}
@@ -138,18 +130,14 @@ export default function Support() {
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.tipo && (
-                  <p className="text-sm text-destructive">{errors.tipo}</p>
-                )}
+                {errors.tipo && <p className="text-sm text-destructive">{errors.tipo}</p>}
               </div>
 
               {/* Mensagem */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="mensagem">Mensagem</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {mensagem.length}/2000
-                  </span>
+                  <span className="text-xs text-muted-foreground">{mensagem.length}/2000</span>
                 </div>
                 <Textarea
                   id="mensagem"
@@ -159,42 +147,36 @@ export default function Support() {
                   className="min-h-[160px]"
                   maxLength={2000}
                 />
-                {errors.mensagem && (
-                  <p className="text-sm text-destructive">{errors.mensagem}</p>
-                )}
+                {errors.mensagem && <p className="text-sm text-destructive">{errors.mensagem}</p>}
               </div>
 
               {/* Imagem */}
               <div className="space-y-2">
                 <Label>Imagem (opcional)</Label>
-                {imagemPreview ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={imagemPreview}
-                      alt="Preview"
-                      className="h-24 w-24 rounded-md object-cover border border-border"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
+                <div className="flex flex-col gap-3">
+                  {imagemPreview && (
+                    <div className="relative w-48 h-48">
+                      <img
+                        src={imagemPreview}
+                        alt="Preview"
+                        className="w-full h-full rounded-md object-cover border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                   <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
+                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                       <ImagePlus className="h-4 w-4 mr-2" />
-                      Anexar imagem
+                      {imagemPreview ? "Trocar imagem" : "Anexar imagem"}
                     </Button>
                   </div>
-                )}
+                </div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -202,9 +184,7 @@ export default function Support() {
                   className="hidden"
                   onChange={handleImageChange}
                 />
-                {imagemError && (
-                  <p className="text-sm text-destructive">{imagemError}</p>
-                )}
+                {imagemError && <p className="text-sm text-destructive">{imagemError}</p>}
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">

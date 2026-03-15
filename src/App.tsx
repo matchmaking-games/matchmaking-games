@@ -47,7 +47,7 @@ import StudioPublicProfile from "./pages/public/StudioPublicProfile";
 import StudioProjectDetail from "./pages/public/StudioProjectDetail";
 import AcceptInvite from "./pages/auth/AcceptInvite";
 import NotFound from "./pages/NotFound";
-import Support from "./pages/public/Support";
+import Support from "./pages/dashboard/Support";
 import Terms from "./pages/public/Terms";
 import Privacy from "./pages/public/Privacy";
 

@@ -17,8 +17,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue } from
-"@/components/ui/select";
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
@@ -82,6 +82,7 @@ export default function Profile() {
   const [slug, setSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugTouched, setSlugTouched] = useState(false);
   const [pronomes, setPronomes] = useState("");
   const [tituloProfissional, setTituloProfissional] = useState("");
   const [disponivelParaTrabalho, setDisponivelParaTrabalho] = useState(false);
@@ -147,6 +148,7 @@ export default function Profile() {
   const handleSlugChange = (value: string) => {
     const filtered = filterSlugInput(value);
     setSlug(filtered);
+    setSlugTouched(true);
     if (!filtered || filtered.length < 3) {
       setSlugStatus("invalid");
     } else if (!slugRegex.test(filtered)) {
@@ -378,20 +380,26 @@ export default function Profile() {
                       id="slug"
                       value={slug}
                       onChange={(e) => handleSlugChange(e.target.value)}
+                      onFocus={() => setSlugTouched(true)}
+                      onBlur={() => {
+                        if (slug === originalSlug) setSlugTouched(false);
+                      }}
                       placeholder="seu-username"
                       maxLength={30}
                       className="h-11 bg-input border-border focus:border-primary focus:ring-2 focus:ring-primary/20 lowercase pr-10" />
 
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        {slugIcon()}
-                      </div>
+                      {slugTouched && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {slugIcon()}
+                        </div>
+                      )}
                     </div>
                     {slug &&
                   <p className="text-xs text-muted-foreground">
                         matchmaking.games/p/{slug}
                       </p>
                   }
-                    {slugMessage() &&
+                    {slugTouched && slugMessage() &&
                   <p className="text-sm">{slugMessage()}</p>
                   }
                     {validationErrors.slug &&
