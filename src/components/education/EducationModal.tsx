@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/shared/use-toast";
-import { useEducations, type Education } from "@/hooks/dashboard/useEducations";
+import type { Education, EducationInsert, EducationUpdate } from "@/hooks/dashboard/useEducations";
 
 const currentYear = new Date().getFullYear();
 
@@ -68,12 +68,12 @@ interface EducationModalProps {
   onOpenChange: (open: boolean) => void;
   editingEducation: Education | null;
   onSuccess: () => void;
+  addEducation: (data: Omit<EducationInsert, "user_id" | "ordem">) => Promise<Education>;
+  updateEducation: (id: string, data: EducationUpdate) => Promise<Education>;
 }
 
-export function EducationModal({ open, onOpenChange, editingEducation, onSuccess }: EducationModalProps) {
+export function EducationModal({ open, onOpenChange, editingEducation, onSuccess, addEducation, updateEducation }: EducationModalProps) {
   const { toast } = useToast();
-  const { addEducation, updateEducation } = useEducations();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = !!editingEducation;
@@ -164,7 +164,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
       }
 
       onSuccess();
-      onOpenChange(false);
     } catch (error) {
       console.error("Error saving education:", error);
       toast({

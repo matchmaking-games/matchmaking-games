@@ -20,7 +20,7 @@ import { useEducations, type Education } from "@/hooks/dashboard/useEducations";
 import { useToast } from "@/hooks/shared/use-toast";
 
 export default function EducationPage() {
-  const { educations, loading, error, refetch, deleteEducation } = useEducations();
+  const { educations, loading, error, refetch, deleteEducation, addEducation, updateEducation } = useEducations();
   const { toast } = useToast();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +101,8 @@ export default function EducationPage() {
         onOpenChange={setIsModalOpen}
         editingEducation={editingEducation}
         onSuccess={handleSuccess}
+        addEducation={addEducation}
+        updateEducation={updateEducation}
       />
 
       {/* Delete Confirmation Dialog */}
