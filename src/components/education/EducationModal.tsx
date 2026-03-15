@@ -72,10 +72,8 @@ interface EducationModalProps {
   updateEducation: (id: string, data: EducationUpdate) => Promise<Education>;
 }
 
-export function EducationModal({ open, onOpenChange, editingEducation, onSuccess }: EducationModalProps) {
+export function EducationModal({ open, onOpenChange, editingEducation, onSuccess, addEducation, updateEducation }: EducationModalProps) {
   const { toast } = useToast();
-  const { addEducation, updateEducation } = useEducations();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = !!editingEducation;
