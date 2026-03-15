@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/shared/use-toast";
-import { useEducations, type Education } from "@/hooks/dashboard/useEducations";
+import type { Education, EducationInsert, EducationUpdate } from "@/hooks/dashboard/useEducations";
 
 const currentYear = new Date().getFullYear();
 
