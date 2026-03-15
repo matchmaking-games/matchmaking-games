@@ -43,5 +43,9 @@ export function useCreateEvento() {
       if (error) throw error;
       return evento;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos", "meus"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos", "publicos"] });
+    },
   });
 }
