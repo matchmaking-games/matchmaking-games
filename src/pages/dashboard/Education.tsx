@@ -101,6 +101,8 @@ export default function EducationPage() {
         onOpenChange={setIsModalOpen}
         editingEducation={editingEducation}
         onSuccess={handleSuccess}
+        addEducation={addEducation}
+        updateEducation={updateEducation}
       />
 
       {/* Delete Confirmation Dialog */}

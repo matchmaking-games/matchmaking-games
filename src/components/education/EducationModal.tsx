@@ -164,7 +164,6 @@ export function EducationModal({ open, onOpenChange, editingEducation, onSuccess
       }
 
       onSuccess();
-      onOpenChange(false);
     } catch (error) {
       console.error("Error saving education:", error);
       toast({
