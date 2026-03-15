@@ -31,27 +31,6 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
   const tipoEducacaoLabel = formatTipoEducacao(education.tipo);
   const tipoEducacaoStyle = tipoEducacaoStyles[education.tipo] || tipoEducacaoStyles.graduacao;
 
-  const ActionsDropdown = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-          <EllipsisVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(education)}>
-          <Pencil className="h-4 w-4 mr-2" />
-          Editar
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onDelete(education)} className="text-destructive focus:text-destructive">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Excluir
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
   return (
     <Card className="group transition-all hover:border-primary/30">
       <CardContent className="p-3 sm:p-4">
@@ -90,7 +69,7 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
 
             {/* Credential link */}
             {education.credencial_url && (
-              
+              <a
                 href={education.credencial_url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -103,7 +82,24 @@ export function EducationCard({ education, onEdit, onDelete }: EducationCardProp
           </div>
 
           {/* Action dropdown (⋮) */}
-          <ActionsDropdown />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                <EllipsisVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(education)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onDelete(education)} className="text-destructive focus:text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>
