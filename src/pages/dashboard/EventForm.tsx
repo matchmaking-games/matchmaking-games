@@ -83,8 +83,11 @@ const eventoSchema = z
 
 type EventoFormData = z.infer<typeof eventoSchema>;
 
-const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
-const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, "0"));
+const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
+  const hour = String(Math.floor(i / 2)).padStart(2, "0");
+  const minute = i % 2 === 0 ? "00" : "30";
+  return `${hour}:${minute}`;
+});
 
 interface TimeSelectProps {
   value: string;
@@ -92,53 +95,19 @@ interface TimeSelectProps {
 }
 
 function TimeSelect({ value, onChange }: TimeSelectProps) {
-  const [hour, setHour] = useState(() => value?.split(":")[0] ?? "");
-  const [minute, setMinute] = useState(() => value?.split(":")[1] ?? "");
-
-  useEffect(() => {
-    if (value && value.includes(":")) {
-      setHour(value.split(":")[0]);
-      setMinute(value.split(":")[1]);
-    }
-  }, [value]);
-
-  const handleHourChange = (h: string) => {
-    setHour(h);
-    if (minute) onChange(`${h}:${minute}`);
-  };
-
-  const handleMinuteChange = (m: string) => {
-    setMinute(m);
-    if (hour) onChange(`${hour}:${m}`);
-  };
-
   return (
-    <div className="flex gap-2">
-      <Select value={hour} onValueChange={handleHourChange}>
-        <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Hora" />
-        </SelectTrigger>
-        <SelectContent>
-          {HOURS.map((h) => (
-            <SelectItem key={h} value={h}>
-              {h}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={minute} onValueChange={handleMinuteChange}>
-        <SelectTrigger className="flex-1">
-          <SelectValue placeholder="Min" />
-        </SelectTrigger>
-        <SelectContent>
-          {MINUTES.map((m) => (
-            <SelectItem key={m} value={m}>
-              {m}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Selecione o horário" />
+      </SelectTrigger>
+      <SelectContent>
+        {TIME_OPTIONS.map((time) => (
+          <SelectItem key={time} value={time}>
+            {time}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

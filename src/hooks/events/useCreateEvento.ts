@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreateEventoData {
@@ -14,6 +14,8 @@ interface CreateEventoData {
 }
 
 export function useCreateEvento() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: CreateEventoData) => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
@@ -40,6 +42,10 @@ export function useCreateEvento() {
 
       if (error) throw error;
       return evento;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["eventos", "meus"] });
+      queryClient.invalidateQueries({ queryKey: ["eventos", "publicos"] });
     },
   });
 }
