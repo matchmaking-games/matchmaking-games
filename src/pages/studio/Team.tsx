@@ -3,9 +3,9 @@ import { Users, Shield, Trash2, UserPlus, MoreVertical, User, AlertTriangle } fr
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-import { useStudioMembers, type StudioMember } from "@/hooks/useStudioMembers";
-import { useActiveStudio } from "@/hooks/useActiveStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useStudioMembers, type StudioMember } from "@/hooks/studio/useStudioMembers";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
+import { useIsMobile } from "@/hooks/shared/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +39,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { InviteMemberDialog } from "@/components/studio/InviteMemberDialog";
+import { useToast } from "@/hooks/shared/use-toast";
+import { InviteMemberDialog } from "@/components/studio-manage/InviteMemberDialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type UserRole = Database["public"]["Enums"]["user_role"];

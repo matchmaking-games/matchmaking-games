@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDateRange, formatTipoEmprego } from "@/lib/formatters";
-import type { ExperienceWithCargos, CargoExperiencia } from "@/hooks/useExperiences";
+import type { ExperienceWithCargos, CargoExperiencia } from "@/hooks/dashboard/useExperiences";
 
 interface ExperienceCardProps {
   experience: ExperienceWithCargos;

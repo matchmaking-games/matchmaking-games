@@ -13,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { useAvailableSkills } from "@/hooks/useAvailableSkills";
-import type { UserSkill } from "@/hooks/useSkills";
+import { useAvailableSkills } from "@/hooks/shared/useAvailableSkills";
+import type { UserSkill } from "@/hooks/dashboard/useSkills";
 import type { Database } from "@/integrations/supabase/types";
 
 type NivelHabilidade = Database["public"]["Enums"]["nivel_habilidade"];

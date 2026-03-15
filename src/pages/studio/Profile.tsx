@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Loader2, Camera, Check, X, AlertTriangle } from "lucide-react";
 import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 
-import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
+import { StudioProfileNavigation } from "@/components/studio-manage/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SpecialtiesInput } from "@/components/studio/SpecialtiesInput";
-import { useToast } from "@/hooks/use-toast";
+import { SpecialtiesInput } from "@/components/studio-manage/SpecialtiesInput";
+import { useToast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveStudio } from "@/hooks/useActiveStudio";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useDebounce } from "@/hooks/shared/useDebounce";
 import type { Database } from "@/integrations/supabase/types";
 
 type TamanhoEstudio = Database["public"]["Enums"]["tamanho_estudio"];
@@ -91,6 +91,7 @@ export default function StudioProfile() {
   const [slug, setSlug] = useState("");
   const [originalSlug, setOriginalSlug] = useState("");
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
+  const [slugTouched, setSlugTouched] = useState(false);
   const [sobre, setSobre] = useState("");
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
@@ -143,6 +144,7 @@ export default function StudioProfile() {
   const handleSlugChange = (value: string) => {
     const filtered = filterSlugInput(value);
     setSlug(filtered);
+    setSlugTouched(true);
     if (!filtered || filtered.length < 3) {
       setSlugStatus("invalid");
     } else if (!slugRegex.test(filtered)) {
@@ -484,20 +486,26 @@ export default function StudioProfile() {
                       id="slug"
                       value={slug}
                       onChange={(e) => handleSlugChange(e.target.value)}
+                      onFocus={() => setSlugTouched(true)}
+                      onBlur={() => {
+                        if (slug === originalSlug) setSlugTouched(false);
+                      }}
                       placeholder="slug-do-estudio"
                       maxLength={30}
                       className="h-11 lowercase pr-10"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {slugIcon()}
-                    </div>
+                    {slugTouched && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {slugIcon()}
+                      </div>
+                    )}
                   </div>
                   {slug && (
                     <p className="text-xs text-muted-foreground">
                       matchmaking.games/studio/{slug}
                     </p>
                   )}
-                  {slugMessage() && (
+                  {slugTouched && slugMessage() && (
                     <p className="text-sm">{slugMessage()}</p>
                   )}
                   {validationErrors.slug && (

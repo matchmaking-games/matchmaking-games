@@ -14,13 +14,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/shared/use-toast";
 import { generateSlug } from "@/lib/formatters";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectImageUpload } from "@/components/projects/ProjectImageUpload";
 import { ProjectSkillsSelect } from "@/components/projects/ProjectSkillsSelect";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
-import { useProjects, type ProjectWithSkills } from "@/hooks/useProjects";
+import { useProjects, type ProjectWithSkills } from "@/hooks/dashboard/useProjects";
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
 import { ENGINE_LABELS, PLATAFORMA_LABELS, GENERO_LABELS } from "@/constants/project-labels";
 import type { Database } from "@/integrations/supabase/types";
@@ -247,6 +247,10 @@ export default function ProjectFormPage() {
   const slugValue = form.watch("slug");
   const destaqueValue = form.watch("destaque");
   const imagemCapaUrl = form.watch("imagem_capa_url");
+
+  const editorKey = editingProject
+    ? (richContent !== null ? editingProject.id : "loading")
+    : "new";
 
   // Show not found if editing but project not found after loading
   if (isEditing && !loading && !editingProject) {
@@ -598,6 +602,7 @@ export default function ProjectFormPage() {
               </p>
               <div className="min-h-[300px]">
                 <RichTextEditor
+                  key={editorKey}
                   initialContent={richContent ?? undefined}
                   onChange={(json) => {
                     setRichContent(json);

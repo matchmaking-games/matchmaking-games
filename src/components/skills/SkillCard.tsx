@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { UserSkill } from "@/hooks/useSkills";
+import type { UserSkill } from "@/hooks/dashboard/useSkills";
 
 interface SkillCardProps {
   skill: UserSkill;

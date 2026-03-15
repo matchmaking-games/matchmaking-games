@@ -11,9 +11,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useExperiences, type ExperienceWithCargos } from "@/hooks/useExperiences";
+import { useToast } from "@/hooks/shared/use-toast";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useExperiences, type ExperienceWithCargos } from "@/hooks/dashboard/useExperiences";
 import { MonthYearPicker } from "./MonthYearPicker";
 
 // Zod validation schema with conditional location validation
@@ -263,7 +263,11 @@ export function ExperienceModal({
     try {
       setIsSubmitting(true);
 
-      // Convert dates to YYYY-MM-DD format (only for cargos_experiencia which uses date type)
+      // Para a tabela experiencia (character varying(7)) — formato YYYY-MM
+      const inicioExperiencia = data.inicio;
+      const fimExperiencia = data.fim || null;
+
+      // Para a tabela cargos_experiencia (tipo date) — formato YYYY-MM-DD
       const inicioDate = `${data.inicio}-01`;
       const fimDate = data.fim ? `${data.fim}-01` : null;
 
@@ -293,8 +297,8 @@ export function ExperienceModal({
           estado: data.remoto === "remoto" ? null : data.estado || null,
           cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
-          inicio: inicioDate,
-          fim: fimDate,
+          inicio: inicioExperiencia,
+          fim: fimExperiencia,
           atualmente_trabalhando: data.atualmente_trabalhando,
           descricao: data.descricao || null,
         };
@@ -314,8 +318,8 @@ export function ExperienceModal({
           estado: data.remoto === "remoto" ? null : data.estado || null,
           cidade_ibge_id: data.remoto === "remoto" ? null : data.cidade_ibge_id || null,
           remoto: data.remoto,
-          inicio: inicioDate,
-          fim: fimDate,
+          inicio: inicioExperiencia,
+          fim: fimExperiencia,
           atualmente_trabalhando: data.atualmente_trabalhando,
           descricao: data.descricao || null,
         };

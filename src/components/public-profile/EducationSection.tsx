@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import type { PublicEducationData } from "@/hooks/usePublicProfile";
+import type { PublicEducationData } from "@/hooks/public/usePublicProfile";
 
 interface EducationSectionProps {
   educations: PublicEducationData[];

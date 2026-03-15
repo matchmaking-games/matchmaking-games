@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatNivelVaga, formatTipoContrato, formatTipoTrabalho } from "@/lib/formatters";
-import { VagaListItem } from "@/hooks/useJobs";
+import { VagaListItem } from "@/hooks/search/useJobs";
 
 interface JobCardProps {
   job: VagaListItem;

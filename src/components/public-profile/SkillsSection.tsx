@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import type { PublicSkillData } from "@/hooks/usePublicProfile";
+import type { PublicSkillData } from "@/hooks/public/usePublicProfile";
 
 interface SkillsSectionProps {
   skills: PublicSkillData[];

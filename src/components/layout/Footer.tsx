@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { SocialIcon } from "@/components/SocialIcon";
+import { SocialIcon } from "@/components/shared/SocialIcon";
 import matchmakingLogo from "@/assets/matchmaking-logo.png";
 
 const socials = [

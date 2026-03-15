@@ -2,7 +2,7 @@ import { Briefcase, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectCard } from "./ProjectCard";
-import type { ProjectWithSkills } from "@/hooks/useProjects";
+import type { ProjectWithSkills } from "@/hooks/dashboard/useProjects";
 
 interface ProjectsListProps {
   projects: ProjectWithSkills[];
