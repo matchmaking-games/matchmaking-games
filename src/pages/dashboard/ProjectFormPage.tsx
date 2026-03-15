@@ -602,6 +602,7 @@ export default function ProjectFormPage() {
               </p>
               <div className="min-h-[300px]">
                 <RichTextEditor
+                  key={editorKey}
                   initialContent={richContent ?? undefined}
                   onChange={(json) => {
                     setRichContent(json);
