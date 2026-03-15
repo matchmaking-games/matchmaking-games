@@ -263,7 +263,11 @@ export function ExperienceModal({
     try {
       setIsSubmitting(true);
 
-      // Convert dates to YYYY-MM-DD format (only for cargos_experiencia which uses date type)
+      // Para a tabela experiencia (character varying(7)) — formato YYYY-MM
+      const inicioExperiencia = data.inicio;
+      const fimExperiencia = data.fim || null;
+
+      // Para a tabela cargos_experiencia (tipo date) — formato YYYY-MM-DD
       const inicioDate = `${data.inicio}-01`;
       const fimDate = data.fim ? `${data.fim}-01` : null;
 
