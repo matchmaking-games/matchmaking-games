@@ -14,12 +14,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useCreateEvento } from "@/hooks/useCreateEvento";
-import { useUpdateEvento } from "@/hooks/useUpdateEvento";
-import { useEventoById } from "@/hooks/useEventoById";
+import { useToast } from "@/hooks/shared/use-toast";
+import { useCreateEvento } from "@/hooks/events/useCreateEvento";
+import { useUpdateEvento } from "@/hooks/events/useUpdateEvento";
+import { useEventoById } from "@/hooks/events/useEventoById";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
 import type { DateRange } from "react-day-picker";
 
 const eventoSchema = z

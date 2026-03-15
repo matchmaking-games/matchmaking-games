@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Loader2, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AvatarUploadProps {

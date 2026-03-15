@@ -2,8 +2,8 @@ import { CreditCard, ExternalLink, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-import { useActiveStudio } from "@/hooks/useActiveStudio";
-import { usePagamentos } from "@/hooks/usePagamentos";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
+import { usePagamentos } from "@/hooks/studio/usePagamentos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

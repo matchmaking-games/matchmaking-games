@@ -21,10 +21,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox";
-import { useAvailableSkills, Habilidade } from "@/hooks/useAvailableSkills";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useTiposFuncao } from "@/hooks/useTiposFuncao";
-import { JobFilters } from "@/hooks/useJobFilters";
+import { useAvailableSkills, Habilidade } from "@/hooks/shared/useAvailableSkills";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useTiposFuncao } from "@/hooks/shared/useTiposFuncao";
+import { JobFilters } from "@/hooks/search/useJobFilters";
 import { cn } from "@/lib/utils";
 
 interface JobsSidebarProps {

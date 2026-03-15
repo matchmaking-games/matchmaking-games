@@ -1,7 +1,7 @@
 import { MapPin, CheckCircle } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { PublicUserData } from "@/hooks/usePublicProfile";
+import type { PublicUserData } from "@/hooks/public/usePublicProfile";
 
 interface ProfileHeroProps {
   user: PublicUserData;

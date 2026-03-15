@@ -2,15 +2,15 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Briefcase, FileText, Clock, Sparkles, Plus, Settings, ExternalLink } from "lucide-react";
 
-import { useActiveStudio } from "@/hooks/useActiveStudio";
-import { useStudioDashboardStats } from "@/hooks/useStudioDashboardStats";
-import { useStudioInviteCTA } from "@/hooks/useStudioInviteCTA";
-import { StudioInviteCTACard } from "@/components/studio/StudioInviteCTACard";
-import { StudioProfileCompletion } from "@/components/studio/StudioProfileCompletion";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
+import { useStudioDashboardStats } from "@/hooks/studio/useStudioDashboardStats";
+import { useStudioInviteCTA } from "@/hooks/studio/useStudioInviteCTA";
+import { StudioInviteCTACard } from "@/components/studio-manage/StudioInviteCTACard";
+import { StudioProfileCompletion } from "@/components/studio-manage/StudioProfileCompletion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/shared/use-toast";
 
 const statCards = [
   { key: "ativas" as const, label: "Ativas", icon: Briefcase, color: "text-primary" },

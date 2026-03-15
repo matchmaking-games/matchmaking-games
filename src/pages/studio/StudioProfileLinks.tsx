@@ -2,15 +2,15 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { Loader2, Globe } from "lucide-react";
 
-import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
+import { StudioProfileNavigation } from "@/components/studio-manage/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { SocialIcon } from "@/components/SocialIcon";
-import { useToast } from "@/hooks/use-toast";
+import { SocialIcon } from "@/components/shared/SocialIcon";
+import { useToast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveStudio } from "@/hooks/useActiveStudio";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
 
 const urlSchema = z
   .string()

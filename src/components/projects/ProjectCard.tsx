@@ -11,7 +11,7 @@ import {
 import { MoreVertical, Pencil, Star, Trash2, Gamepad2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTipoProjeto, formatStatusProjeto } from "@/lib/formatters";
-import type { ProjectWithSkills } from "@/hooks/useProjects";
+import type { ProjectWithSkills } from "@/hooks/dashboard/useProjects";
 
 interface ProjectCardProps {
   project: ProjectWithSkills;

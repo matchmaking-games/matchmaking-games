@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import type { PublicProjectData } from "@/hooks/usePublicProfile";
+import type { PublicProjectData } from "@/hooks/public/usePublicProfile";
 
 interface ProjectsSectionProps {
   featuredProjects: PublicProjectData[];

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { format, differenceInMonths, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { PublicExperienceData, PublicCargoData } from "@/hooks/usePublicProfile";
+import type { PublicExperienceData, PublicCargoData } from "@/hooks/public/usePublicProfile";
 interface ExperienceSectionProps {
   experiences: PublicExperienceData[];
 }

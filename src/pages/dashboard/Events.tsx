@@ -33,8 +33,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useEventos, type Evento } from "@/hooks/useEventos";
-import { useDeleteEvento } from "@/hooks/useDeleteEvento";
+import { useEventos, type Evento } from "@/hooks/events/useEventos";
+import { useDeleteEvento } from "@/hooks/events/useDeleteEvento";
 
 function formatEventDate(inicio: string, fim: string): string {
   const tz = "America/Sao_Paulo";

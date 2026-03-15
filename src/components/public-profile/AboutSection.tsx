@@ -1,9 +1,9 @@
 import { Globe, Briefcase, Mail, Phone, Copy } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import { SocialIcon } from "@/components/SocialIcon";
-import type { PublicUserData } from "@/hooks/usePublicProfile";
+import { useToast } from "@/hooks/shared/use-toast";
+import { SocialIcon } from "@/components/shared/SocialIcon";
+import type { PublicUserData } from "@/hooks/public/usePublicProfile";
 
 interface AboutSectionProps {
   user: PublicUserData;

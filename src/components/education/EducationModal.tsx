@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useEducations, type Education } from "@/hooks/useEducations";
+import { useToast } from "@/hooks/shared/use-toast";
+import { useEducations, type Education } from "@/hooks/dashboard/useEducations";
 
 const currentYear = new Date().getFullYear();
 

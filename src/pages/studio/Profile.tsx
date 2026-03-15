@@ -4,7 +4,7 @@ import { z } from "zod";
 import { Loader2, Camera, Check, X, AlertTriangle } from "lucide-react";
 import { MonthYearPicker } from "@/components/experience/MonthYearPicker";
 
-import { StudioProfileNavigation } from "@/components/studio/StudioProfileNavigation";
+import { StudioProfileNavigation } from "@/components/studio-manage/StudioProfileNavigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SpecialtiesInput } from "@/components/studio/SpecialtiesInput";
-import { useToast } from "@/hooks/use-toast";
+import { SpecialtiesInput } from "@/components/studio-manage/SpecialtiesInput";
+import { useToast } from "@/hooks/shared/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useActiveStudio } from "@/hooks/useActiveStudio";
-import { useIBGELocations } from "@/hooks/useIBGELocations";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useActiveStudio } from "@/hooks/studio/useActiveStudio";
+import { useIBGELocations } from "@/hooks/shared/useIBGELocations";
+import { useDebounce } from "@/hooks/shared/useDebounce";
 import type { Database } from "@/integrations/supabase/types";
 
 type TamanhoEstudio = Database["public"]["Enums"]["tamanho_estudio"];
