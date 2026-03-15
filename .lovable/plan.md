@@ -1,44 +1,18 @@
 
-## Plano: Hook useStudioProject + Página StudioProjectDetail
 
-Criar dois arquivos novos que trabalham juntos — o hook de busca de dados e a página de detalhe de projeto de estúdio.
+## Plan: Cache invalidation after event creation + Time selector simplification
 
-### Arquivo 1: `src/hooks/useStudioProject.ts`
+### Changes
 
-Hook simples seguindo o padrão de `useProjectDetail` e `usePublicStudio`:
+**File 1: `src/hooks/events/useCreateEvento.ts`**
+- Add `useQueryClient` to the import from `@tanstack/react-query`
+- Create `queryClient` instance inside the hook
+- Add `onSuccess` callback that invalidates `["eventos", "meus"]` and `["eventos", "publicos"]` query keys
 
-```typescript
-interface StudioProjectData {
-  // Campos do projeto + estúdio aninhado
-  id, titulo, descricao, tipo, status, engine, plataformas, genero,
-  imagem_capa_url, demo_url, codigo_url, steam_url, ...
-  estudio: { id, nome, slug, logo_url }
-}
-```
+**File 2: `src/pages/dashboard/EventForm.tsx`**
+- Remove `HOURS` and `MINUTES` constants (lines 86-87)
+- Replace the entire `TimeSelect` component (lines 89-143) with the new single-select version using `TIME_OPTIONS` (48 options, 00:00 to 23:30 in 30-min intervals)
+- The new component has the same `value`/`onChange` interface, so the two `FormField` usages remain unchanged
 
-- Query: `supabase.from('projetos').select('*, estudio:estudios(id, nome, slug, logo_url)').eq('slug', projectSlug).maybeSingle()`
-- React Query com `staleTime: 30000`, queryKey: `["studio-project", projectSlug]`
-- Retorna `{ project, isLoading, error }`
+No other files are touched. Schema, submit logic, hooks, and layout stay as-is.
 
-### Arquivo 2: `src/pages/StudioProjectDetail.tsx`
-
-Página pública simplificada, seguindo o layout de `ProjectDetail.tsx`:
-
-**Estrutura:**
-- Header + Footer padrão
-- Skeleton durante loading (imagem, título, descrição)
-- Estado de erro: "Projeto não encontrado" + link para `/projects`
-
-**Layout quando encontrado:**
-1. Imagem de capa (16:9) se existir
-2. Título (`font-display font-semibold text-3xl`)
-3. Badges: engine (`secondary`), plataformas (`outline`), gêneros (`outline`) — usando labels de `project-labels.ts`
-4. Descrição simples (campo `descricao`, não o `descricao_rich`)
-5. Links externos: botões para demo_url, codigo_url, steam_url (se existirem)
-6. Rodapé: "Projeto de" + link para `/studio/{estudio.slug}`
-
-**useParams:** `slug` (estúdio, não usado agora) e `projectSlug` (passado ao hook)
-
-### Arquivos afetados
-- `src/hooks/useStudioProject.ts` (criar)
-- `src/pages/StudioProjectDetail.tsx` (criar)
